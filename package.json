@@ -1,7 +1,7 @@
 {
   "name": "@eliware/elera-client",
-  "version": "0.1.0",
-  "description": "Application-facing Elera client for managed MySQL and MariaDB routing",
+  "version": "0.3.0",
+  "description": "Application-facing Elera client for managed MySQL/MariaDB routing, failover, lifecycle, and telemetry",
   "keywords": [
     "eliware",
     "elera",
@@ -10,16 +10,20 @@
     "database",
     "routing",
     "failover",
-    "telemetry"
+    "telemetry",
+    "websocket",
+    "connection-pool",
+    "application-client"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/eliware/elera-client.git"
+    "url": "git+https://github.com/eliware/elera-client.git"
   },
   "homepage": "https://github.com/eliware/elera-client#readme",
   "bugs": {
     "url": "https://github.com/eliware/elera-client/issues"
   },
+  "author": "Eli Sterling, eliware.org <eli@eliware.org>",
   "license": "Apache-2.0",
   "type": "module",
   "engines": {
