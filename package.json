@@ -1,67 +1,67 @@
 {
-  "name": "@eliware/elera-client",
-  "version": "0.3.0",
-  "description": "Application-facing Elera client for managed MySQL/MariaDB routing, failover, lifecycle, and telemetry",
-  "keywords": [
-    "eliware",
-    "elera",
-    "mysql",
-    "mariadb",
-    "database",
-    "routing",
-    "failover",
-    "telemetry",
-    "websocket",
-    "connection-pool",
-    "application-client"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/eliware/elera-client.git"
-  },
-  "homepage": "https://github.com/eliware/elera-client#readme",
-  "bugs": {
-    "url": "https://github.com/eliware/elera-client/issues"
-  },
-  "author": "Eli Sterling, eliware.org <eli@eliware.org>",
-  "license": "Apache-2.0",
-  "type": "module",
-  "engines": {
-    "node": ">=26"
-  },
-  "exports": {
-    ".": {
-      "types": "./src/index.d.ts",
-      "import": "./src/index.mjs"
+    "name": "@eliware/elera-client",
+    "version": "0.3.0",
+    "description": "Application-facing Elera client for managed MySQL/MariaDB routing, failover, lifecycle, and telemetry",
+    "keywords": [
+        "eliware",
+        "elera",
+        "mysql",
+        "mariadb",
+        "database",
+        "routing",
+        "failover",
+        "telemetry",
+        "websocket",
+        "connection-pool",
+        "application-client"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/eliware/elera-client.git"
+    },
+    "homepage": "https://github.com/eliware/elera-client#readme",
+    "bugs": {
+        "url": "https://github.com/eliware/elera-client/issues"
+    },
+    "author": "Eli Sterling, eliware.org <eli@eliware.org>",
+    "license": "Apache-2.0",
+    "type": "module",
+    "engines": {
+        "node": ">=26"
+    },
+    "exports": {
+        ".": {
+            "types": "./src/index.d.ts",
+            "import": "./src/index.mjs"
+        }
+    },
+    "files": [
+        "src",
+        "README.md",
+        "RELEASE_NOTES.md",
+        "LICENSE",
+        "THIRD-PARTY-NOTICES.md"
+    ],
+    "scripts": {
+        "test": "eliware-test",
+        "lint": "eliware-test --lint",
+        "check": "node --check src/index.mjs",
+        "contracts": "node scripts/verify-contracts.mjs",
+        "typecheck": "tsc --project tsconfig.json",
+        "pack": "npm pack --dry-run",
+        "audit": "npm audit --omit=dev --audit-level=moderate"
+    },
+    "dependencies": {
+        "@eliware/common": "^2.0.0",
+        "@eliware/elera-lib": "^0.3.0",
+        "mysql2": "^3.24.2"
+    },
+    "devDependencies": {
+        "@eliware/test": "^2.0.0",
+        "@types/node": "^26.4.0",
+        "typescript": "^7.0.2"
+    },
+    "publishConfig": {
+        "access": "public"
     }
-  },
-  "files": [
-    "src",
-    "README.md",
-    "RELEASE_NOTES.md",
-    "LICENSE",
-    "THIRD-PARTY-NOTICES.md"
-  ],
-  "scripts": {
-    "test": "eliware-test",
-    "lint": "eliware-test --lint",
-    "check": "node --check src/index.mjs",
-    "contracts": "node scripts/verify-contracts.mjs",
-    "typecheck": "tsc --project tsconfig.json",
-    "pack": "npm pack --dry-run",
-    "audit": "npm audit --omit=dev --audit-level=moderate"
-  },
-  "dependencies": {
-    "@eliware/common": "^2.0.0",
-    "@eliware/elera-lib": "^0.3.0",
-    "mysql2": "^3.24.2"
-  },
-  "devDependencies": {
-    "@eliware/test": "^2.0.0",
-    "@types/node": "^26.4.0",
-    "typescript": "^7.0.2"
-  },
-  "publishConfig": {
-    "access": "public"
-  }
 }
