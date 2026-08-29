@@ -1,0 +1,16 @@
+version: 1
+
+on:
+  push:
+    deployments:
+      - target: dev
+        cwd: /opt/elera-client
+        commands:
+          - git pull --ff-only
+          - npm ci
+          - npm test
+          - npm run lint
+          - npm run typecheck
+          - npm run contracts
+          - npm run audit
+          - npm run pack

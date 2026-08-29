@@ -1,0 +1,6 @@
+import { selectRouteNodes } from '../../src/routing/node-set.mjs';
+
+test('rejects an omitted route selection request', () => { expect(() => selectRouteNodes()).toThrow(); });
+const bundle = { apiVersion: 'v1', application: 'app', database: 'db', identity: 'app', credentials: { username: 'u', password: 'p' }, writer: { host: 'one', port: 3306 }, readers: [{ host: 'two', port: 3306 }], failover: [], bundleVersion: 1, nodeIdentity: 'one', ports: { sql: 3306, http: 8080 }, expiresAt: '2030-01-01T00:00:00Z', routes: { primary: [{ host: 'one', port: 3306 }], balanced: [{ host: 'two', port: 3306, weight: 2 }] } };
+test('returns validated direct nodes without embedding policy', () => { expect(selectRouteNodes({ bundle, route: 'primary', now: 0 })).toEqual([{ host: 'one', port: 3306 }]); expect(selectRouteNodes({ bundle, route: 'balanced', now: 0 })).toEqual([{ host: 'two', port: 3306, weight: 2 }]); });
+test('rejects expired or empty routes', () => { expect(() => selectRouteNodes({ bundle, now: Date.parse(bundle.expiresAt) })).toThrow('expired'); expect(() => selectRouteNodes({ bundle: { ...bundle, routes: { ...bundle.routes, primary: [] } } })).toThrow('empty'); });

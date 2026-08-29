@@ -1,0 +1,5 @@
+import { expect, test } from '@jest/globals';
+import { createQuiesceController } from '../../src/lifecycle/quiesce.mjs';
+test('blocks new work and waits for active work to finish', async () => { const q = createQuiesceController(); const leave = q.enter(); const pending = q.begin(); leave(); await pending; expect(q.state().state).toBe('quiesced'); expect(() => q.enter()).toThrow('quiesced'); await q.end(); expect(q.state().state).toBe('open'); });
+test('closes the underlying client after quiescing', async () => { let closed = false; const q = createQuiesceController({ close: async () => { closed = true; } }); await q.begin(); await q.close(); expect(closed).toBe(true); expect(q.state().state).toBe('closed'); });
+test('publishes lifecycle changes when a listener is provided', async () => { const changes = []; const q = createQuiesceController({ onChange: (state) => changes.push(state) }); const leave = q.enter(); leave(); leave(); await q.begin(); await q.end(); await q.close(); expect(changes).toEqual(['quiescing', 'quiesced', 'open', 'closed']); });
