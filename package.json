@@ -57,7 +57,7 @@
         "mysql2": "^3.24.2"
     },
     "devDependencies": {
-        "@eliware/test": "^2.1.0",
+        "@eliware/test": "^2.1.3",
         "@types/node": "^26.4.0",
         "typescript": "^7.0.2"
     },
