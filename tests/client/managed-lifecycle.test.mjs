@@ -6,7 +6,7 @@ const driver = { createPool: () => ({ query: async () => [[]], execute: async ()
 const sockets = [];
 
 class LifecycleSocket {
-  constructor(url) { this.url = url; this.readyState = 0; sockets.push(this); queueMicrotask(() => { this.readyState = 1; this.onopen?.(); }); }
+  constructor(url, options) { this.url = url; this.options = options; this.readyState = 0; sockets.push(this); queueMicrotask(() => { this.readyState = 1; this.onopen?.(); }); }
   message(event) { this.onmessage?.({ data: JSON.stringify(event) }); }
   close() { this.readyState = 3; this.onclose?.(); }
 }
@@ -16,7 +16,8 @@ afterEach(() => { while (sockets.length) sockets.pop().close(); });
 test('acquires a bundle, attaches the stream, and applies routing updates', async () => {
   const fetchImpl = jest.fn(async () => ({ ok: true, json: async () => bundle }));
   const client = await createDb({ endpoint: 'http://vip:8080', token: 'token', fetchImpl, WebSocketImpl: LifecycleSocket, mysqlLib: driver });
-  expect(sockets[0].url).toContain('/api/v1/routing/stream?token=token');
+  expect(sockets[0].url).toBe('ws://vip:8080/api/v1/routing/stream');
+  expect(sockets[0].options).toEqual({ headers: { authorization: 'Bearer token' } });
   sockets[0].message({ ...bundle, type: 'routing.update', bundleVersion: 2, writer: { host: 'writer-b', port: 3306 }, routes: { primary: [{ host: 'writer-b', port: 3306 }], balanced: bundle.routes.balanced } });
   await new Promise((resolve) => setImmediate(resolve));
   expect(client.bundle().writer.host).toBe('writer-b');
