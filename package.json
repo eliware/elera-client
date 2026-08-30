@@ -1,6 +1,6 @@
 {
     "name": "@eliware/elera-client",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "description": "Application-facing Elera client for managed MySQL/MariaDB routing, failover, lifecycle, and telemetry",
     "keywords": [
         "eliware",

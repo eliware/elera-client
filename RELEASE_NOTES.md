@@ -1,5 +1,19 @@
 # Release notes
 
+## v0.3.1
+
+Refined the managed client boundary and routing transport.
+
+- Require WebSocket authentication through the `Authorization` handshake
+  header; query-string bearer tokens are no longer accepted.
+- Tighten managed-client bundle validation and routing update handling.
+- Keep client-specific SQL error classification local to the client package and
+  synchronize the public exports and declarations.
+- Add route-level telemetry and clearer standalone/cluster availability states.
+- Document the public application API and package boundary.
+- Reorganize focused routing and contract tests while retaining complete 100×4
+  coverage.
+
 ## v0.3.0
 
 Initial baseline release of the Elera application client.
@@ -20,4 +34,4 @@ Initial baseline release of the Elera application client.
 - Enforce bounded client-side drain behavior for in-flight operations.
 - Expose client telemetry for query activity, failures, retries, reconnects,
   failover, latency, and in-flight work.
-- Provide typed public declarations and shared Elera error types.
+- Provide typed public declarations and client-specific SQL error types.

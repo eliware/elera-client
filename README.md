@@ -49,6 +49,8 @@ Routing updates and lifecycle events arrive over WebSocket. If the stream is
 unavailable, stale, or closed, the client retrieves a fresh bundle over REST
 and reconnects through the configured endpoint or the endpoint supplied by a
 shutdown event.
+WebSocket authentication uses the `Authorization: Bearer …` handshake header;
+bearer tokens are never placed in the WebSocket URL.
 
 During drain or shutdown, the affected node is removed from new route
 selection while in-flight work is allowed to finish up to the configured
@@ -89,8 +91,8 @@ does not issue SQL queries from health or readiness operations.
 
 The package does not include containers, lab orchestration, backups, GitOps,
 or supervisor/CLI administration. Those responsibilities belong to their
-respective repositories. Shared contracts and errors come from
-`@eliware/elera-lib`.
+respective repositories. Shared contracts and protocol helpers come from
+`@eliware/elera-lib`; client-specific SQL errors remain local to this package.
 
 The public API boundary is documented in [docs/public-api.md](docs/public-api.md).
 

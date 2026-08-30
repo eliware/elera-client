@@ -34,7 +34,9 @@ The package exports:
 The managed client exposes application operations such as `query`, `execute`,
 `transaction`, `health`, `close`, and read-only routing/telemetry inspection.
 It obtains routing bundles and SQL credentials internally, applies writer/read
-routing, and responds to supervisor lifecycle events.
+routing, and responds to supervisor lifecycle events. Its WebSocket transport
+authenticates with the `Authorization: Bearer …` handshake header and does not
+put bearer tokens in query strings.
 
 Bundle parsing, routing pools, WebSocket handling, credential materialization,
 Galera operations, provisioning, recovery, and supervisor administration are
