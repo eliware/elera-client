@@ -40,3 +40,10 @@ test('keeps later managed bundles inside the initial authorization context', asy
 });
 
 test('requires an endpoint and token when no managed options are supplied', async () => { await expect(createDb()).rejects.toThrow(); });
+test('uses the managed endpoint and bundle even when direct SQL options are supplied', async () => {
+  const fetchImpl = jest.fn(async () => ({ ok: true, json: async () => bundle }));
+  const client = await createDb({ endpoint: 'http://vip:8080', token: 'token', primary: { host: 'bypass', port: 3306 }, fetchImpl, WebSocketImpl: FakeWebSocket, mysqlLib: { createPool: () => ({ query: async () => [[]], execute: async () => [[]], getConnection: async () => ({}), end: async () => {} }) } });
+  expect(fetchImpl).toHaveBeenCalledWith('http://vip:8080/api/v1/routing/bundle', expect.any(Object));
+  expect(client.bundle()).toBe(bundle);
+  await client.close();
+});

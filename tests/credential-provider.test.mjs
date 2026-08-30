@@ -1,6 +1,6 @@
 import { expect, test } from '@jest/globals';
 import { validateProfile, redactedProfile } from '../src/config.mjs';
-import { resolveCredentials, credentialContext } from '../src/credential-provider.mjs';
+import { resolveCredentials, credentialContext } from '../src/client/internal/credential-provider.mjs';
 import { SqlClientError, classifyError, asSqlError } from '../src/errors.mjs';
 
 test('applies default profile options and redacts profiles without optional values', async () => {

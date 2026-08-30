@@ -58,8 +58,9 @@ bearer tokens are never placed in the WebSocket URL.
 During drain or shutdown, the affected node is removed from new route
 selection while in-flight work is allowed to finish up to the configured
 client drain deadline. If no primary route remains, availability reports
-`cluster-unavailable`; applications should surface the error and wait for a
-later routing update rather than retrying unsafe writes.
+`standalone-unavailable` for a single-server service or
+`cluster-unavailable` for a clustered service. Applications should surface the
+error and wait for a later routing update rather than retrying unsafe writes.
 
 ## Client API
 
