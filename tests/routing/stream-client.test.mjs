@@ -7,12 +7,12 @@ test('requires endpoint and REST fallback', () => {
 
 const sockets = [];
 afterEach(() => sockets.splice(0).forEach((socket) => socket.close()));
-class FakeWebSocket { constructor(url) { this.url = url; this.readyState = 0; sockets.push(this); } open() { this.readyState = 1; this.onopen?.(); } message(value) { this.onmessage?.({ data: JSON.stringify(value) }); } close(...args) { this.closeArgs = args; this.readyState = 3; this.onclose?.(); } }
+class FakeWebSocket { constructor(url, options) { this.url = url; this.options = options; this.readyState = 0; sockets.push(this); } open() { this.readyState = 1; this.onopen?.(); } message(value) { this.onmessage?.({ data: JSON.stringify(value) }); } close(...args) { this.closeArgs = args; this.readyState = 3; this.onclose?.(); } }
 test('authenticates, applies updates, and resynchronizes gaps', async () => {
   const update = jest.fn(); const fetchBundle = jest.fn(async () => ({ bundleVersion: 'rest' }));
   const client = createRoutingStream({ endpoint: 'http://vip', token: 'root', WebSocketImpl: FakeWebSocket, fetchBundle, onUpdate: update, reconnectMs: 100000 }); const pending = client.connect(); const socket = sockets[0];
-  expect(socket.url).toContain('token=root'); socket.open(); expect(client.state().mode).toBe('websocket'); socket.message({ type: 'routing.update', version: 1 }); socket.message({ type: 'routing.update' }); socket.message({ type: 'routing.update', version: 3 }); await pending; await Promise.resolve();
-  expect(update).toHaveBeenCalled(); expect(fetchBundle).toHaveBeenCalledWith(); expect(client.state().expectedVersion).toBe(3); expect(client.state().mode).toBe('rest'); client.close();
+  expect(socket.url).toBe('ws://vip/api/v1/routing/stream'); expect(socket.options).toEqual({ headers: { authorization: 'Bearer root' } }); socket.open(); expect(client.state().mode).toBe('websocket'); socket.message({ type: 'routing.update', version: 1 }); socket.message({ type: 'routing.update' }); socket.message({ type: 'routing.update', version: 3 }); await pending; await Promise.resolve();
+  expect(update).toHaveBeenCalled(); expect(fetchBundle).toHaveBeenCalledWith('http://vip'); expect(client.state().expectedVersion).toBe(3); expect(client.state().mode).toBe('rest'); client.close();
 });
 test('falls back to REST when WebSocket is unavailable or fails', async () => { const fetchBundle = jest.fn(async () => { throw new Error('offline'); }); const warn = jest.fn(); const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle, WebSocketImpl: null, reconnectMs: 1, maxReconnectMs: 1, log: { warn } }); await client.connect(); await new Promise((resolve) => setTimeout(resolve, 5)); client.close(); expect(fetchBundle).toHaveBeenCalled(); expect(warn).toHaveBeenCalled(); });
 test('reports malformed events and socket errors', async () => { const errors = []; const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle: async () => ({}), WebSocketImpl: FakeWebSocket, onError: (error) => errors.push(error), reconnectMs: 100000 }); await client.connect(); const socket = sockets.at(-1); socket.open(); socket.onmessage?.({ data: '{' }); socket.onerror?.(new Error('socket')); client.close(); expect(errors).toHaveLength(2); });
@@ -66,7 +66,7 @@ test('honors a supervisor shutdown event with immediate resync and reconnect', a
   socket.message({ type: 'routing.shutdown', node: 'writer', reason: 'SIGTERM', reconnect: true, reconnectDeadlineMs: 60000, loadBalancerEndpoint: 'http://new-vip' });
   await new Promise((resolve) => setImmediate(resolve));
   expect(updates).toEqual(expect.arrayContaining([expect.objectContaining({ type: 'routing.shutdown' }), expect.objectContaining({ type: 'routing.resync', bundle: { bundleVersion: 'rest-after-shutdown' } })]));
-  expect(fetchBundle).toHaveBeenCalledWith();
+  expect(fetchBundle).toHaveBeenCalledWith('http://new-vip');
   expect(socket.closeArgs).toEqual([1012, 'supervisor restarting']);
   expect(client.state().endpoint).toBe('http://new-vip');
   expect(client.state().mode).toBe('disconnected');

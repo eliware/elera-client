@@ -92,6 +92,8 @@ or supervisor/CLI administration. Those responsibilities belong to their
 respective repositories. Shared contracts and errors come from
 `@eliware/elera-lib`.
 
+The public API boundary is documented in [docs/public-api.md](docs/public-api.md).
+
 ## Development
 
 ```sh

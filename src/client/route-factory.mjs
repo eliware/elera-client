@@ -1,5 +1,5 @@
 
-import { bundleExpired } from '@eliware/elera-lib';
+import { bundleExpired } from '../routing/bundle-expiry.mjs';
 import { createNodePool, createRoutePool } from '../pools.mjs';
 import { bundleProfiles } from './bundle-profiles.mjs';
 

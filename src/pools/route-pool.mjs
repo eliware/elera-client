@@ -1,5 +1,5 @@
 
-import { ClusterUnavailableError, ServerUnavailableError } from '@eliware/elera-lib';
+import { ClusterUnavailableError, ServerUnavailableError } from '../errors.mjs';
 
 export function createRoutePool(nodes, { preferred = false, unavailableError = nodes.length === 1 ? ServerUnavailableError : ClusterUnavailableError } = {}) {
   let cursor = 0;

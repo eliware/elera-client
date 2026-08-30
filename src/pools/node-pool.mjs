@@ -1,5 +1,5 @@
 
-import { asSqlError } from '@eliware/elera-lib';
+import { asSqlError } from '../errors.mjs';
 const connectionFailure = (error) => asSqlError(error).retryable;
 export function createNodePool({ profile, mysqlLib, log, now = () => Date.now(), quarantineMs = 5000 }) {
   const { acquireTimeout: _acquireTimeout, ...driverOptions } = profile.options ?? {};

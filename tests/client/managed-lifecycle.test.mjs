@@ -17,7 +17,7 @@ test('acquires a bundle, attaches the stream, and applies routing updates', asyn
   const fetchImpl = jest.fn(async () => ({ ok: true, json: async () => bundle }));
   const client = await createDb({ endpoint: 'http://vip:8080', token: 'token', fetchImpl, WebSocketImpl: LifecycleSocket, mysqlLib: driver });
   expect(sockets[0].url).toContain('/api/v1/routing/stream?token=token');
-  sockets[0].message({ type: 'routing.update', version: 2, application: 'app', database: 'db', writer: { host: 'writer-b', port: 3306 }, routes: { primary: [{ host: 'writer-b', port: 3306 }], balanced: bundle.routes.balanced } });
+  sockets[0].message({ ...bundle, type: 'routing.update', bundleVersion: 2, writer: { host: 'writer-b', port: 3306 }, routes: { primary: [{ host: 'writer-b', port: 3306 }], balanced: bundle.routes.balanced } });
   await new Promise((resolve) => setImmediate(resolve));
   expect(client.bundle().writer.host).toBe('writer-b');
   await client.close();
@@ -31,5 +31,5 @@ test('resynchronizes after shutdown and closes cleanly', async () => {
   await new Promise((resolve) => setImmediate(resolve));
   expect(client.bundle().bundleVersion).toBe(3);
   await client.close();
-  expect(client.availability().state).toBe('cluster-unavailable');
+  expect(client.availability().state).toBe('standalone-unavailable');
 });
