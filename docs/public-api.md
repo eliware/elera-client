@@ -44,7 +44,7 @@ implementation details. They must not become application-facing exports.
 
 ## Boundary rule
 
-The client package owns application integration. Shared bundle/event contracts,
-validation, common errors, lifecycle policies, telemetry structures, and generic
-transport helpers remain in `@eliware/elera-lib`. Supervisor-only and CLI-only
-operations remain in their respective repositories.
+The client package owns application integration. Shared bundle/event contracts
+and validation remain in `@eliware/elera-lib`. Client errors, lifecycle policy,
+telemetry, transport, SQL pools, and routing behavior belong to this package.
+Supervisor-only and CLI-only operations remain in their respective repositories.

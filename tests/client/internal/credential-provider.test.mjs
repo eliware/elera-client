@@ -1,10 +1,10 @@
 import { expect, test } from '@jest/globals';
-import { validateProfile, redactedProfile } from '../src/config.mjs';
-import { resolveCredentials, credentialContext } from '../src/client/internal/credential-provider.mjs';
-import { SqlClientError, classifyError, asSqlError } from '../src/errors.mjs';
+import { validateProfile, redactedProfile } from '../../../src/config.mjs';
+import { resolveCredentials, credentialContext } from '../../../src/client/internal/credential-provider.mjs';
+import { SqlClientError, classifyError, asSqlError } from '../../../src/errors.mjs';
 
 test('applies default profile options and redacts profiles without optional values', async () => {
-  const { validateProfile, redactedProfile } = await import('../src/config.mjs');
+  const { validateProfile, redactedProfile } = await import('../../../src/config.mjs');
   expect(validateProfile({ host: 'db', database: 'app' })).toMatchObject({ port: 3306, options: { connectionLimit: 10 } });
   expect(redactedProfile({ host: 'db', database: 'app' })).toMatchObject({ host: 'db', database: 'app', options: {} });
 });
