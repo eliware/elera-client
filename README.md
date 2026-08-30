@@ -49,6 +49,9 @@ Routing updates and lifecycle events arrive over WebSocket. If the stream is
 unavailable, stale, or closed, the client retrieves a fresh bundle over REST
 and reconnects through the configured endpoint or the endpoint supplied by a
 shutdown event.
+The internal `routing.resync` signal used for that REST refresh is not a
+public server event; applications receive the resulting bundle through the
+normal client routing behavior.
 WebSocket authentication uses the `Authorization: Bearer …` handshake header;
 bearer tokens are never placed in the WebSocket URL.
 

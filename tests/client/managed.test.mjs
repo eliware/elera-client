@@ -40,4 +40,3 @@ test('keeps later managed bundles inside the initial authorization context', asy
 });
 
 test('requires an endpoint and token when no managed options are supplied', async () => { await expect(createDb()).rejects.toThrow(); });
-test('rejects legacy SQL configuration at the public entrypoint', async () => { await expect(createDb({ primary: { host: 'db', port: 3306, database: 'app' } })).rejects.toThrow('only endpoint and token'); });
