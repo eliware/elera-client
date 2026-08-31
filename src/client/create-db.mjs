@@ -44,6 +44,7 @@ export async function createDb({ primary, balanced, bundle, credentialProvider, 
     async health(route = 'primary') { const started = now(); const selected = route === 'balanced' && balancedPool ? balancedPool : primaryPool; const nodes = await selected.health(); return { ok: nodes.some((node) => node.ok), route: selected === balancedPool ? 'balanced' : 'primary', nodes, latencyMs: now() - started }; },
     async refresh(nextBundle) {
       const candidate = validateBundle(nextBundle);
+      if (activeBundle && JSON.stringify(candidate) === JSON.stringify(activeBundle)) return { bundleVersion: activeBundle.bundleVersion, refreshRequired: bundleNeedsRefresh(activeBundle, now()) };
       if (olderVersion(candidate.bundleVersion, activeBundle?.bundleVersion)) {
         return { bundleVersion: activeBundle?.bundleVersion, refreshRequired: bundleNeedsRefresh(activeBundle, now()) };
       }
