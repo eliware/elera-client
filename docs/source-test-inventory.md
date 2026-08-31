@@ -32,13 +32,14 @@ moved, not rewritten, when a focused test is relocated.
 | `src/client/create-db/transaction.mjs` | implementation | `tests/client/create-db/transaction/transaction.test.mjs` |
 | `src/client/managed/configuration.mjs` | implementation | `tests/client/managed/configuration.test.mjs` |
 | `src/client/managed/public-api.mjs` | implementation | `tests/client/managed/public-api.test.mjs` |
-| `src/routing/stream-client/index.mjs` | orchestrator | `tests/routing/stream-client/cross-cutting.test.mjs` plus focused events, heartbeat, and reconnect tests |
+| `src/routing/stream-client/index.mjs` | orchestrator | `tests/routing/stream-client/cross-cutting.test.mjs` plus focused events, fallback, heartbeat, and reconnect tests |
 | `src/pools/route-pool/delegation.mjs` | implementation | `tests/pools/route-pool/delegation.test.mjs` |
 | `src/pools/route-pool/health.mjs` | implementation | covered by route-pool tests |
 | `src/pools/route-pool/lifecycle.mjs` | implementation | covered by route-pool lifecycle tests |
 | `src/pools/route-pool/selection.mjs` | implementation | covered by route-pool selection tests |
 | `src/routing/stream-client/address.mjs` | implementation | covered by stream connection tests |
 | `src/routing/stream-client/events.mjs` | implementation | `tests/routing/stream-client/events.test.mjs` |
+| `src/routing/stream-client/fallback.mjs` | implementation | `tests/routing/stream-client/fallback.test.mjs` |
 | `src/routing/stream-client/heartbeat.mjs` | implementation | `tests/routing/stream-client/heartbeat.test.mjs` |
 | `src/routing/stream-client/reconnect.mjs` | implementation | `tests/routing/stream-client/reconnect.test.mjs` |
 

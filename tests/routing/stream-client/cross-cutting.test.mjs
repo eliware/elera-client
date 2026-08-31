@@ -34,8 +34,6 @@ test('rejects unsupported and malformed canonical routing events without deliver
 test('replaces the update handler and closes an unopened stream', () => { const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle: async () => ({ }), WebSocketImpl: FakeWebSocket }); const handler = jest.fn(); client.setOnUpdate(handler); client.close(); expect(client.state().connected).toBe(false); });
 test('accepts a telemetry sink after construction', () => { const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle: async () => ({ }), WebSocketImpl: FakeWebSocket }); client.setTelemetry({ recordReconnect: jest.fn() }); client.close(); });
 test('sends telemetry only over an open socket', async () => { const sent = []; class TelemetrySocket extends FakeWebSocket { send(value) { sent.push(value); } } const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle: async () => ({}), WebSocketImpl: TelemetrySocket }); await client.connect(); const socket = sockets.at(-1); client.sendTelemetry({ type: 'client.telemetry' }); expect(sent).toHaveLength(0); socket.open(); client.sendTelemetry({ type: 'client.telemetry' }); expect(sent).toHaveLength(1); client.close(); });
-test('recovers from a WebSocket constructor failure', async () => { const errors = []; class BrokenWebSocket { constructor() { throw new Error('constructor'); } } const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle: async () => ({}), WebSocketImpl: BrokenWebSocket, onError: (error) => errors.push(error), reconnectMs: 100000 }); await client.connect(); client.close(); expect(errors[0].message).toBe('constructor'); });
-test('does not schedule reconnect work after an already closed connect', async () => { const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle: async () => ({}), WebSocketImpl: null }); client.close(); await client.connect(); expect(client.state().mode).toBe('disconnected'); });
 test('ignores a failed REST fallback after shutdown', async () => { let reject; const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle: () => new Promise((_, fail) => { reject = fail; }), WebSocketImpl: null }); const pending = client.connect(); client.close(); reject(new Error('late failure')); await pending; expect(client.state().mode).toBe('disconnected'); });
 
 test('uses top-level event versions as the authoritative ordering field', async () => {
@@ -63,24 +61,6 @@ test('refreshes credentials through REST for credential-free topology events', a
   client.close();
 });
 
-test('honors a supervisor shutdown event with immediate resync and reconnect', async () => {
-  const updates = [];
-  const fetchBundle = jest.fn(async () => ({ bundleVersion: 'rest-after-shutdown' }));
-  const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle, WebSocketImpl: FakeWebSocket, reconnectMs: 1, maxReconnectMs: 1, onUpdate: (event) => updates.push(event) });
-  await client.connect();
-  const socket = sockets.at(-1);
-  socket.open();
-  socket.message({ type: 'routing.shutdown', node: 'writer', reason: 'SIGTERM', reconnect: true, reconnectDeadlineMs: 60000, loadBalancerEndpoint: 'http://new-vip' });
-  await new Promise((resolve) => setImmediate(resolve));
-  expect(updates).toEqual(expect.arrayContaining([expect.objectContaining({ type: 'routing.shutdown' }), expect.objectContaining({ type: 'routing.resync', bundle: { bundleVersion: 'rest-after-shutdown' } })]));
-  expect(fetchBundle).toHaveBeenCalledWith('http://new-vip');
-  expect(socket.closeArgs).toEqual([1012, 'supervisor restarting']);
-  expect(client.state().endpoint).toBe('http://new-vip');
-  expect(client.state().mode).toBe('disconnected');
-  await new Promise((resolve) => setTimeout(resolve, 5));
-  expect(sockets.at(-1).url).toContain('ws://new-vip/api/v1/routing/stream');
-  client.close();
-});
 
 test('records an intentional reconnect separately from ordinary socket loss', async () => {
   const recordReconnect = jest.fn();
@@ -91,19 +71,5 @@ test('records an intentional reconnect separately from ordinary socket loss', as
   await new Promise((resolve) => setTimeout(resolve, 5));
   sockets.at(-1).open();
   expect(recordReconnect).toHaveBeenCalledWith({ delayMs: expect.any(Number), failover: false });
-  client.close();
-});
-
-test('does not reconnect after the shutdown deadline expires', async () => {
-  let now = 1000;
-  const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle: async () => ({}), WebSocketImpl: FakeWebSocket, reconnectMs: 1, maxReconnectMs: 1, now: () => now });
-  await client.connect();
-  const socket = sockets.at(-1);
-  socket.open();
-  socket.message({ type: 'routing.shutdown', reconnectDeadlineMs: 0 });
-  now = 1001;
-  await new Promise((resolve) => setImmediate(resolve));
-  await new Promise((resolve) => setTimeout(resolve, 5));
-  expect(sockets).toHaveLength(1);
   client.close();
 });
