@@ -7,7 +7,7 @@ class ClosedSocket { constructor() { this.readyState = 3; } close() {} }
 const make = async ({ query = jest.fn(), execute = jest.fn(), connection = {} } = {}) => {
   const end = jest.fn(async () => {});
   const mysqlLib = { createPool: () => ({ query, execute, getConnection: async () => connection, end }) };
-  const fetchImpl = jest.fn(async () => ({ ok: true, json: async () => bundle }));
+  const fetchImpl = jest.fn(async () => ({ ok: true, json: async () => ({ ok: true, operation: 'routing.bundle', data: bundle }) }));
   const db = await createDb({ endpoint: 'http://vip:8080', token: 'token', fetchImpl, WebSocketImpl: ClosedSocket, mysqlLib });
   return { db, end };
 };
@@ -59,7 +59,7 @@ test('public query and execute route reads to balanced nodes and writes to the w
     { query: jest.fn(async () => [writerResult, []]), execute: jest.fn(async () => [writerResult, []]), getConnection: async () => ({ release() {} }), end: jest.fn(async () => {}) },
     { query: jest.fn(async () => [readRows, [{ name: 'id' }]]), execute: jest.fn(async () => [readRows, [{ name: 'id' }]]), getConnection: async () => ({ release() {} }), end: jest.fn(async () => {}) }
   ];
-  const fetchImpl = jest.fn(async () => ({ ok: true, json: async () => ({ ...bundle, routes: { primary: [{ host: 'writer', port: 3306 }], balanced: [{ host: 'reader', port: 3306 }] }, readers: [{ host: 'reader', port: 3306 }] }) }));
+  const fetchImpl = jest.fn(async () => ({ ok: true, json: async () => ({ ok: true, operation: 'routing.bundle', data: { ...bundle, routes: { primary: [{ host: 'writer', port: 3306 }], balanced: [{ host: 'reader', port: 3306 }] }, readers: [{ host: 'reader', port: 3306 }] } }) }));
   const db = await createDb({ endpoint: 'http://vip:8080', token: 'token', fetchImpl, WebSocketImpl: ClosedSocket, mysqlLib: { createPool: jest.fn(() => pools.shift()) } });
   await expect(db.query('SELECT 1')).resolves.toEqual([readRows, [{ name: 'id' }]]);
   await expect(db.execute('UPDATE t SET x=?', [2])).resolves.toEqual([writerResult, []]);

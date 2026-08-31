@@ -14,7 +14,8 @@ class LifecycleSocket {
 afterEach(() => { while (sockets.length) sockets.pop().close(); });
 
 test('acquires a bundle, attaches the stream, and applies routing updates', async () => {
-  const fetchImpl = jest.fn(async () => ({ ok: true, json: async () => bundle }));
+  const envelope = (data) => ({ ok: true, operation: 'routing.bundle', data });
+  const fetchImpl = jest.fn(async () => ({ ok: true, json: async () => envelope(bundle) }));
   const client = await createDb({ endpoint: 'http://vip:8080', token: 'token', fetchImpl, WebSocketImpl: LifecycleSocket, mysqlLib: driver });
   expect(sockets[0].url).toBe('ws://vip:8080/api/v1/routing/stream');
   expect(sockets[0].options).toEqual({ headers: { authorization: 'Bearer token' } });
@@ -26,7 +27,8 @@ test('acquires a bundle, attaches the stream, and applies routing updates', asyn
 
 test('resynchronizes after shutdown and closes cleanly', async () => {
   const fallback = { ...bundle, bundleVersion: 3, writer: { host: 'writer-c', port: 3306 }, routes: { primary: [{ host: 'writer-c', port: 3306 }], balanced: bundle.routes.balanced } };
-  const fetchImpl = jest.fn().mockResolvedValueOnce({ ok: true, json: async () => bundle }).mockResolvedValueOnce({ ok: true, json: async () => fallback });
+  const envelope = (data) => ({ ok: true, operation: 'routing.bundle', data });
+  const fetchImpl = jest.fn().mockResolvedValueOnce({ ok: true, json: async () => envelope(bundle) }).mockResolvedValueOnce({ ok: true, json: async () => envelope(fallback) });
   const client = await createDb({ endpoint: 'http://vip:8080', token: 'token', fetchImpl, WebSocketImpl: LifecycleSocket, mysqlLib: driver });
   sockets[0].message({ type: 'routing.shutdown', version: 2, generatedAt: '2099-01-01T00:00:00Z', node: 'writer-a', reason: 'maintenance', reconnect: false, reconnectDeadlineMs: 0 });
   await new Promise((resolve) => setImmediate(resolve));

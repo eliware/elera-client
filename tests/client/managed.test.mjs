@@ -9,7 +9,7 @@ class FakeWebSocket {
 }
 
 test('creates a managed client from endpoint and token only', async () => {
-  const fetchImpl = jest.fn(async () => ({ ok: true, json: async () => bundle }));
+  const fetchImpl = jest.fn(async () => ({ ok: true, json: async () => ({ ok: true, operation: 'routing.bundle', data: bundle }) }));
   const client = await createDb({ endpoint: 'http://vip:8080', token: 'token', fetchImpl, WebSocketImpl: FakeWebSocket, mysqlLib: { createPool: () => ({ query: async () => [[]], execute: async () => [[]], getConnection: async () => ({}), end: async () => {} }) } });
   expect(fetchImpl).toHaveBeenCalledWith('http://vip:8080/api/v1/routing/bundle', expect.objectContaining({ headers: expect.objectContaining({ authorization: 'Bearer token' }) }));
   expect(client).toEqual(expect.objectContaining({ query: expect.any(Function), execute: expect.any(Function), getConnection: expect.any(Function), end: expect.any(Function) }));
@@ -21,7 +21,7 @@ test('uses managed endpoint and token from the process environment when omitted'
   const previousToken = process.env.ELERA_API_TOKEN;
   process.env.ELERA_API_URL = 'http://env-vip:8080';
   process.env.ELERA_API_TOKEN = 'env-token';
-  const fetchImpl = jest.fn(async () => ({ ok: true, json: async () => bundle }));
+  const fetchImpl = jest.fn(async () => ({ ok: true, json: async () => ({ ok: true, operation: 'routing.bundle', data: bundle }) }));
   try {
     const client = await createDb({ fetchImpl, WebSocketImpl: FakeWebSocket, mysqlLib: { createPool: () => ({ query: async () => [[]], execute: async () => [[]], getConnection: async () => ({}), end: async () => {} }) } });
     expect(fetchImpl).toHaveBeenCalledWith('http://env-vip:8080/api/v1/routing/bundle', expect.objectContaining({ headers: expect.objectContaining({ authorization: 'Bearer env-token' }) }));
@@ -37,7 +37,7 @@ test('createDb({ env }) uses the supplied environment before process defaults', 
   const previousToken = process.env.ELERA_API_TOKEN;
   process.env.ELERA_API_URL = 'http://wrong-process-endpoint:8080';
   process.env.ELERA_API_TOKEN = 'wrong-process-token';
-  const fetchImpl = jest.fn(async () => ({ ok: true, json: async () => bundle }));
+  const fetchImpl = jest.fn(async () => ({ ok: true, json: async () => ({ ok: true, operation: 'routing.bundle', data: bundle }) }));
   try {
     const client = await createDb({ env: { ELERA_API_URL: 'http://supplied-endpoint:8080', ELERA_API_TOKEN: 'supplied-token' }, fetchImpl, WebSocketImpl: FakeWebSocket, mysqlLib: { createPool: () => ({ query: async () => [[]], execute: async () => [[]], getConnection: async () => ({}), end: async () => {} }) } });
     expect(fetchImpl).toHaveBeenCalledWith('http://supplied-endpoint:8080/api/v1/routing/bundle', expect.objectContaining({ headers: expect.objectContaining({ authorization: 'Bearer supplied-token' }) }));
@@ -50,7 +50,7 @@ test('createDb({ env }) uses the supplied environment before process defaults', 
 
 test('requires an endpoint and token when no managed options are supplied', async () => { await expect(createDb()).rejects.toThrow(); });
 test('uses the managed endpoint and bundle even when direct SQL options are supplied', async () => {
-  const fetchImpl = jest.fn(async () => ({ ok: true, json: async () => bundle }));
+  const fetchImpl = jest.fn(async () => ({ ok: true, json: async () => ({ ok: true, operation: 'routing.bundle', data: bundle }) }));
   const client = await createDb({ endpoint: 'http://vip:8080', token: 'token', primary: { host: 'bypass', port: 3306 }, fetchImpl, WebSocketImpl: FakeWebSocket, mysqlLib: { createPool: () => ({ query: async () => [[]], execute: async () => [[]], getConnection: async () => ({}), end: async () => {} }) } });
   expect(fetchImpl).toHaveBeenCalledWith('http://vip:8080/api/v1/routing/bundle', expect.any(Object));
   await client.end();

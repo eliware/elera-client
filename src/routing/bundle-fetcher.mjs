@@ -14,9 +14,10 @@ export async function fetchRoutingBundle({ endpoint, token, path, fetchImpl, sig
   if (typeof request !== 'function') throw new TypeError('fetch implementation is required');
   const response = await request(bundleUrl(endpoint, path ?? DEFAULT_BUNDLE_PATH), { method: 'GET', headers: { accept: 'application/json', authorization: `Bearer ${token}` }, signal });
   if (!response?.ok) throw new Error(`routing bundle request failed with HTTP ${response?.status ?? 0}`);
-  let bundle;
-  try { bundle = await response.json(); } catch (error) { throw new Error('routing bundle response was not valid JSON', { cause: error }); }
-  return validateBundle(bundle);
+  let envelope;
+  try { envelope = await response.json(); } catch (error) { throw new Error('routing bundle response was not valid JSON', { cause: error }); }
+  if (!envelope || envelope.ok !== true || typeof envelope.operation !== 'string' || !envelope.data || typeof envelope.data !== 'object') throw new Error('routing bundle response envelope is invalid');
+  return validateBundle(envelope.data);
 }
 
 export { DEFAULT_BUNDLE_PATH };

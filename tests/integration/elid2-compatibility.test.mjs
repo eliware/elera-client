@@ -8,7 +8,7 @@ test('supports Elid2 database calls without an application migration adapter', a
   const release = jest.fn();
   const connection = { beginTransaction: jest.fn(), commit: jest.fn(), rollback: jest.fn(), query: jest.fn(async () => [[{ ok: 1 }], [{ name: 'ok' }]]), execute: jest.fn(async () => [{ affectedRows: 1 }, []]), release };
   const pool = { query: jest.fn(async () => [[{ ok: 1 }], [{ name: 'ok' }]]), execute: jest.fn(async () => [{ affectedRows: 1 }, []]), getConnection: jest.fn(async () => connection), end: jest.fn(async () => {}) };
-  const fetchImpl = jest.fn(async () => ({ ok: true, json: async () => bundle }));
+  const fetchImpl = jest.fn(async () => ({ ok: true, json: async () => ({ ok: true, operation: 'routing.bundle', data: bundle }) }));
   const db = await createDb({ env: { ELERA_API_URL: 'http://elera.test', ELERA_API_TOKEN: 'application-token' }, fetchImpl, WebSocketImpl: ClosedSocket, mysqlLib: { createPool: () => pool } });
   const [result] = await db.execute('SELECT * FROM users WHERE id=?', ['user-id']);
   expect(result).toEqual({ affectedRows: 1 });
