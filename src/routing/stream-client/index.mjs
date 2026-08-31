@@ -1,18 +1,18 @@
 
 import { log as defaultLog } from '@eliware/common';
 import { compareBundleVersions } from '../bundle-version.mjs';
-import { createRoutingResync } from '../internal-events.mjs';
 import { websocketUrl, activeEndpointFromShutdown } from './address.mjs';
 import { createReconnectPolicy } from './reconnect.mjs';
 import { startHeartbeat, stopHeartbeat } from './heartbeat.mjs';
 import { parseRoutingEvent } from './events.mjs';
+import { createRestFallback } from './fallback.mjs';
 
 export function createRoutingStream({ endpoint, token, fetchBundle, WebSocketImpl = globalThis.WebSocket, onUpdate, onError, reconnectMs = 1000, maxReconnectMs = 30000, heartbeatMs = 45000, now = () => Date.now(), telemetry } = {}) {
   if (!endpoint || typeof fetchBundle !== 'function') throw new TypeError('endpoint and fetchBundle are required');
   let socket; let closed = false; let connecting = false; let heartbeat; let expectedVersion = 0; let updateHandler = onUpdate; let mode = 'disconnected'; let plannedReconnect = false; let lastReconnectWasPlanned = false; let disconnectedAt; let reconnectDeadlineAt; let activeEndpoint = endpoint;
   const log = arguments[0]?.log ?? defaultLog;
   const streamUrl = () => websocketUrl(activeEndpoint);
-  async function fallback() { try { const bundle = await fetchBundle(activeEndpoint); if (closed) return; mode = 'rest'; await updateHandler?.(createRoutingResync({ version: expectedVersion, bundle, receivedAt: now() })); } catch (error) { if (closed) return; mode = 'disconnected'; onError?.(error); log.warn?.('Routing REST fallback failed', { error }); } }
+  const fallback = createRestFallback({ fetchBundle, getEndpoint: () => activeEndpoint, isClosed: () => closed, getVersion: () => expectedVersion, setMode: (value) => { mode = value; }, update: (event) => updateHandler?.(event), onError, log, now });
   const reconnect = createReconnectPolicy({ reconnectMs, maxReconnectMs, now, isClosed: () => closed, getDeadline: () => reconnectDeadlineAt, scheduleConnect: connect });
   const schedule = reconnect.schedule;
   async function connect() {
