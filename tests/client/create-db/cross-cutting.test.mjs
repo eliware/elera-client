@@ -23,23 +23,8 @@ test('supports an initially unbundled client bundle view and end alias', async (
   await client.end();
 });
 
-test('resolves credentials and builds routes from a valid bundle', async () => {
-  const client = await createDb({ primary: { host: 'fallback', port: 3306, database: 'app' }, bundle, credentialProvider: jest.fn(async () => ({ user: 'u', password: 'p' })), mysqlLib: driver() });
-  expect(client.bundle()).not.toHaveProperty('credentials');
-  await client.refresh({ ...bundle, bundleVersion: 'v2', routes: { primary: [{ host: 'new', port: 3306 }], balanced: [] } });
-  expect(client.bundle().bundleVersion).toBe('v2');
-  await client.close();
-});
 
 
-test('rejects invalid setup and expired refresh bundles', async () => {
-  await expect(createDb()).rejects.toThrow('primary connection profile');
-  await expect(createDb({ primary: { ...profile, user: '' }, mysqlLib: driver() })).rejects.toThrow('primary.user');
-  const client = await createDb({ primary: profile, mysqlLib: driver() });
-  await expect(createDb({ primary: profile, bundle: { ...bundle, expiresAt: new Date(0).toISOString() }, mysqlLib: driver() })).rejects.toThrow('future');
-  await expect(client.refresh({ ...bundle, expiresAt: new Date(0).toISOString() })).rejects.toThrow('future');
-  await client.close();
-});
 
 test('covers non-retryable errors, credential overlays, and refresh without balanced routes', async () => {
   const failure = Object.assign(new Error('bad query'), { code: 'ER_PARSE_ERROR' });

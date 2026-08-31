@@ -37,3 +37,5 @@ test('does not replace a newer bundle with an older resync', async () => {
   await expect(client.refresh({ ...bundle, bundleVersion: 1 })).resolves.toMatchObject({ bundleVersion: 2 });
   await client.close();
 });
+
+test('resolves credentials and keeps them out of the public bundle view', async () => { const client = await createDb({ primary: { host: 'fallback', port: 3306, database: 'app' }, bundle, credentialProvider: jest.fn(async () => ({ user: 'u', password: 'p' })), mysqlLib: driver() }); expect(client.bundle()).not.toHaveProperty('credentials'); await client.refresh({ ...bundle, bundleVersion: 'v2', routes: { primary: [{ host: 'new', port: 3306 }], balanced: [] } }); expect(client.bundle().bundleVersion).toBe('v2'); await client.close(); });
