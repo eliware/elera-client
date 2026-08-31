@@ -2,7 +2,6 @@
 import { log as defaultLog } from '@eliware/common';
 import * as mysql from 'mysql2/promise';
 import { validateProfile } from '../../config.mjs';
-import { asSqlError } from '../../errors.mjs';
 import { validateBundle as validateBundleShape } from '@eliware/elera-lib';
 import { clientDrainTimeout } from '../drain-policy.mjs';
 import { createTelemetry } from '../../telemetry.mjs';
@@ -17,6 +16,8 @@ import { isOlderBundle, bundlesHaveEquivalentPools, hasUsablePool, redactBundle 
 import { createRouteSelection } from './route-selection.mjs';
 import { createPoolShutdown } from './shutdown.mjs';
 import { createDiagnostics } from './diagnostics.mjs';
+import { createQueryExecution } from './query-execution.mjs';
+import { createTransactionOperation } from './transaction.mjs';
 export async function createDb({ primary, balanced, bundle, credentialProvider, mysqlLib = mysql, log = defaultLog, routing = 'auto', identity, tokenContext, quarantineMs = 5000, drainTimeoutMs = 45000, now = () => Date.now(), telemetry } = {}) {
   if (!primary || typeof primary !== 'object') throw new TypeError('primary connection profile is required');
   const credentials = await resolveCredentials(credentialProvider, credentialContext(primary, { identity }));
@@ -37,11 +38,13 @@ export async function createDb({ primary, balanced, bundle, credentialProvider, 
   const timed = createTimedOperation({ metrics, now });
   const shutdown = createPoolShutdown({ getPools: () => [primaryPool, balancedPool].filter(Boolean), drainTimeoutMs, metrics });
   const diagnostics = createDiagnostics({ getPools: () => [primaryPool, balancedPool].filter(Boolean), getPrimaryPool: () => primaryPool, getBalancedPool: () => balancedPool, now });
+  const execution = createQueryExecution({ selection, timed, metrics, balancedPool, routeFor, routing });
+  const transaction = createTransactionOperation({ primaryPool, timed });
   const client = {
-    async query(sql, values, options) { const selectedRoute = routeFor(sql, options?.route ?? routing); return timed(async () => { const { choose, isSafeBalancedRetry } = selection(); const selected = choose(sql, options); try { return await selected.query(sql, values); } catch (error) { if (isSafeBalancedRetry(sql, options, error)) { metrics?.record?.({ retry: true, route: 'balanced' }); return balancedPool.query(sql, values); } throw error; } }, { route: selectedRoute }); },
-    async execute(sql, values, options) { const selectedRoute = routeFor(sql, options?.route ?? routing); return timed(async () => selection().choose(sql, options).execute(sql, values), { route: selectedRoute }); },
+    async query(sql, values, options) { return execution.query(sql, values, options); },
+    async execute(sql, values, options) { return execution.execute(sql, values, options); },
     async probe(sql = 'SELECT 1') { const route = routeFor(sql); const result = await client.query(sql); const connection = await client.getConnection(); let transaction = 'started'; try { await connection.beginTransaction(); await connection.rollback(); } finally { connection.release(); } return { ok: true, route, result, transaction, released: true }; },
-    async transaction(callback) { return timed(async () => { const node = primaryPool.choose(); const connection = await node.getConnection(); try { await connection.beginTransaction(); const tx = { query: (sql, values) => connection.query(sql, values), execute: (sql, values) => connection.execute(sql, values) }; const result = await callback(tx); await connection.commit(); return result; } catch (error) { await connection.rollback().catch(() => {}); throw asSqlError(error); } finally { connection.release(); } }); },
+    async transaction(callback) { return transaction(callback); },
     async getConnection() { const node = primaryPool.choose(); return node.getConnection(); },
     async health(route = 'primary') { return diagnostics.health(route); },
     async refresh(nextBundle) {
