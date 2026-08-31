@@ -22,7 +22,7 @@ moved, not rewritten, when a focused test is relocated.
 | `src/client/internal/credential-provider.mjs` | implementation | `tests/client/internal/credential-provider.test.mjs` |
 | `src/client/create-db/bundle-refresh.mjs` | implementation | `tests/client/create-db/bundle-refresh.test.mjs` |
 | `src/client/create-db/bundle-state.mjs` | implementation | covered by create-db refresh and integration tests |
-| `src/client/create-db/diagnostics.mjs` | implementation | covered by create-db client and integration tests |
+| `src/client/create-db/diagnostics.mjs` | implementation | `tests/client/create-db/diagnostics.test.mjs` |
 | `src/client/create-db/query-execution.mjs` | implementation | `tests/client/create-db/query/query.test.mjs` |
 | `src/client/create-db/route-selection.mjs` | implementation | covered by query and routing tests |
 | `src/client/create-db/routing-events.mjs` | implementation | `tests/client/create-db/routing-events.test.mjs` |
@@ -30,7 +30,7 @@ moved, not rewritten, when a focused test is relocated.
 | `src/client/create-db/transaction.mjs` | implementation | `tests/client/create-db/transaction/transaction.test.mjs` |
 | `src/client/managed/configuration.mjs` | implementation | `tests/client/managed/configuration.test.mjs` |
 | `src/client/managed/public-api.mjs` | implementation | `tests/client/managed/public-api.test.mjs` |
-| `src/routing/stream-client/index.mjs` | orchestrator | `tests/routing/stream-client/cross-cutting.test.mjs` plus focused connection, events, heartbeat, and reconnect tests |
+| `src/routing/stream-client/index.mjs` | orchestrator | `tests/routing/stream-client/cross-cutting.test.mjs` plus focused events, heartbeat, and reconnect tests |
 | `src/pools/route-pool/delegation.mjs` | implementation | `tests/pools/route-pool/delegation.test.mjs` |
 | `src/pools/route-pool/health.mjs` | implementation | covered by route-pool tests |
 | `src/pools/route-pool/lifecycle.mjs` | implementation | covered by route-pool lifecycle tests |
@@ -42,7 +42,7 @@ moved, not rewritten, when a focused test is relocated.
 
 ## Cross-cutting tests
 
-`tests/client/create-db/contract.test.mjs`,
+`tests/integration/mysql2-contract.test.mjs`,
 `tests/contracts/shared-library-import.test.mjs`, and
 `tests/integration/public-entrypoint.test.mjs` remain cross-cutting tests.
 

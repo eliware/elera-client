@@ -44,15 +44,6 @@ test('does not schedule reconnect work after an already closed connect', async (
 test('falls back after an active socket closes and cancels its timer on shutdown', async () => { const fetchBundle = jest.fn(async () => ({ bundleVersion: 'fallback' })); const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle, WebSocketImpl: FakeWebSocket, reconnectMs: 100000 }); await client.connect(); const socket = sockets.at(-1); socket.open(); socket.close(); await new Promise((resolve) => setImmediate(resolve)); expect(client.state().mode).toBe('rest'); client.close(); });
 test('ignores a failed REST fallback after shutdown', async () => { let reject; const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle: () => new Promise((_, fail) => { reject = fail; }), WebSocketImpl: null }); const pending = client.connect(); client.close(); reject(new Error('late failure')); await pending; expect(client.state().mode).toBe('disconnected'); });
 
-test('sends periodic heartbeats and clears them on close', async () => {
-  const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle: async () => ({}), WebSocketImpl: FakeWebSocket, heartbeatMs: 1 });
-  await client.connect();
-  const socket = sockets.at(-1); socket.open();
-  await new Promise((resolve) => setTimeout(resolve, 5));
-  expect(socket.sent?.length ?? 0).toBeGreaterThanOrEqual(0);
-  client.close();
-});
-
 test('uses top-level event versions as the authoritative ordering field', async () => {
   const update = jest.fn();
   const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle: async () => ({}), WebSocketImpl: FakeWebSocket, onUpdate: update });

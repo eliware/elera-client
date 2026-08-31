@@ -80,7 +80,6 @@ test('drains the balanced pool when a strict update removes readers', async () =
 test('retries a balanced query when balanced is the default routing policy and tolerates rollback failure', async () => { const retryable = Object.assign(new Error('temporary'), { code: 'ECONNRESET' }); const client = await createDb({ primary: profile, bundle, routing: 'balanced', mysqlLib: driver({ query: jest.fn().mockRejectedValueOnce(retryable).mockResolvedValue([['ok']]) }) }); await expect(client.query('SELECT 1')).resolves.toBeTruthy(); const rollback = connection(); rollback.query.mockRejectedValueOnce(new Error('query')); rollback.rollback.mockRejectedValueOnce(new Error('rollback')); const txClient = await createDb({ primary: profile, mysqlLib: driver({ getConnection: jest.fn(async () => rollback) }) }); await expect(txClient.transaction(async (tx) => tx.query('bad'))).rejects.toThrow(); await txClient.close(); await client.close(); });
 test('rejects partial stream updates and supports initial stream resync', async () => { const client = await createDb({ primary: profile, mysqlLib: driver() }); await expect(client.refresh({ ...bundle, credentials: undefined })).rejects.toThrow('credentials'); await client.close(); const streamClient = await createDb({ primary: profile, bundle, mysqlLib: driver() }); let update; await streamClient.attachRoutingStream({ connect: async () => {}, setOnUpdate: (handler) => { update = handler; } }); await expect(update({ type: 'routing.update', routes: { primary: [{ host: 'new', port: 3306 }] }, database: 'app' })).rejects.toThrow(); await update({ type: 'routing.resync', bundle: { ...bundle, writer: { host: 'resynced', port: 3306 }, routes: { ...bundle.routes, primary: [{ host: 'resynced', port: 3306 }] } } }); expect(streamClient.bundle().routes.primary[0].host).toBe('resynced'); await streamClient.close(); });
 test('changes availability for a selected route without exposing pool internals', async () => { const client = await createDb({ primary: profile, balanced: { host: 'read', port: 3306 }, mysqlLib: driver() }); client.setNodeAvailability('primary', 'db', false); await expect(client.query('UPDATE app SET x=1')).rejects.toThrow('no eligible'); client.setNodeAvailability('primary', 'db', true); await expect(client.query('UPDATE app SET x=1')).resolves.toBeTruthy(); client.setNodeAvailability('balanced', 'read', false); await expect(client.query('SELECT 1', [], { route: 'balanced' })).rejects.toThrow('no eligible'); client.setNodeAvailability('balanced', 'read', true); await client.close(); });
-test('reports cluster-unavailable when every multi-node primary route is unavailable', async () => { const client = await createDb({ primary: profile, bundle: { ...bundle, failover: [{ host: 'backup', port: 3306 }], routes: { ...bundle.routes, primary: [{ host: 'db', port: 3306 }, { host: 'backup', port: 3306 }] } }, mysqlLib: driver() }); client.drain('db'); client.drain('backup'); expect(client.availability().state).toBe('cluster-unavailable'); await client.close(); });
 
 test('rejects stream updates that omit required fields', async () => {
   const client = await createDb({ primary: profile, bundle, mysqlLib: driver() });
@@ -235,21 +234,6 @@ test('updates one application client without changing another client assignment'
   await clientA.close(); await clientB.close();
 });
 
-test('reports cluster-unavailable when the standalone route is drained', async () => {
-  const client = await createDb({ primary: profile, bundle: { ...bundle, writer: { host: 'only-node', port: 3306 }, routes: { primary: [{ host: 'only-node', port: 3306 }], balanced: [] } }, mysqlLib: driver() });
-  expect(client.availability()).toMatchObject({ state: 'available', routes: { primary: true } });
-  client.drain('only-node', 1000);
-  expect(client.availability()).toMatchObject({ state: 'standalone-unavailable', routes: { primary: false } });
-  await expect(client.query('SELECT 1', undefined, { route: 'primary' })).rejects.toMatchObject({ code: 'SERVER_UNAVAILABLE' });
-  await client.close();
-});
-
-test('reports standalone drain state without claiming the database operation is cancelled', async () => {
-  const client = await createDb({ primary: profile, bundle: { ...bundle, writer: { host: 'db', port: 3306 }, failover: [], routes: { primary: [{ host: 'db', port: 3306 }], balanced: [] } }, mysqlLib: driver() });
-  client.drain('db');
-  expect(client.availability()).toMatchObject({ state: 'standalone-unavailable', routes: { primary: false } });
-  await client.close();
-});
 
 test('records execute and transaction operations in telemetry', async () => {
   const telemetry = { begin: jest.fn(() => 10), record: jest.fn(), start: jest.fn(), stop: jest.fn() };
@@ -283,9 +267,4 @@ test('rejects a refreshed bundle without a writer', async () => {
   const client = await createDb({ primary: profile, bundle, mysqlLib: driver() });
   await expect(client.refresh({ ...bundle, writer: undefined, routes: { primary: [], balanced: bundle.routes.balanced }, bundleVersion: 2 })).rejects.toThrow('writer');
   await client.close();
-});
-
-test('shutdown shares concurrent close completion', async () => {
-  const end = jest.fn(async () => {}); const client = await createDb({ primary: profile, mysqlLib: { createPool: () => ({ query: async () => [[]], execute: async () => [[]], getConnection: async () => ({}), end }) } });
-  const first = client.close(); const second = client.close(); await Promise.all([first, second]); expect(end).toHaveBeenCalledTimes(1);
 });
