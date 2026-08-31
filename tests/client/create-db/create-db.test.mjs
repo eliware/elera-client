@@ -298,3 +298,8 @@ test('rejects a refreshed bundle without a writer', async () => {
   await expect(client.refresh({ ...bundle, writer: undefined, routes: { primary: [], balanced: bundle.routes.balanced }, bundleVersion: 2 })).rejects.toThrow('writer');
   await client.close();
 });
+
+test('shutdown shares concurrent close completion', async () => {
+  const end = jest.fn(async () => {}); const client = await createDb({ primary: profile, mysqlLib: { createPool: () => ({ query: async () => [[]], execute: async () => [[]], getConnection: async () => ({}), end }) } });
+  const first = client.close(); const second = client.close(); await Promise.all([first, second]); expect(end).toHaveBeenCalledTimes(1);
+});

@@ -37,6 +37,7 @@ export async function createDb({ primary, balanced, bundle, credentialProvider, 
   const choose = (sql, options = {}) => options.connection ?? (routeFor(sql, options.route ?? routing) === 'balanced' && balancedPool ? balancedPool : primaryPool);
   const metrics = telemetry === true ? createTelemetry({ application: bundle?.application ?? 'default', credentialName: bundle?.credentialName, database: bundle?.database, scopes: bundle?.scopes, now }) : telemetry;
   const timed = createTimedOperation({ metrics, now });
+  let closing;
   const client = {
     async query(sql, values, options) { const selectedRoute = routeFor(sql, options?.route ?? routing); return timed(async () => { const selected = choose(sql, options); try { return await selected.query(sql, values); } catch (error) { const requestedRoute = options?.route ?? routing; if (error.retryable && balancedPool && routeFor(sql, requestedRoute) === 'balanced' && classifyQuery(sql) === 'balanced') { metrics?.record?.({ retry: true, route: 'balanced' }); return balancedPool.query(sql, values); } throw error; } }, { route: selectedRoute }); },
     async execute(sql, values, options) { const selectedRoute = routeFor(sql, options?.route ?? routing); return timed(async () => choose(sql, options).execute(sql, values), { route: selectedRoute }); },
@@ -79,7 +80,7 @@ export async function createDb({ primary, balanced, bundle, credentialProvider, 
     nodeStates() { return [primaryPool, balancedPool].filter(Boolean).flatMap((pool) => pool.nodes.map((node) => ({ host: node.host, port: node.port, route: pool === primaryPool ? 'primary' : 'balanced', state: node.state, active: node.active, available: node.available }))); },
     setNodeAvailability(route, host, available) { const pool = route === 'balanced' ? balancedPool : primaryPool; pool?.setAvailability(host, available); },
     bundle: () => publicBundle(activeBundle),
-    async close() { metrics?.stop?.(); await Promise.all([primaryPool.close(), balancedPool?.close()]); },
+    async close() { if (closing) return closing; closing = (async () => { metrics?.stop?.(); const pools = [primaryPool, balancedPool].filter(Boolean); pools.forEach((pool) => pool.drain(drainTimeoutMs)); await Promise.all(pools.map((pool) => pool.waitForIdle(drainTimeoutMs))); await Promise.all(pools.map((pool) => pool.close())); })(); return closing; },
     async end() { return this.close(); },
     telemetry: metrics
   };
