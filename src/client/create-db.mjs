@@ -60,7 +60,13 @@ export async function createDb({ primary, balanced, bundle, credentialProvider, 
         for (const node of balancedPool.nodes) node.drain(drainTimeoutMs);
       }
       const obsolete = previous.filter(Boolean).filter((pool) => pool !== primaryPool && pool !== balancedPool);
-      await Promise.all(obsolete.map((pool) => pool.close()));
+      obsolete.forEach((pool) => {
+        pool.nodes.forEach((node) => node.drain(drainTimeoutMs));
+        void (async () => {
+          await pool.waitForIdle(drainTimeoutMs);
+          await pool.close();
+        })();
+      });
       return { bundleVersion: activeBundle.bundleVersion, refreshRequired: bundleNeedsRefresh(activeBundle, now()) };
     },
     async attachRoutingStream(stream) { if (!stream?.connect) throw new TypeError('routing stream is required'); metrics?.start?.(stream); stream.setTelemetry?.(metrics); stream.setOnUpdate?.(async (event) => { const update = event.type === 'routing.update' ? { ...event } : event.type === ROUTING_RESYNC ? event.bundle : undefined; if (update?.type) delete update.type; if (update) await client.refresh(update); if (event.type === 'routing.drain') for (const pool of [primaryPool, balancedPool].filter(Boolean)) pool.drain(event.node, clientDrainTimeout(event.drainTimeoutMs ?? drainTimeoutMs)); if (event.type === 'routing.shutdown') for (const pool of [primaryPool, balancedPool].filter(Boolean)) pool.drain(event.node, clientDrainTimeout(event.reconnectDeadlineMs ?? event.drainTimeoutMs ?? drainTimeoutMs)); if (event.type === 'routing.recovery') for (const pool of [primaryPool, balancedPool].filter(Boolean)) pool.recover(event.node, drainTimeoutMs); }); await stream.connect(); return () => stream.close?.(); },
