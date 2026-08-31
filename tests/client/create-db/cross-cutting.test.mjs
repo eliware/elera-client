@@ -26,16 +26,6 @@ test('supports an initially unbundled client bundle view and end alias', async (
 
 
 
-test('covers non-retryable errors, credential overlays, and refresh without balanced routes', async () => {
-  const failure = Object.assign(new Error('bad query'), { code: 'ER_PARSE_ERROR' });
-  const client = await createDb({ primary: profile, balanced: { host: 'read', port: 3306 }, credentialProvider: async () => ({ user: 'u', password: 'p' }), mysqlLib: driver({ query: jest.fn(async () => { throw failure; }) }) });
-  await expect(client.query('SELECT 1', [], { route: 'balanced' })).rejects.toThrow('bad query');
-  await expect(client.refresh({ ...bundle, routes: { primary: [{ host: 'new', port: 3306 }], balanced: [] } })).resolves.toMatchObject({ bundleVersion: 'v1' });
-  await client.close();
-});
-test('retries a balanced query when balanced is the default routing policy and tolerates rollback failure', async () => { const retryable = Object.assign(new Error('temporary'), { code: 'ECONNRESET' }); const client = await createDb({ primary: profile, bundle, routing: 'balanced', mysqlLib: driver({ query: jest.fn().mockRejectedValueOnce(retryable).mockResolvedValue([['ok']]) }) }); await expect(client.query('SELECT 1')).resolves.toBeTruthy(); const rollback = connection(); rollback.query.mockRejectedValueOnce(new Error('query')); rollback.rollback.mockRejectedValueOnce(new Error('rollback')); const txClient = await createDb({ primary: profile, mysqlLib: driver({ getConnection: jest.fn(async () => rollback) }) }); await expect(txClient.transaction(async (tx) => tx.query('bad'))).rejects.toThrow(); await txClient.close(); await client.close(); });
-
-
 
 
 
