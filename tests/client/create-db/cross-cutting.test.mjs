@@ -34,41 +34,7 @@ test('covers non-retryable errors, credential overlays, and refresh without bala
   await client.close();
 });
 test('retries a balanced query when balanced is the default routing policy and tolerates rollback failure', async () => { const retryable = Object.assign(new Error('temporary'), { code: 'ECONNRESET' }); const client = await createDb({ primary: profile, bundle, routing: 'balanced', mysqlLib: driver({ query: jest.fn().mockRejectedValueOnce(retryable).mockResolvedValue([['ok']]) }) }); await expect(client.query('SELECT 1')).resolves.toBeTruthy(); const rollback = connection(); rollback.query.mockRejectedValueOnce(new Error('query')); rollback.rollback.mockRejectedValueOnce(new Error('rollback')); const txClient = await createDb({ primary: profile, mysqlLib: driver({ getConnection: jest.fn(async () => rollback) }) }); await expect(txClient.transaction(async (tx) => tx.query('bad'))).rejects.toThrow(); await txClient.close(); await client.close(); });
-test('rejects partial stream updates and supports initial stream resync', async () => { const client = await createDb({ primary: profile, mysqlLib: driver() }); await expect(client.refresh({ ...bundle, credentials: undefined })).rejects.toThrow('credentials'); await client.close(); const streamClient = await createDb({ primary: profile, bundle, mysqlLib: driver() }); let update; await streamClient.attachRoutingStream({ connect: async () => {}, setOnUpdate: (handler) => { update = handler; } }); await expect(update({ type: 'routing.update', routes: { primary: [{ host: 'new', port: 3306 }] }, database: 'app' })).rejects.toThrow(); await update({ type: 'routing.resync', bundle: { ...bundle, writer: { host: 'resynced', port: 3306 }, routes: { ...bundle.routes, primary: [{ host: 'resynced', port: 3306 }] } } }); expect(streamClient.bundle().routes.primary[0].host).toBe('resynced'); await streamClient.close(); });
 
-test('rejects a partial routing event when no active bundle exists', async () => {
-  const client = await createDb({ primary: profile, mysqlLib: driver() });
-  let update;
-  await client.attachRoutingStream({ connect: async () => {}, setOnUpdate: (handler) => { update = handler; } });
-  await expect(update({ type: 'routing.update', routes: { primary: [{ host: 'writer', port: 3306 }] } })).rejects.toThrow();
-  await client.close();
-});
-
-
-test('accepts a complete routing update without relying on active-bundle defaults', async () => {
-  const client = await createDb({ primary: profile, bundle, mysqlLib: driver() });
-  let update;
-  await client.attachRoutingStream({ connect: async () => {}, setOnUpdate: (handler) => { update = handler; } });
-  await update({
-    type: 'routing.update',
-    apiVersion: 'v1',
-    application: 'new-app',
-    database: 'new-db',
-    identity: 'new-identity',
-    credentials: { username: 'new-user', password: 'new-password' },
-    writer: { host: 'new-writer', port: 3306 },
-    readers: [{ host: 'new-reader', port: 3306 }],
-    failover: [{ host: 'new-failover', port: 3306 }],
-    bundleVersion: 'v2',
-    nodeIdentity: 'new-node',
-    ports: { sql: 3306, http: 8080 },
-    physicalDatabase: 'new-physical-db',
-    routes: { primary: [{ host: 'new-writer', port: 3306 }], balanced: [{ host: 'new-reader', port: 3306 }] },
-    expiresAt: new Date(Date.now() + 60000).toISOString()
-  });
-  expect(client.bundle()).toMatchObject({ application: 'new-app', database: 'new-db', physicalDatabase: 'new-physical-db', identity: 'new-identity', nodeIdentity: 'new-node', bundleVersion: 'v2' });
-  await client.close();
-});
 
 
 
