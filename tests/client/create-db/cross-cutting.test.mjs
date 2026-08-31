@@ -67,14 +67,6 @@ test('retries a balanced query when balanced is the default routing policy and t
 test('rejects partial stream updates and supports initial stream resync', async () => { const client = await createDb({ primary: profile, mysqlLib: driver() }); await expect(client.refresh({ ...bundle, credentials: undefined })).rejects.toThrow('credentials'); await client.close(); const streamClient = await createDb({ primary: profile, bundle, mysqlLib: driver() }); let update; await streamClient.attachRoutingStream({ connect: async () => {}, setOnUpdate: (handler) => { update = handler; } }); await expect(update({ type: 'routing.update', routes: { primary: [{ host: 'new', port: 3306 }] }, database: 'app' })).rejects.toThrow(); await update({ type: 'routing.resync', bundle: { ...bundle, writer: { host: 'resynced', port: 3306 }, routes: { ...bundle.routes, primary: [{ host: 'resynced', port: 3306 }] } } }); expect(streamClient.bundle().routes.primary[0].host).toBe('resynced'); await streamClient.close(); });
 test('changes availability for a selected route without exposing pool internals', async () => { const client = await createDb({ primary: profile, balanced: { host: 'read', port: 3306 }, mysqlLib: driver() }); client.setNodeAvailability('primary', 'db', false); await expect(client.query('UPDATE app SET x=1')).rejects.toThrow('no eligible'); client.setNodeAvailability('primary', 'db', true); await expect(client.query('UPDATE app SET x=1')).resolves.toBeTruthy(); client.setNodeAvailability('balanced', 'read', false); await expect(client.query('SELECT 1', [], { route: 'balanced' })).rejects.toThrow('no eligible'); client.setNodeAvailability('balanced', 'read', true); await client.close(); });
 
-test('rejects stream updates that omit required fields', async () => {
-  const client = await createDb({ primary: profile, bundle, mysqlLib: driver() });
-  let update;
-  await client.attachRoutingStream({ connect: async () => {}, setOnUpdate: (handler) => { update = handler; } });
-  await expect(update({ type: 'routing.update', routes: { primary: [{ host: 'next', port: 3306 }] } })).rejects.toThrow();
-  await client.close();
-});
-
 test('rejects a partial routing event when no active bundle exists', async () => {
   const client = await createDb({ primary: profile, mysqlLib: driver() });
   let update;
