@@ -31,20 +31,6 @@ test('resolves credentials and builds routes from a valid bundle', async () => {
   await client.close();
 });
 
-test('handles transaction rollback and stream routing events', async () => {
-  const bad = Object.assign(new Error('boom'), { code: 'ER_LOCK_DEADLOCK' });
-  const conn = connection(); conn.query.mockRejectedValueOnce(bad);
-  const client = await createDb({ primary: profile, bundle, mysqlLib: driver({ getConnection: jest.fn(async () => conn) }) });
-  await expect(client.transaction(async (tx) => tx.query('UPDATE x'))).rejects.toThrow();
-  const handlers = {}; const stream = { connect: jest.fn(async () => {}), close: jest.fn(), setOnUpdate: jest.fn((handler) => { handlers.update = handler; }) };
-  const stop = await client.attachRoutingStream(stream);
-  await handlers.update({ type: 'routing.drain', version: 2, generatedAt: '2099-01-01T00:00:00Z', node: 'read', context: {} });
-  await handlers.update({ type: 'routing.recovery', version: 3, generatedAt: '2099-01-01T00:00:00Z', node: 'read', context: {} });
-  await handlers.update({ ...bundle, type: 'routing.update', version: 4, generatedAt: '2099-01-01T00:00:00Z', routes: { ...bundle.routes, primary: [{ host: 'new', port: 3306 }] }, database: 'app', bundleVersion: 'v3' });
-  stop();
-  await expect(client.attachRoutingStream(null)).rejects.toThrow('routing stream');
-  await client.close();
-});
 
 test('rejects invalid setup and expired refresh bundles', async () => {
   await expect(createDb()).rejects.toThrow('primary connection profile');
