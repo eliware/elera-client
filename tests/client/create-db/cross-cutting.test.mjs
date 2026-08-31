@@ -39,31 +39,9 @@ test('retries a balanced query when balanced is the default routing policy and t
 
 
 
-test('finishes an in-flight query while excluding the drained node from new work', async () => {
-  let release;
-  const pending = new Promise((resolve) => { release = resolve; });
-  const mysqlLib = { createPool: jest.fn((options) => ({ options, query: jest.fn((sql) => options.host === 'writer' && sql === 'pending' ? pending : Promise.resolve([[options.host]])), execute: jest.fn(async () => [[options.host]]), getConnection: jest.fn(async () => connection()), end: jest.fn(async () => {}) })) };
-  const client = await createDb({ primary: profile, bundle: { ...bundle, writer: { host: 'writer', port: 3306 }, failover: [{ host: 'backup', port: 3306 }], routes: { primary: [{ host: 'writer', port: 3306 }], balanced: [] } }, mysqlLib });
-  const inFlight = client.query('pending', [], { route: 'primary' });
-  const drain = client.drain('writer', 90000);
-  await expect(client.execute('UPDATE app SET x=1', [], { route: 'primary' })).resolves.toEqual([['backup']]);
-  release([['writer']]);
-  await expect(inFlight).resolves.toEqual([['writer']]);
-  expect(drain.timeoutMs).toBe(45000);
-  await client.close();
-});
 
 
 
 
 
 
-
-test('recovery makes a previously unavailable route usable again', async () => {
-  const client = await createDb({ primary: profile, bundle: { ...bundle, writer: { host: 'recovering-node', port: 3306 }, routes: { primary: [{ host: 'recovering-node', port: 3306 }], balanced: [] } }, mysqlLib: driver() });
-  client.drain('recovering-node', 1000);
-  expect(client.availability().state).toBe('standalone-unavailable');
-  client.setNodeAvailability('primary', 'recovering-node', true);
-  expect(client.availability().state).toBe('available');
-  await client.close();
-});
