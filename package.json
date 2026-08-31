@@ -54,7 +54,7 @@
     },
     "dependencies": {
         "@eliware/common": "^2.0.0",
-    "@eliware/elera-lib": "file:../elera-lib",
+        "@eliware/elera-lib": "file:../elera-lib",
         "mysql2": "^3.24.2"
     },
     "devDependencies": {

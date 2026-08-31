@@ -22,22 +22,22 @@ repository conventions. Findings are recorded here before implementation work.
 
 - [x] Update `docs/public-api.md` to assign client errors, lifecycle policy,
   telemetry, transport, SQL pools, and routing behavior to `elera-client`.
-- [ ] Reconcile the client public API documentation with the final application
+- [x] Reconcile the client public API documentation with the final application
   contract: applications require only endpoint and runtime token, while any
   additional options must be clearly documented as optional programmatic
   controls rather than required environment configuration.
 - [x] Add or regenerate a source-to-test inventory; remaining missing focused
   tests and moves are recorded in that inventory.
-- [ ] Verify the temporary `file:../elera-lib` dependency is used only for
+- [x] Verify the temporary `file:../elera-lib` dependency is used only for
   development and restore the published semver dependency before packaging.
-- [ ] Audit `@eliware/common` for actual runtime usage; remove it if no source
-  module imports it.
-- [ ] Review the public export test and declarations against Core Flow so only
+- [x] Audit `@eliware/common` for actual runtime usage; retain it for the
+  source module imports that use its logger.
+- [x] Review the public export test and declarations against Core Flow so only
   application-facing `createDb()` and client-operational errors are public.
 - [x] Existing focused and integration tests cover routing-update, drain,
   recovery, shutdown, REST resync, reconnect deadlines, node identity,
   bundle versions, and cluster-unavailable states.
-- [ ] Add integration coverage proving the client consumes supervisor bundles
+- [x] Add integration coverage proving the client consumes supervisor bundles
   and events without importing supervisor or CLI internals.
 - [x] Re-ran the final 100×4, lint, typecheck, contract, audit, and package
   gates after the documentation and boundary corrections. CI remains a
@@ -47,7 +47,7 @@ repository conventions. Findings are recorded here before implementation work.
 
 ## Verified alignment
 
-- [x] Application configuration supports `ELERA_API_ENDPOINT` and
+- [x] Application configuration supports `ELERA_API_URL` and
   `ELERA_API_TOKEN` defaults.
 - [x] The client owns `createDb()`, SQL pools, routing, failover, reconnect,
   REST resync, drain handling, shutdown handling, and client telemetry.

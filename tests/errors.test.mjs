@@ -12,3 +12,7 @@ test('wraps errors without double wrapping', () => {
   expect(wrapped).toBeInstanceOf(SqlClientError);
   expect(asSqlError(wrapped)).toBe(wrapped);
 });
+
+test('uses the fallback message when an error has no message', () => {
+  expect(asSqlError({ code: 'ER_PARSE_ERROR' }, 'fallback message')).toMatchObject({ message: 'fallback message', code: 'ER_PARSE_ERROR' });
+});

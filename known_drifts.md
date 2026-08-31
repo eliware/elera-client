@@ -1,6 +1,6 @@
 # Known convention exceptions
 
-Last reviewed: 2026-08-29
+Last reviewed: 2026-08-30
 
 ## Intentional exceptions
 
@@ -10,9 +10,7 @@ Last reviewed: 2026-08-29
 - Tests import `@jest/globals` for Jest mocks and assertions, matching the
   established `elera-lib` test pattern. `@eliware/test` remains the test
   harness used by the package scripts.
-
-## Environment note
-
-- On the current Windows npm 11 environment, invoking `npm run audit` causes
-  npm's project-scoped script-policy error. The equivalent direct audit with
-  `--ignore-scripts` passes with zero vulnerabilities; CI invokes that form.
+- The client currently links the local `../elera-lib` checkout during
+  coordinated development. This remains intentional until the shared
+  contract is released and the dependency is switched to its published
+  version.

@@ -25,9 +25,9 @@ export function createRoutingStream({ endpoint, token, fetchBundle, WebSocketImp
             if (event.loadBalancerEndpoint) activeEndpoint = event.loadBalancerEndpoint;
             updateHandler?.(event);
             if (typeof event.loadBalancerEndpoint === 'string' && event.loadBalancerEndpoint) endpoint = event.loadBalancerEndpoint;
-            const deadlineMs = Number(event.reconnectDeadlineMs);
-            reconnectDeadlineAt = Number.isFinite(deadlineMs) ? now() + Math.max(0, deadlineMs) : undefined;
-            plannedReconnect = !Number.isFinite(deadlineMs) || deadlineMs > 0;
+            const deadlineMs = event.reconnectDeadlineMs;
+            reconnectDeadlineAt = now() + deadlineMs;
+            plannedReconnect = deadlineMs > 0;
             if (deadlineMs <= 0) clearTimeout(timer);
             delay = reconnectMs;
             await fallback();
@@ -38,7 +38,8 @@ export function createRoutingStream({ endpoint, token, fetchBundle, WebSocketImp
           if (version !== undefined && expectedVersion !== 0 && compareBundleVersions(version, expectedVersion) <= 0) return;
           const numericVersion = Number(version); const numericExpected = Number(expectedVersion);
           if (Number.isInteger(numericVersion) && Number.isInteger(numericExpected) && numericExpected > 0 && numericVersion > numericExpected + 1) await fallback();
-          if (version !== undefined && (expectedVersion === 0 || compareBundleVersions(version, expectedVersion) > 0)) expectedVersion = version;
+          expectedVersion = version;
+          if (event.type === 'routing.topology') { await fallback(); return; }
           updateHandler?.(event);
         } catch (error) { onError?.(error); }
       };

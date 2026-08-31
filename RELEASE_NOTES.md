@@ -1,5 +1,16 @@
 # Release notes
 
+## Unreleased
+
+- Redesign the application-facing client around the canonical mysql2-compatible
+  `createDb()` pool and connection contract.
+- Use `ELERA_API_URL` and `ELERA_API_TOKEN` as the supported application
+  configuration variables.
+- Keep routing bundles, credentials, lifecycle controls, and diagnostics
+  private to the managed client.
+- Elid2 migration remains intentionally pending until its dependency and
+  legacy SQL environment configuration are updated in the dependent project.
+
 ## v0.3.1
 
 Refined the managed client boundary and routing transport.
@@ -20,7 +31,7 @@ Initial baseline release of the Elera application client.
 
 - Create a managed MySQL/MariaDB client with an Elera endpoint and
   application-scoped API token.
-- Read `ELERA_API_ENDPOINT` and `ELERA_API_TOKEN` from the environment by
+- Read `ELERA_API_URL` and `ELERA_API_TOKEN` from the environment by
   default, with explicit options available when needed.
 - Retrieve and validate routing bundles containing database credentials,
   writers, readers, failover nodes, versions, expiry, and node metadata.

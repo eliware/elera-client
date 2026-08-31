@@ -16,11 +16,11 @@ npm install @eliware/elera-client
 Configure the application environment without storing SQL credentials:
 
 ```dotenv
-ELERA_API_ENDPOINT=http://elera.example.test:8080
+ELERA_API_URL=http://elera.example.test:8080
 ELERA_API_TOKEN=application-scoped-token
 ```
 
-Create and close the managed client:
+Create and close the managed client using the familiar mysql2 pool shape:
 
 ```js
 import { createDb } from '@eliware/elera-client';
@@ -30,14 +30,25 @@ try {
   const [rows] = await db.query('SELECT 1');
   console.log(rows);
 } finally {
-  await db.close();
+  await db.end();
 }
 ```
 
-`endpoint` and `token` may be passed directly to `createDb` when an
-application needs configuration other than the two environment variables.
-The client requires both values and retrieves the initial routing bundle
-before opening SQL pools.
+`endpoint` and `token` may be passed directly, or through `createDb({ env })`.
+When omitted, the client reads `ELERA_API_URL` and `ELERA_API_TOKEN` from the
+process environment. The client requires both values and retrieves the initial
+routing bundle before opening SQL pools.
+
+For an injected environment, use:
+
+```js
+const db = await createDb({
+  env: {
+    ELERA_API_URL: 'https://elera.example.test',
+    ELERA_API_TOKEN: process.env.ELERA_API_TOKEN,
+  },
+});
+```
 
 ## Routing and lifecycle
 
@@ -49,6 +60,9 @@ Routing updates and lifecycle events arrive over WebSocket. If the stream is
 unavailable, stale, or closed, the client retrieves a fresh bundle over REST
 and reconnects through the configured endpoint or the endpoint supplied by a
 shutdown event.
+Credential-free `routing.topology` events are treated as refresh signals: the
+client validates the topology event, then retrieves the authenticated bundle
+over REST rather than treating topology data as SQL credentials.
 The internal `routing.resync` signal used for that REST refresh is not a
 public server event; applications receive the resulting bundle through the
 normal client routing behavior.
@@ -64,24 +78,18 @@ error and wait for a later routing update rather than retrying unsafe writes.
 
 ## Client API
 
-The public entrypoint intentionally exposes only `createDb` and shared Elera
-error types. A managed client provides `query`, `execute`, `transaction`,
-`health`, `bundle`, `availability`, `nodeStates`, `drain`, `telemetry`, and
-`close`. SQL credentials and routing internals are obtained from the bundle;
-applications do not provision databases, manage Galera, or operate cluster
-recovery through this package.
+The public entrypoint exposes only `createDb`. A managed client provides the
+mysql2-compatible methods `query`, `execute`, `getConnection`, and `end`.
+Acquired connections provide `beginTransaction`, `commit`, `rollback`, and
+`release`. SQL credentials and routing internals remain private.
 
-Use `routing: 'primary'`, `routing: 'balanced'`, or the default `routing:
-'auto'` where a query-specific route override is required. The client does
-not automatically retry writes after a failure.
+The client selects readers and writers transparently. It does not
+automatically retry writes after a failure.
 
 ## Telemetry
 
-Pass `telemetry: true` to collect an in-memory snapshot, or provide a
-telemetry implementation. Snapshots include query count, failures, retries,
-reconnects, failover count, reconnect delay, in-flight work, and latency
-statistics. Telemetry is sent through the routing stream when available and
-does not issue SQL queries from health or readiness operations.
+Routing telemetry is internal to the managed client and is not part of the
+mysql2-shaped application API.
 
 ## Security and operations
 
@@ -89,9 +97,7 @@ does not issue SQL queries from health or readiness operations.
 - Keep `.env` files out of version control and rotate tokens through the
   supervisor/CLI workflow.
 - Do not log tokens, SQL passwords, or complete routing bundles.
-- Treat `ClusterUnavailableError` and `ServerUnavailableError` as
-  operational states, not authorization failures.
-- Always close the client during application shutdown.
+- Always call `db.end()` during application shutdown.
 
 The package does not include containers, lab orchestration, backups, GitOps,
 or supervisor/CLI administration. Those responsibilities belong to their

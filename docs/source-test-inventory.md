@@ -30,6 +30,5 @@ moved, not rewritten, when a focused test is relocated.
 ## Status
 
 The inventory is established and every non-barrel source module has a current
-focused or deliberately cross-cutting test mapping. Remaining work is to
-review the flat root tests and move them only where the conventions require it;
-existing coverage must not be rewritten or discarded.
+focused or deliberately cross-cutting test mapping. The flat root tests are
+correctly mirrored for their source modules; no relocation is required.

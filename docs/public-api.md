@@ -1,8 +1,7 @@
 # Elera Client Public API
 
 `@eliware/elera-client` is the application-facing SDK. Its public surface is
-intentionally limited to the managed database client and the client errors that
-applications need to handle operational failures.
+intentionally limited to the managed mysql2-compatible database client.
 
 ## Application configuration
 
@@ -13,26 +12,31 @@ API token:
 import { createDb } from '@eliware/elera-client';
 
 const db = await createDb({
-  endpoint: process.env.ELERA_API_ENDPOINT,
+  endpoint: process.env.ELERA_API_URL,
   token: process.env.ELERA_API_TOKEN
 });
 ```
 
 Both values are optional when passed explicitly because `createDb()` reads
-`ELERA_API_ENDPOINT` and `ELERA_API_TOKEN` automatically when they are omitted.
+`ELERA_API_URL` and `ELERA_API_TOKEN` automatically when they are omitted.
+`createDb({ env })` is also supported for dependency-injected environments.
 Applications do not provide SQL hosts, ports, usernames, passwords, physical
 database names, Galera settings, or supervisor credentials.
+
+The runtime accepts only endpoint/token configuration as application inputs.
+Transport, routing, pool, and telemetry controls are internal implementation
+details and are not part of the application API.
 
 ## Public exports
 
 The package exports:
 
 - `createDb()` for creating the managed application client;
-- `SqlClientError` and its operational subclasses;
-- `classifyError()` and `asSqlError()` for handling client failures.
+- `createDb()`.
 
-The managed client exposes application operations such as `query`, `execute`,
-`transaction`, `health`, `close`, and read-only routing/telemetry inspection.
+The managed client exposes `query`, `execute`, `getConnection`, and `end`.
+Acquired connections expose `beginTransaction`, `commit`, `rollback`, and
+`release`, matching the mysql2/promise lifecycle.
 It obtains routing bundles and SQL credentials internally, applies writer/read
 routing, and responds to supervisor lifecycle events. Its WebSocket transport
 authenticates with the `Authorization: Bearer …` handshake header and does not
