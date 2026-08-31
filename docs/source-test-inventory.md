@@ -37,6 +37,8 @@ moved, not rewritten, when a focused test is relocated.
 | `src/pools/route-pool/health.mjs` | implementation | covered by route-pool tests |
 | `src/pools/route-pool/lifecycle.mjs` | implementation | covered by route-pool lifecycle tests |
 | `src/pools/route-pool/selection.mjs` | implementation | covered by route-pool selection tests |
+| `src/pools/node-pool/operations.mjs` | implementation | `tests/pools/node-pool.test.mjs` |
+| `src/pools/node-pool/lifecycle.mjs` | implementation | `tests/pools/node-pool/lifecycle.test.mjs` |
 | `src/routing/stream-client/address.mjs` | implementation | covered by stream connection tests |
 | `src/routing/stream-client/events.mjs` | implementation | `tests/routing/stream-client/events.test.mjs` |
 | `src/routing/stream-client/fallback.mjs` | implementation | `tests/routing/stream-client/fallback.test.mjs` |
