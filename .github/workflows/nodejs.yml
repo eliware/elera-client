@@ -29,6 +29,8 @@ jobs:
       - run: npm test
       - run: npm run lint
       - run: npm run typecheck
+      - run: npm run check
+      - run: npm run contracts
       - run: npm audit --omit=dev --audit-level=moderate --ignore-scripts
       - run: npm pack --dry-run
 

@@ -13,7 +13,8 @@ repository conventions. Findings are recorded here before implementation work.
 - [x] Moved the credential-provider test to its mirrored focused path without
   rewriting its assertions.
 - [x] All non-barrel source modules now have a current focused or deliberate
-  cross-cutting test mapping.
+  cross-cutting test mapping; the source/test inventory records aggregate
+  orchestrator coverage explicitly.
 - [x] Confirmed root `routing.mjs` and `telemetry.mjs` tests are correctly
   mirrored at the repository root; no relocation is required.
 - [x] Current `npm test` passes with 100×4 coverage and zero lint warnings.
@@ -42,8 +43,8 @@ repository conventions. Findings are recorded here before implementation work.
 - [x] Re-ran the final 100×4, lint, typecheck, contract, audit, and package
   gates after the documentation and boundary corrections. CI remains a
   separate remote check.
-- [x] Latest remote Node.js CI runs completed successfully for commit
-  `b1f164dd4f96ae6f3aea9f06243eabf9f1cb8437`.
+- [x] CI validates syntax, contracts, type declarations, tests, lint, audit,
+  and package contents on both supported operating systems.
 
 ## Verified alignment
 
@@ -56,4 +57,13 @@ repository conventions. Findings are recorded here before implementation work.
   physical database names, node names, or cluster settings.
 - [x] No direct supervisor, CLI, lab, GitOps, backup, or Galera imports were
   found in the client source.
-- [x] No non-barrel Istanbul ignores were found.
+- [x] No production non-barrel Istanbul ignores were found. Test-only fixture
+  exclusions are documented in the fixture source.
+
+## Resolved review items
+
+- [x] Added a safe `.env.example` containing only placeholder values.
+- [x] Added `check` and `contracts` to the CI validation job.
+- [x] Updated the source/test inventory for the decomposed directory layout.
+- [x] Documented deployment, backup, rollback, readiness, and health ownership
+  boundaries in the README.

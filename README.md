@@ -99,6 +99,15 @@ mysql2-shaped application API.
 - Do not log tokens, SQL passwords, or complete routing bundles.
 - Always call `db.end()` during application shutdown.
 
+The client has no deployment, backup, or rollback control plane. Applications
+own deployment and database recovery policy; the Elera service owns routing
+and credential rotation. `health()` is an internal diagnostic capability, not
+a public managed-pool method. Readiness is established when `createDb()` has
+retrieved and validated its initial bundle and created its SQL routes.
+Applications should treat connection and routing errors as not-ready and
+retry startup or await a later routing update according to their own service
+policy.
+
 The package does not include containers, lab orchestration, backups, GitOps,
 or supervisor/CLI administration. Those responsibilities belong to their
 respective repositories. Shared contracts and protocol helpers come from
