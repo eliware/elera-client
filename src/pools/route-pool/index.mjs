@@ -1,27 +1,9 @@
 
 import { ClusterUnavailableError, ServerUnavailableError } from '../../errors.mjs';
+import { createNodeSelector } from './selection.mjs';
 
 export function createRoutePool(nodes, { preferred = false, unavailableError = nodes.length === 1 ? ServerUnavailableError : ClusterUnavailableError } = {}) {
-  let cursor = 0;
-  const candidates = () => nodes.filter((node) => node.available);
-  const choose = () => {
-    const available = candidates();
-    if (!available.length) throw new unavailableError('no eligible SQL nodes available');
-    if (preferred) return available[0];
-    const total = available.reduce((sum, node) => sum + Math.max(0, node.weight), 0);
-    if (!total) return available[cursor++ % available.length];
-    let target = cursor++ % total;
-    let selected = available[available.length - 1];
-    for (const node of available) {
-      const weight = Math.max(0, node.weight);
-      if (target < weight) {
-        selected = node;
-        break;
-      }
-      target -= weight;
-    }
-    return selected;
-  };
+  const { choose } = createNodeSelector(nodes, { preferred, unavailableError });
   const setAvailability = (host, available) => {
     for (const node of nodes) if (node.host === host) node.available = available;
   };

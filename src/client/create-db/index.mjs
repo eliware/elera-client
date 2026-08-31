@@ -7,18 +7,16 @@ import { validateBundle as validateBundleShape } from '@eliware/elera-lib';
 import { clientDrainTimeout } from '../drain-policy.mjs';
 import { createTelemetry } from '../../telemetry.mjs';
 import { ROUTING_RESYNC } from '../../routing/internal-events.mjs';
-import { compareBundleVersions } from '../../routing/bundle-version.mjs';
 import { bundleNeedsRefresh } from '../../routing/bundle-expiry.mjs';
 import { resolveCredentials, credentialContext } from '../internal/credential-provider.mjs';
 import { createRouteFactory } from '../route-factory.mjs';
-import { classifyQuery, routeFor } from '../../routing.mjs';
+import { routeFor } from '../../routing.mjs';
 import { createTimedOperation } from '../telemetry-wrapper.mjs';
 import { validateTokenContext } from '../authorization-context.mjs';
-
-const olderVersion = (candidate, current) => compareBundleVersions(candidate, current) < 0;
-const equivalentPools = (candidate, current) => current && candidate.bundleVersion === current.bundleVersion && JSON.stringify({ physicalDatabase: candidate.physicalDatabase, credentials: candidate.credentials, writer: candidate.writer, routes: candidate.routes }) === JSON.stringify({ physicalDatabase: current.physicalDatabase, credentials: current.credentials, writer: current.writer, routes: current.routes });
-const usablePool = (pool) => pool?.nodes?.some((node) => node.available);
-const publicBundle = (bundle) => { if (!bundle) return bundle; const { credentials, ...redacted } = bundle; return redacted; };
+import { isOlderBundle, bundlesHaveEquivalentPools, hasUsablePool, redactBundle } from './bundle-state.mjs';
+import { createRouteSelection } from './route-selection.mjs';
+import { createPoolShutdown } from './shutdown.mjs';
+import { createDiagnostics } from './diagnostics.mjs';
 export async function createDb({ primary, balanced, bundle, credentialProvider, mysqlLib = mysql, log = defaultLog, routing = 'auto', identity, tokenContext, quarantineMs = 5000, drainTimeoutMs = 45000, now = () => Date.now(), telemetry } = {}) {
   if (!primary || typeof primary !== 'object') throw new TypeError('primary connection profile is required');
   const credentials = await resolveCredentials(credentialProvider, credentialContext(primary, { identity }));
@@ -34,21 +32,22 @@ export async function createDb({ primary, balanced, bundle, credentialProvider, 
   const makeRoute = (route, fallback) => createRouteFactory({ bundle: activeBundle, now, mysqlLib, log, quarantineMs })(route, fallback);
   let primaryPool = makeRoute('primary', primaryConfig);
   let balancedPool = balancedConfig || activeBundle?.routes?.balanced?.length ? makeRoute('balanced', balancedConfig ?? primaryConfig) : null;
-  const choose = (sql, options = {}) => options.connection ?? (routeFor(sql, options.route ?? routing) === 'balanced' && balancedPool ? balancedPool : primaryPool);
+  const selection = () => createRouteSelection({ primaryPool, balancedPool, routing });
   const metrics = telemetry === true ? createTelemetry({ application: bundle?.application ?? 'default', credentialName: bundle?.credentialName, database: bundle?.database, scopes: bundle?.scopes, now }) : telemetry;
   const timed = createTimedOperation({ metrics, now });
-  let closing;
+  const shutdown = createPoolShutdown({ getPools: () => [primaryPool, balancedPool].filter(Boolean), drainTimeoutMs, metrics });
+  const diagnostics = createDiagnostics({ getPools: () => [primaryPool, balancedPool].filter(Boolean), getPrimaryPool: () => primaryPool, getBalancedPool: () => balancedPool, now });
   const client = {
-    async query(sql, values, options) { const selectedRoute = routeFor(sql, options?.route ?? routing); return timed(async () => { const selected = choose(sql, options); try { return await selected.query(sql, values); } catch (error) { const requestedRoute = options?.route ?? routing; if (error.retryable && balancedPool && routeFor(sql, requestedRoute) === 'balanced' && classifyQuery(sql) === 'balanced') { metrics?.record?.({ retry: true, route: 'balanced' }); return balancedPool.query(sql, values); } throw error; } }, { route: selectedRoute }); },
-    async execute(sql, values, options) { const selectedRoute = routeFor(sql, options?.route ?? routing); return timed(async () => choose(sql, options).execute(sql, values), { route: selectedRoute }); },
+    async query(sql, values, options) { const selectedRoute = routeFor(sql, options?.route ?? routing); return timed(async () => { const { choose, isSafeBalancedRetry } = selection(); const selected = choose(sql, options); try { return await selected.query(sql, values); } catch (error) { if (isSafeBalancedRetry(sql, options, error)) { metrics?.record?.({ retry: true, route: 'balanced' }); return balancedPool.query(sql, values); } throw error; } }, { route: selectedRoute }); },
+    async execute(sql, values, options) { const selectedRoute = routeFor(sql, options?.route ?? routing); return timed(async () => selection().choose(sql, options).execute(sql, values), { route: selectedRoute }); },
     async probe(sql = 'SELECT 1') { const route = routeFor(sql); const result = await client.query(sql); const connection = await client.getConnection(); let transaction = 'started'; try { await connection.beginTransaction(); await connection.rollback(); } finally { connection.release(); } return { ok: true, route, result, transaction, released: true }; },
     async transaction(callback) { return timed(async () => { const node = primaryPool.choose(); const connection = await node.getConnection(); try { await connection.beginTransaction(); const tx = { query: (sql, values) => connection.query(sql, values), execute: (sql, values) => connection.execute(sql, values) }; const result = await callback(tx); await connection.commit(); return result; } catch (error) { await connection.rollback().catch(() => {}); throw asSqlError(error); } finally { connection.release(); } }); },
     async getConnection() { const node = primaryPool.choose(); return node.getConnection(); },
-    async health(route = 'primary') { const started = now(); const selected = route === 'balanced' && balancedPool ? balancedPool : primaryPool; const nodes = await selected.health(); return { ok: nodes.some((node) => node.ok), route: selected === balancedPool ? 'balanced' : 'primary', nodes, latencyMs: now() - started }; },
+    async health(route = 'primary') { return diagnostics.health(route); },
     async refresh(nextBundle) {
       const candidate = validateBundle(nextBundle);
-      if (equivalentPools(candidate, activeBundle) && usablePool(primaryPool) && (!balancedPool || usablePool(balancedPool))) return { bundleVersion: activeBundle.bundleVersion, refreshRequired: bundleNeedsRefresh(activeBundle, now()) };
-      if (olderVersion(candidate.bundleVersion, activeBundle?.bundleVersion)) {
+      if (bundlesHaveEquivalentPools(candidate, activeBundle) && hasUsablePool(primaryPool) && (!balancedPool || hasUsablePool(balancedPool))) return { bundleVersion: activeBundle.bundleVersion, refreshRequired: bundleNeedsRefresh(activeBundle, now()) };
+      if (isOlderBundle(candidate.bundleVersion, activeBundle?.bundleVersion)) {
         return { bundleVersion: activeBundle?.bundleVersion, refreshRequired: bundleNeedsRefresh(activeBundle, now()) };
       }
       const previous = [primaryPool, balancedPool];
@@ -76,11 +75,11 @@ export async function createDb({ primary, balanced, bundle, credentialProvider, 
     },
     async attachRoutingStream(stream) { if (!stream?.connect) throw new TypeError('routing stream is required'); metrics?.start?.(stream); stream.setTelemetry?.(metrics); stream.setOnUpdate?.(async (event) => { const update = event.type === 'routing.update' ? { ...event } : event.type === ROUTING_RESYNC ? event.bundle : undefined; if (update?.type) delete update.type; if (update) await client.refresh(update); if (event.type === 'routing.drain') for (const pool of [primaryPool, balancedPool].filter(Boolean)) pool.drain(event.node, clientDrainTimeout(event.drainTimeoutMs ?? drainTimeoutMs)); if (event.type === 'routing.shutdown') for (const pool of [primaryPool, balancedPool].filter(Boolean)) pool.drain(event.node, clientDrainTimeout(event.reconnectDeadlineMs ?? event.drainTimeoutMs ?? drainTimeoutMs)); if (event.type === 'routing.recovery') for (const pool of [primaryPool, balancedPool].filter(Boolean)) pool.recover(event.node, drainTimeoutMs); }); await stream.connect(); return () => stream.close?.(); },
     drain(host, timeoutMs = drainTimeoutMs) { const effectiveTimeout = clientDrainTimeout(timeoutMs); const pools = [primaryPool, balancedPool].filter(Boolean); pools.forEach((pool) => pool.drain(host, effectiveTimeout)); return { host, timeoutMs: effectiveTimeout, wait: () => Promise.all(pools.map((pool) => pool.waitForIdle(effectiveTimeout))), forceClose: () => Promise.all(pools.map((pool) => pool.forceClose(host))) }; },
-     availability() { const states = this.nodeStates(); const primaryAvailable = states.some((node) => node.route === 'primary' && node.available); const primaryNodes = states.filter((node) => node.route === 'primary'); const unavailableState = primaryNodes.length <= 1 ? 'standalone-unavailable' : 'cluster-unavailable'; return { state: primaryAvailable ? 'available' : unavailableState, routes: { primary: primaryAvailable, balanced: states.some((node) => node.route === 'balanced' && node.available) } }; },
-    nodeStates() { return [primaryPool, balancedPool].filter(Boolean).flatMap((pool) => pool.nodes.map((node) => ({ host: node.host, port: node.port, route: pool === primaryPool ? 'primary' : 'balanced', state: node.state, active: node.active, available: node.available }))); },
+    availability() { return diagnostics.availability(); },
+    nodeStates() { return diagnostics.nodeStates(); },
     setNodeAvailability(route, host, available) { const pool = route === 'balanced' ? balancedPool : primaryPool; pool?.setAvailability(host, available); },
-    bundle: () => publicBundle(activeBundle),
-    async close() { if (closing) return closing; closing = (async () => { metrics?.stop?.(); const pools = [primaryPool, balancedPool].filter(Boolean); pools.forEach((pool) => pool.drain(drainTimeoutMs)); await Promise.all(pools.map((pool) => pool.waitForIdle(drainTimeoutMs))); await Promise.all(pools.map((pool) => pool.close())); })(); return closing; },
+    bundle: () => redactBundle(activeBundle),
+    async close() { return shutdown.close(); },
     async end() { return this.close(); },
     telemetry: metrics
   };
