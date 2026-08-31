@@ -3,7 +3,7 @@ import { createReconnectPolicy } from '../../../src/routing/stream-client/reconn
 import { createRoutingStream } from '../../../src/routing/stream-client/index.mjs';
 import { FakeWebSocket, sockets } from './fixtures.mjs';
 
-afterEach(() => jest.useRealTimers());
+afterEach(() => { jest.useRealTimers(); sockets.splice(0).forEach((socket) => socket.close()); });
 
 test('schedules, resets, and cancels reconnect attempts', () => {
   jest.useFakeTimers();
