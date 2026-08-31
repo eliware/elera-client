@@ -5,7 +5,6 @@ import { validateProfile } from '../../config.mjs';
 import { validateBundle as validateBundleShape } from '@eliware/elera-lib';
 import { clientDrainTimeout } from '../drain-policy.mjs';
 import { createTelemetry } from '../../telemetry.mjs';
-import { ROUTING_RESYNC } from '../../routing/internal-events.mjs';
 import { bundleNeedsRefresh } from '../../routing/bundle-expiry.mjs';
 import { resolveCredentials, credentialContext } from '../internal/credential-provider.mjs';
 import { createRouteFactory } from '../route-factory.mjs';
@@ -19,6 +18,7 @@ import { createDiagnostics } from './diagnostics.mjs';
 import { createQueryExecution } from './query-execution.mjs';
 import { createTransactionOperation } from './transaction.mjs';
 import { createBundleRefresh } from './bundle-refresh.mjs';
+import { createRoutingEventHandler } from './routing-events.mjs';
 export async function createDb({ primary, balanced, bundle, credentialProvider, mysqlLib = mysql, log = defaultLog, routing = 'auto', identity, tokenContext, quarantineMs = 5000, drainTimeoutMs = 45000, now = () => Date.now(), telemetry } = {}) {
   if (!primary || typeof primary !== 'object') throw new TypeError('primary connection profile is required');
   const credentials = await resolveCredentials(credentialProvider, credentialContext(primary, { identity }));
@@ -50,7 +50,7 @@ export async function createDb({ primary, balanced, bundle, credentialProvider, 
     async getConnection() { const node = primaryPool.choose(); return node.getConnection(); },
     async health(route = 'primary') { return diagnostics.health(route); },
     async refresh(nextBundle) { return refreshBundle(nextBundle); },
-    async attachRoutingStream(stream) { if (!stream?.connect) throw new TypeError('routing stream is required'); metrics?.start?.(stream); stream.setTelemetry?.(metrics); stream.setOnUpdate?.(async (event) => { const update = event.type === 'routing.update' ? { ...event } : event.type === ROUTING_RESYNC ? event.bundle : undefined; if (update?.type) delete update.type; if (update) await client.refresh(update); if (event.type === 'routing.drain') for (const pool of [primaryPool, balancedPool].filter(Boolean)) pool.drain(event.node, clientDrainTimeout(event.drainTimeoutMs ?? drainTimeoutMs)); if (event.type === 'routing.shutdown') for (const pool of [primaryPool, balancedPool].filter(Boolean)) pool.drain(event.node, clientDrainTimeout(event.reconnectDeadlineMs ?? event.drainTimeoutMs ?? drainTimeoutMs)); if (event.type === 'routing.recovery') for (const pool of [primaryPool, balancedPool].filter(Boolean)) pool.recover(event.node, drainTimeoutMs); }); await stream.connect(); return () => stream.close?.(); },
+    async attachRoutingStream(stream) { if (!stream?.connect) throw new TypeError('routing stream is required'); metrics?.start?.(stream); stream.setTelemetry?.(metrics); stream.setOnUpdate?.(createRoutingEventHandler({ refresh: (event) => client.refresh(event), getPools: () => [primaryPool, balancedPool].filter(Boolean), drainTimeoutMs })); await stream.connect(); return () => stream.close?.(); },
     drain(host, timeoutMs = drainTimeoutMs) { const effectiveTimeout = clientDrainTimeout(timeoutMs); const pools = [primaryPool, balancedPool].filter(Boolean); pools.forEach((pool) => pool.drain(host, effectiveTimeout)); return { host, timeoutMs: effectiveTimeout, wait: () => Promise.all(pools.map((pool) => pool.waitForIdle(effectiveTimeout))), forceClose: () => Promise.all(pools.map((pool) => pool.forceClose(host))) }; },
     availability() { return diagnostics.availability(); },
     nodeStates() { return diagnostics.nodeStates(); },
