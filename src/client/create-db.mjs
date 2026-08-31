@@ -16,6 +16,7 @@ import { createTimedOperation } from './telemetry-wrapper.mjs';
 import { validateTokenContext } from './authorization-context.mjs';
 
 const olderVersion = (candidate, current) => compareBundleVersions(candidate, current) < 0;
+const equivalentPools = (candidate, current) => current && candidate.bundleVersion === current.bundleVersion && JSON.stringify({ physicalDatabase: candidate.physicalDatabase, credentials: candidate.credentials, writer: candidate.writer, routes: candidate.routes }) === JSON.stringify({ physicalDatabase: current.physicalDatabase, credentials: current.credentials, writer: current.writer, routes: current.routes });
 const publicBundle = (bundle) => { if (!bundle) return bundle; const { credentials, ...redacted } = bundle; return redacted; };
 export async function createDb({ primary, balanced, bundle, credentialProvider, mysqlLib = mysql, log = defaultLog, routing = 'auto', identity, tokenContext, quarantineMs = 5000, drainTimeoutMs = 45000, now = () => Date.now(), telemetry } = {}) {
   if (!primary || typeof primary !== 'object') throw new TypeError('primary connection profile is required');
@@ -44,7 +45,7 @@ export async function createDb({ primary, balanced, bundle, credentialProvider, 
     async health(route = 'primary') { const started = now(); const selected = route === 'balanced' && balancedPool ? balancedPool : primaryPool; const nodes = await selected.health(); return { ok: nodes.some((node) => node.ok), route: selected === balancedPool ? 'balanced' : 'primary', nodes, latencyMs: now() - started }; },
     async refresh(nextBundle) {
       const candidate = validateBundle(nextBundle);
-      if (activeBundle && JSON.stringify(candidate) === JSON.stringify(activeBundle)) return { bundleVersion: activeBundle.bundleVersion, refreshRequired: bundleNeedsRefresh(activeBundle, now()) };
+      if (equivalentPools(candidate, activeBundle)) return { bundleVersion: activeBundle.bundleVersion, refreshRequired: bundleNeedsRefresh(activeBundle, now()) };
       if (olderVersion(candidate.bundleVersion, activeBundle?.bundleVersion)) {
         return { bundleVersion: activeBundle?.bundleVersion, refreshRequired: bundleNeedsRefresh(activeBundle, now()) };
       }
