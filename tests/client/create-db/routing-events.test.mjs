@@ -25,3 +25,14 @@ test('rejects incomplete stream updates and accepts a complete update', async ()
   expect(client.bundle()).toMatchObject({ bundleVersion: 'v2', writer: bundle.writer });
   await client.close();
 });
+
+test('updates one application client without changing another client assignment', async () => {
+  const clientA = await createDb({ primary: profile, bundle: { ...bundle, writer: { host: 'app-a-writer', port: 3306 }, failover: [{ host: 'a-backup', port: 3306 }] }, mysqlLib: driver() });
+  const clientB = await createDb({ primary: profile, bundle: { ...bundle, writer: { host: 'app-b-writer', port: 3306 }, failover: [{ host: 'b-backup', port: 3306 }] }, mysqlLib: driver() });
+  let update;
+  await clientA.attachRoutingStream({ connect: async () => {}, setOnUpdate: (handler) => { update = handler; } });
+  await update({ ...bundle, type: 'routing.update', writer: { host: 'app-a-new-writer', port: 3306 }, failover: [{ host: 'a-backup', port: 3306 }], bundleVersion: 2, routes: { primary: [{ host: 'app-a-new-writer', port: 3306 }], balanced: bundle.routes.balanced }, database: 'app' });
+  expect(clientA.bundle().writer.host).toBe('app-a-new-writer');
+  expect(clientB.bundle().writer.host).toBe('app-b-writer');
+  await clientA.close(); await clientB.close();
+});
