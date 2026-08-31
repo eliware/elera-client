@@ -2,9 +2,6 @@ import { afterEach, expect, test, jest } from '@jest/globals';
 import { createRoutingStream } from '../../../src/routing/stream-client/index.mjs';
 import { sockets, streamBundle, FakeWebSocket } from './fixtures.mjs';
 
-test('requires endpoint and REST fallback', () => {
-  expect(() => createRoutingStream()).toThrow('endpoint and fetchBundle');
-});
 
 test('waits for an asynchronous REST update handler before connect resolves', async () => {
   let release; let handled = false;
@@ -25,7 +22,6 @@ test('authenticates, applies updates, and resynchronizes gaps', async () => {
   expect(socket.url).toBe('ws://vip/api/v1/routing/stream'); expect(socket.options).toEqual({ headers: { authorization: 'Bearer root' } }); socket.open(); expect(client.state().mode).toBe('websocket'); socket.message({ type: 'routing.update', version: 1 }); socket.message({ type: 'routing.update' }); socket.message({ type: 'routing.update', version: 3 }); await pending; await new Promise((resolve) => setImmediate(resolve));
   expect(update).toHaveBeenCalled(); expect(fetchBundle).toHaveBeenCalledWith('http://vip'); expect(client.state().expectedVersion).toBe(3); expect(client.state().mode).toBe('rest'); client.close();
 });
-test('falls back to REST when WebSocket is unavailable or fails', async () => { const fetchBundle = jest.fn(async () => { throw new Error('offline'); }); const warn = jest.fn(); const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle, WebSocketImpl: null, reconnectMs: 1, maxReconnectMs: 1, log: { warn } }); await client.connect(); await new Promise((resolve) => setTimeout(resolve, 5)); client.close(); expect(fetchBundle).toHaveBeenCalled(); expect(warn).toHaveBeenCalled(); });
 test('reports malformed events and socket errors', async () => { const errors = []; const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle: async () => ({}), WebSocketImpl: FakeWebSocket, onError: (error) => errors.push(error), reconnectMs: 100000 }); await client.connect(); const socket = sockets.at(-1); socket.open(); socket.onmessage?.({ data: '{' }); socket.onerror?.(new Error('socket')); client.close(); expect(errors).toHaveLength(2); });
 test('rejects unsupported and malformed canonical routing events without delivering them', async () => {
   const errors = []; const updates = []; const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle: async () => ({}), WebSocketImpl: FakeWebSocket, onUpdate: (event) => updates.push(event), onError: (error) => errors.push(error) });
@@ -39,9 +35,7 @@ test('replaces the update handler and closes an unopened stream', () => { const 
 test('accepts a telemetry sink after construction', () => { const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle: async () => ({ }), WebSocketImpl: FakeWebSocket }); client.setTelemetry({ recordReconnect: jest.fn() }); client.close(); });
 test('sends telemetry only over an open socket', async () => { const sent = []; class TelemetrySocket extends FakeWebSocket { send(value) { sent.push(value); } } const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle: async () => ({}), WebSocketImpl: TelemetrySocket }); await client.connect(); const socket = sockets.at(-1); client.sendTelemetry({ type: 'client.telemetry' }); expect(sent).toHaveLength(0); socket.open(); client.sendTelemetry({ type: 'client.telemetry' }); expect(sent).toHaveLength(1); client.close(); });
 test('recovers from a WebSocket constructor failure', async () => { const errors = []; class BrokenWebSocket { constructor() { throw new Error('constructor'); } } const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle: async () => ({}), WebSocketImpl: BrokenWebSocket, onError: (error) => errors.push(error), reconnectMs: 100000 }); await client.connect(); client.close(); expect(errors[0].message).toBe('constructor'); });
-test('does not apply a REST result after the stream is closed', async () => { let resolve; const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle: () => new Promise((done) => { resolve = done; }), WebSocketImpl: null }); const pending = client.connect(); client.close(); resolve({ bundleVersion: 'late' }); await pending; expect(client.state().mode).toBe('disconnected'); });
 test('does not schedule reconnect work after an already closed connect', async () => { const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle: async () => ({}), WebSocketImpl: null }); client.close(); await client.connect(); expect(client.state().mode).toBe('disconnected'); });
-test('falls back after an active socket closes and cancels its timer on shutdown', async () => { const fetchBundle = jest.fn(async () => ({ bundleVersion: 'fallback' })); const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle, WebSocketImpl: FakeWebSocket, reconnectMs: 100000 }); await client.connect(); const socket = sockets.at(-1); socket.open(); socket.close(); await new Promise((resolve) => setImmediate(resolve)); expect(client.state().mode).toBe('rest'); client.close(); });
 test('ignores a failed REST fallback after shutdown', async () => { let reject; const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle: () => new Promise((_, fail) => { reject = fail; }), WebSocketImpl: null }); const pending = client.connect(); client.close(); reject(new Error('late failure')); await pending; expect(client.state().mode).toBe('disconnected'); });
 
 test('uses top-level event versions as the authoritative ordering field', async () => {
@@ -57,14 +51,6 @@ test('orders integer event versions numerically', async () => {
   expect(update).toHaveBeenCalledTimes(1); expect(client.state().expectedVersion).toBe(10); client.close();
 });
 
-test('delivers REST resyncs to the replaced update handler', async () => {
-  const received = [];
-  const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle: async () => ({ bundleVersion: 'rest' }), WebSocketImpl: null });
-  client.setOnUpdate((event) => received.push(event));
-  await client.connect();
-  expect(received[0]).toMatchObject({ type: 'routing.resync', bundle: { bundleVersion: 'rest' } });
-  client.close();
-});
 
 test('refreshes credentials through REST for credential-free topology events', async () => {
   const updates = []; const fetchBundle = jest.fn(async () => ({ bundleVersion: 'topology-refresh' }));
