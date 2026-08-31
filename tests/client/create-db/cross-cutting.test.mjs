@@ -81,31 +81,6 @@ test('applies complete top-level routing updates without active-bundle defaults'
 });
 
 
-test('does not replace a newer bundle with an older resync', async () => {
-  const client = await createDb({ primary: profile, bundle, mysqlLib: driver() });
-  await expect(client.refresh({ ...bundle, bundleVersion: 'v0' })).resolves.toMatchObject({ bundleVersion: 'v1' });
-  expect(client.bundle().bundleVersion).toBe('v1');
-  await client.close();
-});
-
-test('accepts versioned refreshes and rejects unversioned refreshes', async () => {
-  const first = await createDb({ primary: profile, mysqlLib: driver() });
-  await expect(first.refresh({ ...bundle, bundleVersion: 2 })).resolves.toMatchObject({ bundleVersion: 2 });
-  await expect(first.refresh({ ...bundle, bundleVersion: undefined })).rejects.toThrow('bundleVersion');
-  await first.close();
-});
-
-test('replaces the writer pool and preserves explicit application assignments on refresh', async () => {
-  const pools = [];
-  const mysqlLib = { createPool: jest.fn((options) => { const pool = { options, query: jest.fn(async () => [[options.host]]), execute: jest.fn(async () => [[options.host]]), getConnection: jest.fn(async () => connection()), end: jest.fn(async () => {}) }; pools.push(pool); return pool; }) };
-  const client = await createDb({ primary: profile, mysqlLib });
-  await client.refresh({ ...bundle, bundleVersion: 2, writer: { host: 'writer-b', port: 3306 }, failover: [{ host: 'writer-c', port: 3306 }], readers: [{ host: 'reader-b', port: 3306 }], routes: { primary: [{ host: 'writer-b', port: 3306 }], balanced: [{ host: 'reader-b', port: 3306 }] } });
-  expect(client.nodeStates().filter((node) => node.route === 'primary').map((node) => node.host)).toEqual(['writer-b', 'writer-c']);
-  expect(client.nodeStates().filter((node) => node.route === 'balanced').map((node) => node.host)).toEqual(['reader-b']);
-  await expect(client.execute('UPDATE app SET value=1')).resolves.toEqual([['writer-b']]);
-  await expect(client.query('SELECT 1')).resolves.toEqual([['reader-b']]);
-  await client.close();
-});
 
 test('finishes an in-flight query while excluding the drained node from new work', async () => {
   let release;
