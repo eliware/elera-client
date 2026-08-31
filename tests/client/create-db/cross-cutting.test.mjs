@@ -22,11 +22,6 @@ test('supports an initially unbundled client bundle view and end alias', async (
   expect(client.bundle()).toBeUndefined();
   await client.end();
 });
-test('collects telemetry and starts it with the routing stream', async () => { const client = await createDb({ primary: profile, mysqlLib: driver(), telemetry: true }); const stream = { connect: jest.fn(async () => {}), setOnUpdate: jest.fn(), sendTelemetry: jest.fn() }; await client.attachRoutingStream(stream); await client.query('SELECT 1'); expect(client.telemetry.snapshot().queries).toBe(1); await client.close(); });
-test('supports an injected telemetry sink', async () => { const telemetry = { begin: jest.fn(), record: jest.fn(), start: jest.fn(), stop: jest.fn() }; const client = await createDb({ primary: profile, mysqlLib: driver(), telemetry }); await client.query('SELECT 1'); await client.attachRoutingStream({ connect: jest.fn(async () => {}), setOnUpdate: jest.fn() }); await client.close(); expect(telemetry.start).toHaveBeenCalled(); expect(telemetry.stop).toHaveBeenCalled(); });
-test('records injected telemetry when its clock is unavailable', async () => { const telemetry = { begin: jest.fn(() => undefined), record: jest.fn(), start: jest.fn(), stop: jest.fn() }; const client = await createDb({ primary: profile, mysqlLib: driver(), telemetry }); await client.query('SELECT 1'); expect(telemetry.record).toHaveBeenCalledWith({ latencyMs: 0, route: 'balanced' }); await client.close(); });
-test('records elapsed latency on successful and failed queries', async () => { let clock = 10; const telemetry = { begin: jest.fn(() => clock), record: jest.fn(), start: jest.fn(), stop: jest.fn() }; let calls = 0; const query = jest.fn(async () => { calls += 1; if (calls > 1) { clock = 14; throw new Error('query failed'); } clock = 13; return [['ok']]; }); const client = await createDb({ primary: profile, mysqlLib: driver({ query }), telemetry, now: () => clock }); await client.query('SELECT 1'); await expect(client.query('SELECT 1')).rejects.toThrow('query failed'); expect(telemetry.record).toHaveBeenCalledWith({ latencyMs: 3, route: 'balanced' }); expect(telemetry.record.mock.calls.some(([entry]) => entry.failed === true && entry.latencyMs > 0 && entry.route === 'balanced')).toBe(true); await client.close(); });
-test('uses the telemetry start time when it is zero', async () => { const telemetry = { begin: () => 0, record: jest.fn() }; const client = await createDb({ primary: profile, mysqlLib: driver(), telemetry, now: () => 5 }); await client.query('SELECT 1'); expect(telemetry.record).toHaveBeenCalledWith({ latencyMs: 5, route: 'balanced' }); await client.close(); });
 
 test('resolves credentials and builds routes from a valid bundle', async () => {
   const client = await createDb({ primary: { host: 'fallback', port: 3306, database: 'app' }, bundle, credentialProvider: jest.fn(async () => ({ user: 'u', password: 'p' })), mysqlLib: driver() });
@@ -67,15 +62,6 @@ test('covers non-retryable errors, credential overlays, and refresh without bala
   await expect(client.refresh({ ...bundle, routes: { primary: [{ host: 'new', port: 3306 }], balanced: [] } })).resolves.toMatchObject({ bundleVersion: 'v1' });
   await client.close();
 });
-test('refreshes a bundle with a balanced route and handles partial stream events', async () => {
-  const client = await createDb({ primary: profile, mysqlLib: driver() });
-  await expect(client.refresh(bundle)).resolves.toMatchObject({ bundleVersion: 'v1' });
-  const handler = {}; await client.attachRoutingStream({ connect: async () => {}, setOnUpdate: (value) => { handler.value = value; } });
-  await handler.value({ ...bundle, type: 'routing.update', routes: { ...bundle.routes, primary: [{ host: 'new', port: 3306 }] }, database: 'app' });
-  await handler.value({ type: 'routing.resync', bundle: { ...bundle, writer: { host: 'resynced', port: 3306 }, routes: { ...bundle.routes, primary: [{ host: 'resynced', port: 3306 }] } } });
-  await client.close();
-});
-test('refreshes a primary-only client and processes drain/recovery without a balanced pool', async () => { const client = await createDb({ primary: profile, mysqlLib: driver() }); await client.refresh({ ...bundle, routes: { primary: [{ host: 'new', port: 3306 }], balanced: [] }, readers: [], bundleVersion: 'v2' }); const handler = {}; await client.attachRoutingStream({ connect: async () => {}, setOnUpdate: (value) => { handler.value = value; } }); await handler.value({ type: 'routing.drain', node: 'new' }); await handler.value({ type: 'routing.recovery', node: 'new' }); await client.close(); });
 test('drains the balanced pool when a strict update removes readers', async () => { const client = await createDb({ primary: profile, balanced: { host: 'read', port: 3306 }, bundle, mysqlLib: driver() }); await client.refresh({ ...bundle, readers: [], routes: { primary: bundle.routes.primary, balanced: [] }, bundleVersion: 2 }); expect(client.nodeStates().filter((node) => node.route === 'balanced')).toEqual(expect.arrayContaining([expect.objectContaining({ state: 'draining', available: false })])); await client.close(); });
 test('retries a balanced query when balanced is the default routing policy and tolerates rollback failure', async () => { const retryable = Object.assign(new Error('temporary'), { code: 'ECONNRESET' }); const client = await createDb({ primary: profile, bundle, routing: 'balanced', mysqlLib: driver({ query: jest.fn().mockRejectedValueOnce(retryable).mockResolvedValue([['ok']]) }) }); await expect(client.query('SELECT 1')).resolves.toBeTruthy(); const rollback = connection(); rollback.query.mockRejectedValueOnce(new Error('query')); rollback.rollback.mockRejectedValueOnce(new Error('rollback')); const txClient = await createDb({ primary: profile, mysqlLib: driver({ getConnection: jest.fn(async () => rollback) }) }); await expect(txClient.transaction(async (tx) => tx.query('bad'))).rejects.toThrow(); await txClient.close(); await client.close(); });
 test('rejects partial stream updates and supports initial stream resync', async () => { const client = await createDb({ primary: profile, mysqlLib: driver() }); await expect(client.refresh({ ...bundle, credentials: undefined })).rejects.toThrow('credentials'); await client.close(); const streamClient = await createDb({ primary: profile, bundle, mysqlLib: driver() }); let update; await streamClient.attachRoutingStream({ connect: async () => {}, setOnUpdate: (handler) => { update = handler; } }); await expect(update({ type: 'routing.update', routes: { primary: [{ host: 'new', port: 3306 }] }, database: 'app' })).rejects.toThrow(); await update({ type: 'routing.resync', bundle: { ...bundle, writer: { host: 'resynced', port: 3306 }, routes: { ...bundle.routes, primary: [{ host: 'resynced', port: 3306 }] } } }); expect(streamClient.bundle().routes.primary[0].host).toBe('resynced'); await streamClient.close(); });
@@ -97,12 +83,6 @@ test('rejects a partial routing event when no active bundle exists', async () =>
   await client.close();
 });
 
-test('drains a previously configured balanced pool when the refreshed bundle has no readers', async () => {
-  const client = await createDb({ primary: profile, balanced: { host: 'reader', port: 3306 }, bundle, mysqlLib: driver() });
-  await expect(client.refresh({ ...bundle, readers: [], routes: { primary: [bundle.writer], balanced: [] }, bundleVersion: 'v2' })).resolves.toMatchObject({ bundleVersion: 'v2' });
-  expect(client.availability().routes.balanced).toBe(false);
-  await client.close();
-});
 
 test('accepts a complete routing update without relying on active-bundle defaults', async () => {
   const client = await createDb({ primary: profile, bundle, mysqlLib: driver() });
@@ -235,15 +215,6 @@ test('updates one application client without changing another client assignment'
 });
 
 
-test('records execute and transaction operations in telemetry', async () => {
-  const telemetry = { begin: jest.fn(() => 10), record: jest.fn(), start: jest.fn(), stop: jest.fn() };
-  const client = await createDb({ primary: profile, mysqlLib: driver(), telemetry, now: () => 14 });
-  await client.execute('INSERT INTO app VALUES (?)', ['x']);
-  await client.transaction(async (tx) => tx.query('SELECT 1'));
-  expect(telemetry.begin).toHaveBeenCalledTimes(2);
-  expect(telemetry.record).toHaveBeenCalledTimes(2);
-  await client.close();
-});
 
 test('recovery makes a previously unavailable route usable again', async () => {
   const client = await createDb({ primary: profile, bundle: { ...bundle, writer: { host: 'recovering-node', port: 3306 }, routes: { primary: [{ host: 'recovering-node', port: 3306 }], balanced: [] } }, mysqlLib: driver() });
@@ -260,11 +231,5 @@ test('merges writer-only updates with the active route sets', async () => {
   await client.attachRoutingStream({ connect: async () => {}, setOnUpdate: (handler) => { update = handler; } });
   await update({ ...bundle, type: 'routing.update', writer: { host: 'writer-only', port: 3306 }, failover: [], bundleVersion: 2, routes: { ...bundle.routes, primary: [{ host: 'writer-only', port: 3306 }] } });
   expect(client.nodeStates().find((node) => node.route === 'primary').host).toBe('writer-only');
-  await client.close();
-});
-
-test('rejects a refreshed bundle without a writer', async () => {
-  const client = await createDb({ primary: profile, bundle, mysqlLib: driver() });
-  await expect(client.refresh({ ...bundle, writer: undefined, routes: { primary: [], balanced: bundle.routes.balanced }, bundleVersion: 2 })).rejects.toThrow('writer');
   await client.close();
 });

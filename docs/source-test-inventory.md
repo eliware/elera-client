@@ -23,6 +23,8 @@ moved, not rewritten, when a focused test is relocated.
 | `src/client/create-db/bundle-refresh.mjs` | implementation | `tests/client/create-db/bundle-refresh.test.mjs` |
 | `src/client/create-db/bundle-state.mjs` | implementation | covered by create-db refresh and integration tests |
 | `src/client/create-db/diagnostics.mjs` | implementation | `tests/client/create-db/diagnostics.test.mjs` |
+| `src/client/create-db/public-api.mjs` | implementation | `tests/integration/mysql2-contract.test.mjs` and create-db integration tests |
+| `src/client/create-db/` telemetry behavior | cross-cutting | `tests/client/create-db/telemetry.test.mjs` |
 | `src/client/create-db/query-execution.mjs` | implementation | `tests/client/create-db/query/query.test.mjs` |
 | `src/client/create-db/route-selection.mjs` | implementation | covered by query and routing tests |
 | `src/client/create-db/routing-events.mjs` | implementation | `tests/client/create-db/routing-events.test.mjs` |
