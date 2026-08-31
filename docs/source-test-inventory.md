@@ -56,5 +56,7 @@ moved, not rewritten, when a focused test is relocated.
 
 The inventory is current. Tests mirror source directories without a redundant
 `src` segment. Aggregate orchestrator tests are deliberate cross-cutting
-tests; focused modules have dedicated tests where isolation adds value, and
-remaining small helpers are covered through their owning orchestrator tests.
+tests: create-db retains only full-client routing/lifecycle smoke coverage and
+the stream aggregate retains only connection coordination. Focused modules have
+dedicated tests where isolation adds value, and remaining small helpers are
+covered through their owning orchestrator tests.
