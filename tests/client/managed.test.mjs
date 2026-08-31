@@ -16,6 +16,15 @@ test('creates a managed client from endpoint and token only', async () => {
   await client.end();
 });
 
+test('enables managed telemetry by default and accepts an explicit telemetry sink', async () => {
+  const telemetry = { start: jest.fn(), stop: jest.fn() };
+  const fetchImpl = jest.fn(async () => ({ ok: true, json: async () => ({ ok: true, operation: 'routing.bundle', data: bundle }) }));
+  const client = await createDb({ endpoint: 'http://vip:8080', token: 'token', telemetry, fetchImpl, WebSocketImpl: FakeWebSocket, mysqlLib: { createPool: () => ({ query: async () => [[]], execute: async () => [[]], getConnection: async () => ({}), end: async () => {} }) } });
+  expect(telemetry.start).toHaveBeenCalledTimes(1);
+  await client.end();
+  expect(telemetry.stop).toHaveBeenCalledTimes(1);
+});
+
 test('uses managed endpoint and token from the process environment when omitted', async () => {
   const previousEndpoint = process.env.ELERA_API_URL;
   const previousToken = process.env.ELERA_API_TOKEN;

@@ -3,7 +3,7 @@ import { createDbFromBundle } from './from-bundle.mjs';
 import { fetchRoutingBundle } from '../routing/bundle-fetcher.mjs';
 import { createRoutingStream } from '../routing/stream-client.mjs';
 
-export async function createDb({ endpoint, token, env = process.env, fetchImpl = globalThis.fetch, fetchPath, WebSocketImpl = globalThis.WebSocket, mysqlLib, log, routing, quarantineMs, drainTimeoutMs, now, telemetry } = {}) {
+export async function createDb({ endpoint, token, env = process.env, fetchImpl = globalThis.fetch, fetchPath, WebSocketImpl = globalThis.WebSocket, mysqlLib, log, routing, quarantineMs, drainTimeoutMs, now, telemetry = true } = {}) {
   endpoint ??= env?.ELERA_API_URL;
   token ??= env?.ELERA_API_TOKEN;
   const fetchBundle = (targetEndpoint = endpoint) => fetchRoutingBundle({ endpoint: targetEndpoint, token, fetchImpl, path: fetchPath });
