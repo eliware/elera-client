@@ -1,7 +1,16 @@
-import { expect, test } from '@jest/globals';
+import { afterEach, expect, jest, test } from '@jest/globals';
+import { createRoutingStream } from '../../../src/routing/stream-client/index.mjs';
 import { parseRoutingEvent } from '../../../src/routing/stream-client/events.mjs';
+import { FakeWebSocket, sockets } from './fixtures.mjs';
+
+afterEach(() => sockets.splice(0).forEach((socket) => socket.close()));
 
 test('parses and validates routing event payloads', () => {
   expect(parseRoutingEvent(JSON.stringify({ type: 'routing.topology', version: 1, generatedAt: '2030-01-01T00:00:00Z', node: 'writer', context: { nodeIdentity: { name: 'writer' }, ports: { sql: 3306, http: 8080 }, clusterCondition: 'Primary' }, topology: { nodes: [] } }))).toMatchObject({ type: 'routing.topology', version: 1 });
   expect(() => parseRoutingEvent('{bad')).toThrow();
 });
+
+test('reports malformed events and socket errors', async () => { const errors = []; const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle: async () => ({}), WebSocketImpl: FakeWebSocket, onError: (error) => errors.push(error), reconnectMs: 100000 }); await client.connect(); const socket = sockets.at(-1); socket.open(); socket.onmessage?.({ data: '{' }); socket.onerror?.(new Error('socket')); client.close(); expect(errors).toHaveLength(2); });
+test('uses top-level event versions as the authoritative ordering field', async () => { const update = jest.fn(); const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle: async () => ({}), WebSocketImpl: FakeWebSocket, onUpdate: update }); await client.connect(); const socket = sockets.at(-1); socket.open(); socket.message({ type: 'routing.update', version: 2, bundleVersion: 100 }); socket.message({ type: 'routing.update', version: 1, bundleVersion: 200 }); expect(update).toHaveBeenCalledTimes(1); client.close(); });
+test('orders integer event versions numerically', async () => { const update = jest.fn(); const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle: async () => ({}), WebSocketImpl: FakeWebSocket, onUpdate: update }); await client.connect(); const socket = sockets.at(-1); socket.open(); socket.message({ type: 'routing.update', version: 10 }); socket.message({ type: 'routing.update', version: 9 }); expect(update).toHaveBeenCalledTimes(1); expect(client.state().expectedVersion).toBe(10); client.close(); });
+test('refreshes credentials through REST for credential-free topology events', async () => { const updates = []; const fetchBundle = jest.fn(async () => ({ bundleVersion: 'topology-refresh' })); const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle, WebSocketImpl: FakeWebSocket, onUpdate: (event) => updates.push(event) }); await client.connect(); const socket = sockets.at(-1); socket.open(); socket.message({ type: 'routing.topology', version: 1, node: 'writer', context: { nodeIdentity: { name: 'writer' }, ports: { sql: 3306, http: 8080 }, clusterCondition: 'Primary' }, topology: { nodes: [{ nodeId: 'writer', address: 'db', sqlPort: 3306, state: 'ready', draining: false }] } }); await new Promise((resolve) => setImmediate(resolve)); expect(fetchBundle).toHaveBeenCalledWith('http://vip'); expect(updates).toEqual([expect.objectContaining({ type: 'routing.resync', bundle: { bundleVersion: 'topology-refresh' } })]); client.close(); });
