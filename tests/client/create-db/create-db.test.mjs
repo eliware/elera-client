@@ -2,7 +2,7 @@ import { expect, test, jest } from '@jest/globals';
 import { createDb } from '../../../src/client/create-db.mjs';
 
 const profile = { host: 'db', port: 3306, user: 'u', password: 'p', database: 'app' };
-const bundle = { apiVersion: 'v1', bundleVersion: 'v1', application: 'app', database: 'app', identity: 'runtime', nodeIdentity: 'db', credentials: { username: 'u', password: 'p' }, writer: { host: 'db', port: 3306 }, readers: [{ host: 'read', port: 3306 }, { host: 'read2', port: 3306 }], failover: [], ports: { sql: 3306, http: 8080 }, routes: { primary: [{ host: 'db', port: 3306 }], balanced: [{ host: 'read', port: 3306, weight: 10 }, { host: 'read2', port: 3306, weight: 10 }] }, expiresAt: new Date(Date.now() + 60000).toISOString() };
+const bundle = { apiVersion: 'v1', bundleVersion: 'v1', application: 'app', database: 'app', physicalDatabase: 'physical_app', identity: 'runtime', nodeIdentity: 'db', credentials: { username: 'u', password: 'p' }, writer: { host: 'db', port: 3306 }, readers: [{ host: 'read', port: 3306 }, { host: 'read2', port: 3306 }], failover: [], ports: { sql: 3306, http: 8080 }, routes: { primary: [{ host: 'db', port: 3306 }], balanced: [{ host: 'read', port: 3306, weight: 10 }, { host: 'read2', port: 3306, weight: 10 }] }, expiresAt: new Date(Date.now() + 60000).toISOString() };
 const connection = () => ({ query: jest.fn(async (sql) => [[sql]]), execute: jest.fn(async (sql) => [[sql]]), beginTransaction: jest.fn(async () => {}), commit: jest.fn(async () => {}), rollback: jest.fn(async () => {}), release: jest.fn() });
 const driver = (behavior = {}) => ({ createPool: jest.fn(() => ({ query: behavior.query ?? jest.fn(async (sql) => [[sql]]), execute: behavior.execute ?? jest.fn(async (sql) => [[sql]]), getConnection: behavior.getConnection ?? jest.fn(async () => connection()), end: jest.fn(async () => {}) })) });
 
@@ -136,10 +136,11 @@ test('accepts a complete routing update without relying on active-bundle default
     bundleVersion: 'v2',
     nodeIdentity: 'new-node',
     ports: { sql: 3306, http: 8080 },
+    physicalDatabase: 'new-physical-db',
     routes: { primary: [{ host: 'new-writer', port: 3306 }], balanced: [{ host: 'new-reader', port: 3306 }] },
     expiresAt: new Date(Date.now() + 60000).toISOString()
   });
-  expect(client.bundle()).toMatchObject({ application: 'new-app', database: 'new-db', identity: 'new-identity', nodeIdentity: 'new-node', bundleVersion: 'v2' });
+  expect(client.bundle()).toMatchObject({ application: 'new-app', database: 'new-db', physicalDatabase: 'new-physical-db', identity: 'new-identity', nodeIdentity: 'new-node', bundleVersion: 'v2' });
   await client.close();
 });
 

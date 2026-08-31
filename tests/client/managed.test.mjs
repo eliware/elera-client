@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals';
 import { createDb } from '../../src/client/managed.mjs';
 
-const bundle = { apiVersion: 'v1', application: 'app', database: 'app', identity: 'id', credentials: { username: 'u', password: 'p' }, writer: { host: 'db', port: 3306 }, readers: [], failover: [], bundleVersion: 1, nodeIdentity: 'db', ports: { sql: 3306, http: 8080 }, routes: { primary: [{ host: 'db', port: 3306 }], balanced: [] }, expiresAt: '2099-01-01T00:00:00Z' };
+const bundle = { apiVersion: 'v1', application: 'app', database: 'app', physicalDatabase: 'physical_app', identity: 'id', credentials: { username: 'u', password: 'p' }, writer: { host: 'db', port: 3306 }, readers: [], failover: [], bundleVersion: 1, nodeIdentity: 'db', ports: { sql: 3306, http: 8080 }, routes: { primary: [{ host: 'db', port: 3306 }], balanced: [] }, expiresAt: '2099-01-01T00:00:00Z' };
 
 class FakeWebSocket {
   constructor() { this.readyState = 0; }

@@ -51,7 +51,7 @@ export async function createDb({ primary, balanced, bundle, credentialProvider, 
       const writer = candidate.writer;
       const reader = candidate.readers[0] ?? candidate.routes.balanced[0];
       activeBundle = candidate;
-      primaryConfig = validateProfile({ ...primaryConfig, host: writer.host, port: writer.port, user: credentials.username, password: credentials.password, database: candidate.database }, 'primary');
+      primaryConfig = validateProfile({ ...primaryConfig, host: writer.host, port: writer.port, user: credentials.username, password: credentials.password, database: candidate.physicalDatabase }, 'primary');
       primaryPool = makeRoute('primary', primaryConfig);
       if (reader) {
         balancedConfig = validateProfile({ ...primaryConfig, host: reader.host, port: reader.port }, 'balanced');

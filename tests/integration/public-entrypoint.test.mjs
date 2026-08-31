@@ -2,7 +2,7 @@ import { expect, test, jest } from '@jest/globals';
 import { createDb } from '../../src/index.mjs';
 
 const bundle = {
-  apiVersion: 'v1', application: 'smoke', database: 'smoke', identity: 'runtime',
+  apiVersion: 'v1', application: 'smoke', database: 'app', physicalDatabase: 'physical_app', identity: 'runtime',
   credentials: { username: 'u', password: 'p' }, writer: { host: 'db', port: 3306 },
   readers: [], failover: [], bundleVersion: 1, nodeIdentity: 'db',
   ports: { sql: 3306, http: 8080 }, routes: { primary: [{ host: 'db', port: 3306 }], balanced: [] },

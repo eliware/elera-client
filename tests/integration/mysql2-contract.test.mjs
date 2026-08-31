@@ -1,7 +1,7 @@
 import { expect, jest, test } from '@jest/globals';
 import { createDb } from '../../src/index.mjs';
 
-const bundle = { apiVersion: 'v1', application: 'app', database: 'db', identity: 'runtime', credentials: { username: 'u', password: 'p' }, routes: { primary: [{ host: 'writer', port: 3306 }], balanced: [] }, writer: { host: 'writer', port: 3306 }, readers: [], failover: [], bundleVersion: 1, nodeIdentity: 'writer', ports: { sql: 3306, http: 8080 }, expiresAt: '2099-01-01T00:00:00Z' };
+const bundle = { apiVersion: 'v1', application: 'app', database: 'app', physicalDatabase: 'physical_app', identity: 'runtime', credentials: { username: 'u', password: 'p' }, routes: { primary: [{ host: 'writer', port: 3306 }], balanced: [] }, writer: { host: 'writer', port: 3306 }, readers: [], failover: [], bundleVersion: 1, nodeIdentity: 'writer', ports: { sql: 3306, http: 8080 }, expiresAt: '2099-01-01T00:00:00Z' };
 class ClosedSocket { constructor() { this.readyState = 3; } close() {} }
 
 const make = async ({ query = jest.fn(), execute = jest.fn(), connection = {} } = {}) => {
