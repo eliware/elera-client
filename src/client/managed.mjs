@@ -18,6 +18,7 @@ export async function createDb({ endpoint, token, env = process.env, fetchImpl =
     query: client.query,
     execute: client.execute,
     getConnection: client.getConnection,
+    probe: client.probe,
     end
   });
 }

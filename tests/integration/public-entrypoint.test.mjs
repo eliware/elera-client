@@ -16,9 +16,11 @@ class ClosedSocket {
 
 test('public entrypoint creates a managed client with only endpoint and token', async () => {
   const fetchImpl = jest.fn(async () => ({ ok: true, json: async () => ({ ok: true, operation: 'routing.bundle', data: bundle }) }));
-  const mysqlLib = { createPool: () => ({ query: async () => [[]], execute: async () => [[]], getConnection: async () => ({}), end: async () => {} }) };
+  const mysqlLib = { createPool: () => ({ query: async () => [[{ ok: 1 }], [{ name: 'ok' }]], execute: async () => [[]], getConnection: async () => ({ beginTransaction: async () => {}, rollback: async () => {}, release: () => {} }), end: async () => {} }) };
   const client = await createDb({ endpoint: 'http://vip:8080', token: 'app-token', fetchImpl, WebSocketImpl: ClosedSocket, mysqlLib });
   expect(fetchImpl).toHaveBeenCalledWith('http://vip:8080/api/v1/routing/bundle', expect.any(Object));
   expect(client.getConnection).toEqual(expect.any(Function));
+  expect(client.probe).toEqual(expect.any(Function));
+  await expect(client.probe()).resolves.toMatchObject({ ok: true, route: 'balanced', transaction: 'started', released: true });
   await client.end();
 });

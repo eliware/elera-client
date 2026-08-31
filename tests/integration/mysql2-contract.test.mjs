@@ -78,7 +78,7 @@ test('never automatically replays an unsafe write after a retryable failure', as
 
 test('public client exposes no routing, credential, or node-management controls', async () => {
   const { db } = await make();
-  expect(Object.keys(db).sort()).toEqual(['end', 'execute', 'getConnection', 'query']);
+  expect(Object.keys(db).sort()).toEqual(['end', 'execute', 'getConnection', 'probe', 'query']);
   for (const name of ['bundle', 'refresh', 'drain', 'nodeStates', 'setNodeAvailability', 'availability', 'health', 'close', 'telemetry']) expect(db).not.toHaveProperty(name);
   expect(JSON.stringify(db)).not.toMatch(/internal-user|internal-password|credentials|routes|writer|readers/);
   await db.end();
