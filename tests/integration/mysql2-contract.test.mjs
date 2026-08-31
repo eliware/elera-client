@@ -20,7 +20,7 @@ test('forwards mysql2 query and execute tuples, metadata, and parameters unchang
   await expect(db.execute('UPDATE t SET x=?', [2])).resolves.toBe(result);
   expect(query).toHaveBeenCalledWith('SELECT ?', [1]);
   expect(execute).toHaveBeenCalledWith('UPDATE t SET x=?', [2]);
-  await db.end();
+  await expect(db.end()).resolves.toBeUndefined();
 });
 
 test('exposes mysql2-style SQL error properties without credentials or routing data', async () => {
@@ -28,7 +28,7 @@ test('exposes mysql2-style SQL error properties without credentials or routing d
   const { db } = await make({ execute: jest.fn(async () => { throw error; }) });
   await expect(db.execute('BAD SQL')).rejects.toMatchObject({ message: 'syntax error', code: 'ER_PARSE_ERROR', errno: 1064, sqlState: '42000', sqlMessage: 'bad SQL', fatal: false });
   await expect(db.execute('BAD SQL')).rejects.not.toHaveProperty('password');
-  await db.end();
+  await expect(db.end()).resolves.toBeUndefined();
 });
 
 test('getConnection returns a writer connection and preserves transaction lifecycle', async () => {
