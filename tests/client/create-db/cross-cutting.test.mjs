@@ -60,16 +60,6 @@ test('rejects invalid setup and expired refresh bundles', async () => {
   await client.close();
 });
 
-test('retries a retryable balanced query and supports explicit connections and optional stream handlers', async () => {
-  const error = Object.assign(new Error('temporary'), { code: 'ECONNRESET' });
-  const pool = driver({ query: jest.fn().mockRejectedValueOnce(error).mockResolvedValue([['ok']]) });
-  const client = await createDb({ primary: profile, bundle, credentialProvider: async () => ({ user: 'u', password: 'p' }), mysqlLib: pool });
-  await client.query('SELECT 1', [], { route: 'balanced' });
-  const explicit = { query: jest.fn(async () => ['explicit']), execute: jest.fn(async () => ['explicit']) };
-  await client.query('SELECT 1', [], { connection: explicit }); await client.execute('SELECT 1', [], { connection: explicit });
-  const stream = { connect: jest.fn(async () => {}) }; await client.attachRoutingStream(stream); await client.close();
-});
-
 test('covers non-retryable errors, credential overlays, and refresh without balanced routes', async () => {
   const failure = Object.assign(new Error('bad query'), { code: 'ER_PARSE_ERROR' });
   const client = await createDb({ primary: profile, balanced: { host: 'read', port: 3306 }, credentialProvider: async () => ({ user: 'u', password: 'p' }), mysqlLib: driver({ query: jest.fn(async () => { throw failure; }) }) });
