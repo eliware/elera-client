@@ -36,3 +36,13 @@ test('updates one application client without changing another client assignment'
   expect(clientB.bundle().writer.host).toBe('app-b-writer');
   await clientA.close(); await clientB.close();
 });
+
+test('applies explicit writer updates and preserves route assignments', async () => {
+  const client = await createDb({ primary: profile, bundle, mysqlLib: driver() });
+  let update;
+  await client.attachRoutingStream({ connect: async () => {}, setOnUpdate: (handler) => { update = handler; } });
+  await update({ ...bundle, type: 'routing.update', writer: { host: 'stream-writer', port: 3306 }, failover: [{ host: 'stream-backup', port: 3306 }], readers: [{ host: 'stream-reader', port: 3306 }], routes: { primary: [{ host: 'stream-writer', port: 3306 }], balanced: [{ host: 'stream-reader', port: 3306 }] }, bundleVersion: 3, database: 'app' });
+  expect(client.nodeStates().filter((node) => node.route === 'primary').map((node) => node.host)).toEqual(['stream-writer', 'stream-backup']);
+  expect(client.nodeStates().filter((node) => node.route === 'balanced').map((node) => node.host)).toEqual(['stream-reader']);
+  await client.close();
+});

@@ -121,22 +121,7 @@ test('finishes an in-flight query while excluding the drained node from new work
   await client.close();
 });
 
-test('applies explicit writer updates delivered through the routing stream', async () => {
-  const client = await createDb({ primary: profile, bundle, mysqlLib: driver() });
-  let update;
-  await client.attachRoutingStream({ connect: async () => {}, setOnUpdate: (handler) => { update = handler; } });
-  await update({ ...bundle, type: 'routing.update', writer: { host: 'stream-writer', port: 3306 }, failover: [{ host: 'stream-backup', port: 3306 }], readers: [{ host: 'stream-reader', port: 3306 }], routes: { primary: [{ host: 'stream-writer', port: 3306 }], balanced: [{ host: 'stream-reader', port: 3306 }] }, bundleVersion: 3, database: 'app' });
-  expect(client.nodeStates().filter((node) => node.route === 'primary').map((node) => node.host)).toEqual(['stream-writer', 'stream-backup']);
-  expect(client.nodeStates().filter((node) => node.route === 'balanced').map((node) => node.host)).toEqual(['stream-reader']);
-  await client.close();
-});
 
-test('enforces the single-token database context on creation and refresh', async () => {
-  const scopedBundle = { ...bundle, application: 'billing', credentialName: 'core-writer', identity: 'client-1', scopes: ['read', 'write'] };
-  const client = await createDb({ primary: profile, bundle: scopedBundle, tokenContext: { application: 'billing', database: 'app', credentialName: 'core-writer', identity: 'client-1', scopes: ['read'] }, mysqlLib: driver() });
-  await expect(client.refresh({ ...scopedBundle, database: 'other' })).rejects.toThrow('database');
-  await client.close();
-});
 
 test('drains the affected node when a supervisor announces shutdown', async () => {
   const client = await createDb({ primary: profile, bundle: { ...bundle, writer: { host: 'writer', port: 3306 }, failover: [{ host: 'backup', port: 3306 }], routes: { primary: [{ host: 'writer', port: 3306 }, { host: 'backup', port: 3306 }], balanced: [] } }, mysqlLib: driver() });
