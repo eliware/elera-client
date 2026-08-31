@@ -1,12 +1,12 @@
 
 import { createDbFromBundle } from '../from-bundle.mjs';
-import { fetchRoutingBundle } from '../../routing/bundle-fetcher.mjs';
 import { createRoutingStream } from '../../routing/stream-client/index.mjs';
+import { resolveManagedConfig, createBundleFetcher } from './configuration.mjs';
+import { exposeManagedClient } from './public-api.mjs';
 
 export async function createDb({ endpoint, token, env = process.env, fetchImpl = globalThis.fetch, fetchPath, WebSocketImpl = globalThis.WebSocket, mysqlLib, log, routing, quarantineMs, drainTimeoutMs, now, telemetry = true } = {}) {
-  endpoint ??= env?.ELERA_API_URL;
-  token ??= env?.ELERA_API_TOKEN;
-  const fetchBundle = (targetEndpoint = endpoint) => fetchRoutingBundle({ endpoint: targetEndpoint, token, fetchImpl, path: fetchPath });
+  ({ endpoint, token } = resolveManagedConfig({ endpoint, token, env }));
+  const fetchBundle = createBundleFetcher({ endpoint, token, fetchImpl, fetchPath });
   const bundle = await fetchBundle();
   const stream = createRoutingStream({ endpoint, token, fetchBundle, WebSocketImpl, log, now, telemetry });
   const tokenContext = { application: bundle.application, database: bundle.database, credentialName: bundle.credentialName, identity: bundle.identity, scopes: bundle.scopes };
@@ -14,11 +14,5 @@ export async function createDb({ endpoint, token, env = process.env, fetchImpl =
   const detach = await client.attachRoutingStream(stream);
   const close = client.close.bind(client);
   const end = async () => { await detach?.(); await close(); };
-  return Object.freeze({
-    query: client.query,
-    execute: client.execute,
-    getConnection: client.getConnection,
-    probe: client.probe,
-    end
-  });
+  return exposeManagedClient(client, end);
 }
