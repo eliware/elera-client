@@ -1,5 +1,5 @@
 import { afterEach, expect, test, jest } from '@jest/globals';
-import { createRoutingStream } from '../../src/routing/stream-client.mjs';
+import { createRoutingStream } from '../../../src/routing/stream-client/index.mjs';
 
 test('requires endpoint and REST fallback', () => {
   expect(() => createRoutingStream()).toThrow('endpoint and fetchBundle');

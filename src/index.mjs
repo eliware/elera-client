@@ -1,1 +1,1 @@
-export { createDb } from './client/managed.mjs';
+export { createDb } from './client/managed/index.mjs';

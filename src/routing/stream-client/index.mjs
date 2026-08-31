@@ -1,8 +1,8 @@
 
 import { log as defaultLog } from '@eliware/common';
 import { validateRoutingEvent } from '@eliware/elera-lib';
-import { compareBundleVersions } from './bundle-version.mjs';
-import { createRoutingResync } from './internal-events.mjs';
+import { compareBundleVersions } from '../bundle-version.mjs';
+import { createRoutingResync } from '../internal-events.mjs';
 
 export function createRoutingStream({ endpoint, token, fetchBundle, WebSocketImpl = globalThis.WebSocket, onUpdate, onError, reconnectMs = 1000, maxReconnectMs = 30000, heartbeatMs = 45000, now = () => Date.now(), telemetry } = {}) {
   if (!endpoint || typeof fetchBundle !== 'function') throw new TypeError('endpoint and fetchBundle are required');

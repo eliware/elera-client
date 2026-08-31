@@ -1,19 +1,19 @@
 
 import { log as defaultLog } from '@eliware/common';
 import * as mysql from 'mysql2/promise';
-import { validateProfile } from '../config.mjs';
-import { asSqlError } from '../errors.mjs';
+import { validateProfile } from '../../config.mjs';
+import { asSqlError } from '../../errors.mjs';
 import { validateBundle as validateBundleShape } from '@eliware/elera-lib';
-import { clientDrainTimeout } from './drain-policy.mjs';
-import { createTelemetry } from '../telemetry.mjs';
-import { ROUTING_RESYNC } from '../routing/internal-events.mjs';
-import { compareBundleVersions } from '../routing/bundle-version.mjs';
-import { bundleNeedsRefresh } from '../routing/bundle-expiry.mjs';
-import { resolveCredentials, credentialContext } from './internal/credential-provider.mjs';
-import { createRouteFactory } from './route-factory.mjs';
-import { classifyQuery, routeFor } from '../routing.mjs';
-import { createTimedOperation } from './telemetry-wrapper.mjs';
-import { validateTokenContext } from './authorization-context.mjs';
+import { clientDrainTimeout } from '../drain-policy.mjs';
+import { createTelemetry } from '../../telemetry.mjs';
+import { ROUTING_RESYNC } from '../../routing/internal-events.mjs';
+import { compareBundleVersions } from '../../routing/bundle-version.mjs';
+import { bundleNeedsRefresh } from '../../routing/bundle-expiry.mjs';
+import { resolveCredentials, credentialContext } from '../internal/credential-provider.mjs';
+import { createRouteFactory } from '../route-factory.mjs';
+import { classifyQuery, routeFor } from '../../routing.mjs';
+import { createTimedOperation } from '../telemetry-wrapper.mjs';
+import { validateTokenContext } from '../authorization-context.mjs';
 
 const olderVersion = (candidate, current) => compareBundleVersions(candidate, current) < 0;
 const equivalentPools = (candidate, current) => current && candidate.bundleVersion === current.bundleVersion && JSON.stringify({ physicalDatabase: candidate.physicalDatabase, credentials: candidate.credentials, writer: candidate.writer, routes: candidate.routes }) === JSON.stringify({ physicalDatabase: current.physicalDatabase, credentials: current.credentials, writer: current.writer, routes: current.routes });

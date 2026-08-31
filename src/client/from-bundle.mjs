@@ -12,6 +12,6 @@ export function profilesFromBundle(bundle) {
 
 export async function createDbFromBundle({ bundle, createClient, ...options } = {}) {
   const profiles = profilesFromBundle(bundle);
-       const factory = createClient ?? (await import('./create-db.mjs')).createDb;
+       const factory = createClient ?? (await import('./create-db/index.mjs')).createDb;
   return factory({ ...options, ...profiles, bundle, identity: bundle.identity });
 }

@@ -1,7 +1,7 @@
 
-import { createDbFromBundle } from './from-bundle.mjs';
-import { fetchRoutingBundle } from '../routing/bundle-fetcher.mjs';
-import { createRoutingStream } from '../routing/stream-client.mjs';
+import { createDbFromBundle } from '../from-bundle.mjs';
+import { fetchRoutingBundle } from '../../routing/bundle-fetcher.mjs';
+import { createRoutingStream } from '../../routing/stream-client/index.mjs';
 
 export async function createDb({ endpoint, token, env = process.env, fetchImpl = globalThis.fetch, fetchPath, WebSocketImpl = globalThis.WebSocket, mysqlLib, log, routing, quarantineMs, drainTimeoutMs, now, telemetry = true } = {}) {
   endpoint ??= env?.ELERA_API_URL;

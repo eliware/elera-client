@@ -1,5 +1,5 @@
 import { expect, test, jest } from '@jest/globals';
-import { createRoutePool } from '../../src/pools/route-pool.mjs';
+import { createRoutePool } from '../../../src/pools/route-pool/index.mjs';
 
 test('route pool selects available weighted nodes and reports health failures', async () => {
   const calls = [];

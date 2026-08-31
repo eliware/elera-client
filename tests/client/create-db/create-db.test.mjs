@@ -1,5 +1,5 @@
 import { expect, test, jest } from '@jest/globals';
-import { createDb } from '../../../src/client/create-db.mjs';
+import { createDb } from '../../../src/client/create-db/index.mjs';
 
 const profile = { host: 'db', port: 3306, user: 'u', password: 'p', database: 'app' };
 const bundle = { apiVersion: 'v1', bundleVersion: 'v1', application: 'app', database: 'app', physicalDatabase: 'physical_app', identity: 'runtime', nodeIdentity: 'db', credentials: { username: 'u', password: 'p' }, writer: { host: 'db', port: 3306 }, readers: [{ host: 'read', port: 3306 }, { host: 'read2', port: 3306 }], failover: [], ports: { sql: 3306, http: 8080 }, routes: { primary: [{ host: 'db', port: 3306 }], balanced: [{ host: 'read', port: 3306, weight: 10 }, { host: 'read2', port: 3306, weight: 10 }] }, expiresAt: new Date(Date.now() + 60000).toISOString() };
