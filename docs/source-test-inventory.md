@@ -42,6 +42,7 @@ moved, not rewritten, when a focused test is relocated.
 | `src/routing/stream-client/address.mjs` | implementation | covered by stream connection tests |
 | `src/routing/stream-client/events.mjs` | implementation | `tests/routing/stream-client/events.test.mjs` |
 | `src/routing/stream-client/fallback.mjs` | implementation | `tests/routing/stream-client/fallback.test.mjs` |
+| `src/routing/stream-client` telemetry behavior | cross-cutting | `tests/routing/stream-client/telemetry.test.mjs` |
 | `src/routing/stream-client/heartbeat.mjs` | implementation | `tests/routing/stream-client/heartbeat.test.mjs` |
 | `src/routing/stream-client/reconnect.mjs` | implementation | `tests/routing/stream-client/reconnect.test.mjs` |
 
