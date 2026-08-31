@@ -1,11 +1,11 @@
 
 import { log as defaultLog } from '@eliware/common';
-import { validateRoutingEvent } from '@eliware/elera-lib';
 import { compareBundleVersions } from '../bundle-version.mjs';
 import { createRoutingResync } from '../internal-events.mjs';
 import { websocketUrl, activeEndpointFromShutdown } from './address.mjs';
 import { createReconnectPolicy } from './reconnect.mjs';
 import { startHeartbeat, stopHeartbeat } from './heartbeat.mjs';
+import { parseRoutingEvent } from './events.mjs';
 
 export function createRoutingStream({ endpoint, token, fetchBundle, WebSocketImpl = globalThis.WebSocket, onUpdate, onError, reconnectMs = 1000, maxReconnectMs = 30000, heartbeatMs = 45000, now = () => Date.now(), telemetry } = {}) {
   if (!endpoint || typeof fetchBundle !== 'function') throw new TypeError('endpoint and fetchBundle are required');
@@ -24,7 +24,7 @@ export function createRoutingStream({ endpoint, token, fetchBundle, WebSocketImp
       socket.onopen = () => { connecting = false; mode = 'websocket'; reconnectDeadlineAt = undefined; reconnect.reset(); if (disconnectedAt !== undefined) { telemetry?.recordReconnect?.({ delayMs: Math.max(0, now() - disconnectedAt), failover: lastReconnectWasPlanned }); disconnectedAt = undefined; lastReconnectWasPlanned = false; } heartbeat = startHeartbeat({ getSocket: () => socket, heartbeatMs, now }); };
       socket.onmessage = async ({ data }) => {
         try {
-          const event = validateRoutingEvent(JSON.parse(data));
+          const event = parseRoutingEvent(data);
           if (event.type === 'routing.shutdown') {
             activeEndpoint = activeEndpointFromShutdown(activeEndpoint, event);
             updateHandler?.(event);
