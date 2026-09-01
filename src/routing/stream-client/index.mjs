@@ -28,7 +28,10 @@ export function createRoutingStream({ endpoint, token, fetchBundle, WebSocketImp
           if (event.type === 'routing.shutdown') {
             activeEndpoint = activeEndpointFromShutdown(activeEndpoint, event);
             updateHandler?.(event);
-            if (typeof event.loadBalancerEndpoint === 'string' && event.loadBalancerEndpoint) endpoint = event.loadBalancerEndpoint;
+            if (typeof event.loadBalancerEndpoint === 'string' && event.loadBalancerEndpoint) {
+              endpoint = event.loadBalancerEndpoint;
+              activeEndpoint = endpoint;
+            }
             const deadlineMs = event.reconnectDeadlineMs;
             reconnectDeadlineAt = now() + deadlineMs;
             plannedReconnect = deadlineMs > 0;

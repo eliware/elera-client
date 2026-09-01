@@ -64,13 +64,14 @@ Credential-free `routing.topology` events are treated as refresh signals: the
 client validates the topology event, then retrieves the authenticated bundle
 over REST rather than treating topology data as SQL credentials.
 The internal `routing.resync` signal used for that REST refresh is not a
-public server event; applications receive the resulting bundle through the
-normal client routing behavior.
-WebSocket authentication uses the `Authorization: Bearer …` handshake header;
+public server event; applications observe only the resulting SQL routing
+behavior, not the bundle itself.
+In Node WebSocket transports, authentication uses the `Authorization: Bearer …`
+handshake header;
 bearer tokens are never placed in the WebSocket URL.
 
 During drain or shutdown, the affected node is removed from new route
-selection while in-flight work is allowed to finish up to the configured
+selection while in-flight work is allowed to finish up to the applicable
 client drain deadline. If no primary route remains, availability reports
 `standalone-unavailable` for a single-server service or
 `cluster-unavailable` for a clustered service. Applications should surface the
@@ -84,7 +85,8 @@ Acquired connections provide `beginTransaction`, `commit`, `rollback`, and
 `release`. SQL credentials and routing internals remain private.
 
 The client selects readers and writers transparently. It does not
-automatically retry writes after a failure.
+automatically retry writes after a failure; retryable balanced operations are
+limited to SQL classified as safe reads.
 
 ## Telemetry
 
@@ -97,7 +99,8 @@ mysql2-shaped application API.
 - Keep `.env` files out of version control and rotate tokens through the
   supervisor/CLI workflow.
 - Do not log tokens, SQL passwords, or complete routing bundles.
-- Always call `db.end()` during application shutdown.
+- Always call the supported managed `db.end()` method during application
+  shutdown; `close()` is an internal client capability and is not public.
 
 The client has no deployment, backup, or rollback control plane. Applications
 own deployment and database recovery policy; the Elera service owns routing

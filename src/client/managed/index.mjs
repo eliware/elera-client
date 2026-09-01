@@ -13,6 +13,7 @@ export async function createDb({ endpoint, token, env = process.env, fetchImpl =
   const client = await createDbFromBundle({ bundle, tokenContext, mysqlLib, log, routing, quarantineMs, drainTimeoutMs, now, telemetry });
   const detach = await client.attachRoutingStream(stream);
   const close = client.close.bind(client);
-  const end = async () => { await detach?.(); await close(); };
+  let ending;
+  const end = async () => { ending ??= (async () => { await detach?.(); await close(); })(); return ending; };
   return exposeManagedClient(client, end);
 }

@@ -23,23 +23,23 @@ Both values are optional when passed explicitly because `createDb()` reads
 Applications do not provide SQL hosts, ports, usernames, passwords, physical
 database names, Galera settings, or supervisor credentials.
 
-The runtime accepts only endpoint/token configuration as application inputs.
-Transport, routing, pool, and telemetry controls are internal implementation
-details and are not part of the application API.
+The supported application configuration is endpoint/token, either explicitly,
+through `env`, or from `process.env`. Transport, routing, pool, and telemetry
+controls are internal test/integration injection points and are not part of
+the supported application API.
 
 ## Public exports
 
 The package exports:
 
-- `createDb()` for creating the managed application client;
-- `createDb()`.
+- `createDb()` for creating the managed application client.
 
 The managed client exposes `query`, `execute`, `getConnection`, and `end`.
 Acquired connections expose `beginTransaction`, `commit`, `rollback`, and
 `release`, matching the mysql2/promise lifecycle.
 It obtains routing bundles and SQL credentials internally, applies writer/read
-routing, and responds to supervisor lifecycle events. Its WebSocket transport
-authenticates with the `Authorization: Bearer …` handshake header and does not
+ routing, and responds to supervisor lifecycle events. Its Node WebSocket
+ transport authenticates with the `Authorization: Bearer …` handshake header and does not
 put bearer tokens in query strings.
 
 Bundle parsing, routing pools, WebSocket handling, credential materialization,

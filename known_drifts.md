@@ -1,6 +1,6 @@
 # Known convention exceptions
 
-Last reviewed: 2026-08-30
+Last reviewed: 2026-09-01
 
 ## Intentional exceptions
 
@@ -14,3 +14,7 @@ Last reviewed: 2026-08-30
   coordinated development. This remains intentional until the shared
   contract is released and the dependency is switched to its published
   version.
+- The managed public wrapper intentionally exposes only the mysql2-shaped
+  methods. Internal transport, driver, routing, and telemetry injection
+  options remain available to repository tests but are not supported
+  application configuration.
