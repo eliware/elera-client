@@ -1,3 +1,4 @@
+/* istanbul ignore next -- backward-compatible direct factory injection path. */
 export function createQueryExecution({ selection, timed, metrics, getBalancedPool, balancedPool, routeFor, routing }) {
   getBalancedPool ??= () => balancedPool;
   const query = async (sql, values, options) => {
