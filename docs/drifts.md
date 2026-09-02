@@ -5,7 +5,8 @@ repository conventions. Findings are recorded here before implementation work.
 
 ## Current status
 
-- [x] Local `elera-lib` linking is intentional development state.
+- [x] Local `file:../elera-lib` linking is intentional development state and
+  remains until the published package is selected for release.
 - [x] The client ownership boundary and endpoint/token defaults are in place.
 - [x] Public API ownership documentation is aligned with the final boundary.
 - [x] Source-to-test inventory created with existing coverage preserved.

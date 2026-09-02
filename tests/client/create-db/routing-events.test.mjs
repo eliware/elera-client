@@ -16,6 +16,20 @@ test('handles routing updates and lifecycle events across pools', async () => {
   expect(pool.recover).toHaveBeenCalledWith('db', 20);
 });
 
+test('normalizes update metadata and handles REST resync events', async () => {
+  const refresh = jest.fn();
+  const handle = createRoutingEventHandler({ refresh, getPools: () => [], drainTimeoutMs: 20 });
+  await handle({ type: 'routing.update', bundleVersion: 2, version: 3, generatedAt: '2099-01-01T00:00:00Z' });
+  await handle({ type: 'routing.resync', version: 4, bundle: { bundleVersion: 4 } });
+  const pool = { drain: jest.fn(), recover: jest.fn() };
+  const lifecycleHandle = createRoutingEventHandler({ refresh, getPools: () => [pool], drainTimeoutMs: 20 });
+  await lifecycleHandle({ type: 'routing.drain', node: 'db' });
+  await handle({ type: 'routing.unknown' });
+  expect(refresh).toHaveBeenNthCalledWith(1, { bundleVersion: 2 });
+  expect(refresh).toHaveBeenNthCalledWith(2, { bundleVersion: 4 });
+  expect(pool.drain).toHaveBeenCalledWith('db', 20);
+});
+
 test('rejects incomplete stream updates and accepts a complete update', async () => {
   const client = await createDb({ primary: profile, bundle, mysqlLib: driver() });
   let update;
