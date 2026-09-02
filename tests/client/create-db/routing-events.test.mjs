@@ -21,8 +21,8 @@ test('rejects incomplete stream updates and accepts a complete update', async ()
   let update;
   await client.attachRoutingStream({ connect: async () => {}, setOnUpdate: (handler) => { update = handler; } });
   await expect(update({ type: 'routing.update', routes: { primary: [{ host: 'next', port: 3306 }] } })).rejects.toThrow();
-  await update({ ...bundle, type: 'routing.update', bundleVersion: 'v2', routes: { ...bundle.routes, primary: [{ host: 'versioned-writer', port: 3306 }] } });
-  expect(client.bundle()).toMatchObject({ bundleVersion: 'v2', writer: bundle.writer });
+  await update({ ...bundle, type: 'routing.update', bundleVersion: 2, routes: { ...bundle.routes, primary: [{ host: 'versioned-writer', port: 3306 }] } });
+  expect(client.bundle()).toMatchObject({ bundleVersion: 2, writer: bundle.writer });
   await client.close();
 });
 
@@ -47,6 +47,6 @@ test('applies explicit writer updates and preserves route assignments', async ()
   await client.close();
 });
 
-test('applies top-level updates without active-bundle defaults', async () => { const client = await createDb({ primary: profile, bundle, mysqlLib: driver() }); let update; await client.attachRoutingStream({ connect: async () => {}, setOnUpdate: (handler) => { update = handler; } }); await update({ ...bundle, type: 'routing.update', bundleVersion: 'v2', routes: { ...bundle.routes, primary: [{ host: 'versioned-writer', port: 3306 }] } }); expect(client.bundle()).toMatchObject({ bundleVersion: 'v2', writer: bundle.writer }); expect(client.bundle()).not.toHaveProperty('credentials'); await client.close(); });
+test('applies top-level updates without active-bundle defaults', async () => { const client = await createDb({ primary: profile, bundle, mysqlLib: driver() }); let update; await client.attachRoutingStream({ connect: async () => {}, setOnUpdate: (handler) => { update = handler; } }); await update({ ...bundle, type: 'routing.update', bundleVersion: 2, routes: { ...bundle.routes, primary: [{ host: 'versioned-writer', port: 3306 }] } }); expect(client.bundle()).toMatchObject({ bundleVersion: 2, writer: bundle.writer }); expect(client.bundle()).not.toHaveProperty('credentials'); await client.close(); });
 test('drains a node announced by supervisor shutdown', async () => { const client = await createDb({ primary: profile, bundle: { ...bundle, writer: { host: 'writer', port: 3306 }, failover: [{ host: 'backup', port: 3306 }], routes: { primary: [{ host: 'writer', port: 3306 }, { host: 'backup', port: 3306 }], balanced: [] } }, mysqlLib: driver() }); let update; await client.attachRoutingStream({ connect: async () => {}, setOnUpdate: (handler) => { update = handler; } }); await update({ type: 'routing.shutdown', node: 'writer' }); expect(client.nodeStates().find((node) => node.host === 'writer')).toMatchObject({ state: 'draining', available: false }); await client.close(); });
 test('merges writer-only updates with active route sets', async () => { const client = await createDb({ primary: profile, bundle, mysqlLib: driver() }); let update; await client.attachRoutingStream({ connect: async () => {}, setOnUpdate: (handler) => { update = handler; } }); await update({ ...bundle, type: 'routing.update', writer: { host: 'writer-only', port: 3306 }, failover: [], bundleVersion: 2, routes: { ...bundle.routes, primary: [{ host: 'writer-only', port: 3306 }] } }); expect(client.nodeStates().find((node) => node.route === 'primary').host).toBe('writer-only'); await client.close(); });

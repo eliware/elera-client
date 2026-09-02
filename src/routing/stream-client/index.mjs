@@ -34,7 +34,9 @@ export function createRoutingStream({ endpoint, token, fetchBundle, WebSocketImp
             }
             const deadlineMs = event.reconnectDeadlineMs;
             reconnectDeadlineAt = now() + deadlineMs;
-            plannedReconnect = deadlineMs > 0;
+            // Mark the close as planned even for a zero deadline so onclose
+            // cannot schedule an unintended reconnect.
+            plannedReconnect = true;
             if (deadlineMs <= 0) reconnect.cancel();
             reconnect.reset();
             await fallback();

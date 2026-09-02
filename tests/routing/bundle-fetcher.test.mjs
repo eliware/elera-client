@@ -9,7 +9,7 @@ const bundle = { apiVersion: 'v1', application: 'app', database: 'app', physical
 test('fetches and validates an authenticated routing bundle', async () => {
   const envelope = (data) => ({ ok: true, operation: 'routing.bundle', data });
   const fetchImpl = jest.fn(async () => ({ ok: true, json: async () => envelope(bundle) }));
-  await expect(fetchRoutingBundle({ endpoint: 'http://vip:8080', token: 'token', fetchImpl })).resolves.toBe(bundle);
+  await expect(fetchRoutingBundle({ endpoint: 'http://vip:8080', token: 'token', fetchImpl })).resolves.toEqual(bundle);
   expect(fetchImpl).toHaveBeenCalledWith('http://vip:8080/api/v1/routing/bundle', expect.objectContaining({ headers: expect.objectContaining({ authorization: 'Bearer token' }) }));
 });
 
@@ -40,6 +40,6 @@ test('rejects an absent HTTP response', async () => {
 test('uses the default fetch implementation and bundle path', async () => {
   const previousFetch = globalThis.fetch;
   globalThis.fetch = jest.fn(async () => ({ ok: true, json: async () => ({ ok: true, operation: 'routing.bundle', data: bundle }) }));
-  try { await expect(fetchRoutingBundle({ endpoint: 'http://vip:8080', token: 'token' })).resolves.toBe(bundle); }
+  try { await expect(fetchRoutingBundle({ endpoint: 'http://vip:8080', token: 'token' })).resolves.toEqual(bundle); }
   finally { globalThis.fetch = previousFetch; }
 });

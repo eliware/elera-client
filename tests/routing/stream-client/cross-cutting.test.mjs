@@ -17,7 +17,7 @@ test('waits for an asynchronous REST update handler before connect resolves', as
 
 afterEach(() => sockets.splice(0).forEach((socket) => socket.close()));
 test('authenticates, applies updates, and resynchronizes gaps', async () => {
-  const update = jest.fn(); const fetchBundle = jest.fn(async () => ({ bundleVersion: 'rest' }));
+  const update = jest.fn(); const fetchBundle = jest.fn(async () => ({ bundleVersion: 6 }));
   const client = createRoutingStream({ endpoint: 'http://vip', token: 'root', WebSocketImpl: FakeWebSocket, fetchBundle, onUpdate: update, reconnectMs: 100000 }); const pending = client.connect(); const socket = sockets[0];
   expect(socket.url).toBe('ws://vip/api/v1/routing/stream'); expect(socket.options).toEqual({ headers: { authorization: 'Bearer root' } }); socket.open(); expect(client.state().mode).toBe('websocket'); socket.message({ type: 'routing.update', version: 1 }); socket.message({ type: 'routing.update' }); socket.message({ type: 'routing.update', version: 3 }); await pending; await new Promise((resolve) => setImmediate(resolve));
   expect(update).toHaveBeenCalled(); expect(fetchBundle).toHaveBeenCalledWith('http://vip'); expect(client.state().expectedVersion).toBe(3); expect(client.state().mode).toBe('rest'); client.close();
