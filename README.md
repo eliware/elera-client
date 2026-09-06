@@ -1,5 +1,7 @@
 # @eliware/elera-client
 
+Documentation: [docs](docs/README.md) · [specifications](specs/README.md) · [examples](examples/README.md)
+
 `@eliware/elera-client` is the application-facing Elera SDK. It turns an
 Elera HTTP endpoint and application-scoped bearer token into a native
 MySQL/MariaDB client with bundle-driven routing, failover, drain handling,
