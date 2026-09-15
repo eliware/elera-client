@@ -62,7 +62,7 @@
         "ws": "^8.21.3"
     },
     "devDependencies": {
-        "@eliware/test": "^2.3.0",
+        "@eliware/test": "^5.0.0",
         "@types/node": "^26.4.1",
         "typescript": "^7.0.2"
     },
