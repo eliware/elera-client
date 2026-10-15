@@ -54,41 +54,6 @@ test("authenticates, applies updates, and resynchronizes gaps", async () => {
   expect(client.state().mode).toBe("rest");
   client.close();
 });
-test("rejects unsupported and malformed canonical routing events without delivering them", async () => {
-  const errors = [];
-  const updates = [];
-  const client = createRoutingStream({
-    endpoint: "http://vip",
-    fetchBundle: async () => ({}),
-    WebSocketImpl: FakeWebSocket,
-    onUpdate: (event) => updates.push(event),
-    onError: (error) => errors.push(error),
-  });
-  await client.connect();
-  const socket = sockets.at(-1);
-  socket.open();
-  socket.onmessage?.({
-    data: JSON.stringify({
-      type: "routing.unknown",
-      version: 1,
-      generatedAt: "2099-01-01T00:00:00Z",
-    }),
-  });
-  socket.onmessage?.({
-    data: JSON.stringify({
-      type: "routing.topology",
-      version: 2,
-      generatedAt: "2099-01-01T00:00:00Z",
-      node: "writer",
-      context: {},
-      topology: {},
-    }),
-  });
-  await new Promise((resolve) => setImmediate(resolve));
-  expect(updates).toHaveLength(0);
-  expect(errors).toHaveLength(2);
-  client.close();
-});
 test("replaces the update handler and closes an unopened stream", () => {
   const client = createRoutingStream({
     endpoint: "http://vip",

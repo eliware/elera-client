@@ -42,6 +42,42 @@ test("reports malformed events and socket errors", async () => {
   client.close();
   expect(errors).toHaveLength(2);
 });
+
+test("rejects unsupported and malformed canonical events without delivery", async () => {
+  const errors = [];
+  const updates = [];
+  const client = createRoutingStream({
+    endpoint: "http://vip",
+    fetchBundle: async () => ({}),
+    WebSocketImpl: FakeWebSocket,
+    onUpdate: (event) => updates.push(event),
+    onError: (error) => errors.push(error),
+  });
+  await client.connect();
+  const socket = sockets.at(-1);
+  socket.open();
+  socket.onmessage?.({
+    data: JSON.stringify({
+      type: "routing.unknown",
+      version: 1,
+      generatedAt: "2099-01-01T00:00:00Z",
+    }),
+  });
+  socket.onmessage?.({
+    data: JSON.stringify({
+      type: "routing.topology",
+      version: 2,
+      generatedAt: "2099-01-01T00:00:00Z",
+      node: "writer",
+      context: {},
+      topology: {},
+    }),
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+  expect(updates).toHaveLength(0);
+  expect(errors).toHaveLength(2);
+  client.close();
+});
 test("uses top-level event versions as the authoritative ordering field", async () => {
   const update = jest.fn();
   const client = createRoutingStream({

@@ -1,3 +1,5 @@
+import { createTelemetryEmitter } from "./telemetry/emitter.mjs";
+
 export function createTelemetry({
   application = "default",
   credentialName = undefined,
@@ -21,7 +23,6 @@ export function createTelemetry({
     routes: { primary: 0, balanced: 0 },
   };
   const context = { application, credentialName, database, scopes };
-  let timer;
   const begin = () => {
     stats.inflight += 1;
     return now();
@@ -56,6 +57,12 @@ export function createTelemetry({
     stats.reconnectDelayMs += Math.max(0, Number(delayMs) || 0);
     if (failover) stats.failoverCount += 1;
   };
+  const emitter = createTelemetryEmitter({
+    snapshot,
+    intervalMs,
+    setIntervalImpl,
+    clearIntervalImpl,
+  });
   return {
     begin,
     record,
@@ -64,14 +71,6 @@ export function createTelemetry({
     setContext(value = {}) {
       Object.assign(context, value);
     },
-    start(stream) {
-      if (timer) return;
-      timer = setIntervalImpl(() => stream.sendTelemetry?.(snapshot()), intervalMs);
-      timer.unref?.();
-    },
-    stop() {
-      if (timer) clearIntervalImpl(timer);
-      timer = undefined;
-    },
+    ...emitter,
   };
 }

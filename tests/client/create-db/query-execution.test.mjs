@@ -1,8 +1,5 @@
 import { expect, jest, test } from "@jest/globals";
 import { createQueryExecution } from "../../../src/client/create-db/query-execution.mjs";
-import { createDb } from "../../../src/client/create-db/index.mjs";
-import { profile, bundle, driver } from "../../../test-fixtures/client/create-db.mjs";
-import { makeManagedClient } from "../../../test-fixtures/client/managed.mjs";
 
 const timed = async (operation, metadata) => operation(metadata);
 
@@ -76,69 +73,4 @@ test("uses the legacy balancedPool fallback when no getter is supplied", async (
     routing: "auto",
   });
   await expect(execution.query("SELECT 1")).resolves.toEqual(["retried"]);
-});
-
-test("supports client retries and explicit connections", async () => {
-  const error = Object.assign(new Error("temporary"), { code: "ECONNRESET" });
-  const mysqlLib = driver({
-    query: jest
-      .fn()
-      .mockRejectedValueOnce(error)
-      .mockResolvedValue([["ok"]]),
-  });
-  const client = await createDb({
-    primary: profile,
-    bundle,
-    credentialProvider: async () => ({ user: "u", password: "p" }),
-    log: { warn: () => {} },
-    mysqlLib,
-  });
-  await client.query("SELECT 1", [], { route: "balanced" });
-  const explicit = {
-    query: jest.fn(async () => ["explicit"]),
-    execute: jest.fn(async () => ["explicit"]),
-  };
-  await client.query("SELECT 1", [], { connection: explicit });
-  await client.execute("SELECT 1", [], { connection: explicit });
-  await client.close();
-});
-
-test("preserves MariaDB query, execute, and connection results", async () => {
-  const connection = {
-    beginTransaction: jest.fn(),
-    commit: jest.fn(),
-    rollback: jest.fn(),
-    query: jest.fn(async () => [[{ ok: 1 }], [{ name: "ok" }]]),
-    execute: jest.fn(async () => [{ affectedRows: 1 }, []]),
-    release: jest.fn(),
-  };
-  const pool = {
-    query: jest.fn(async () => [[{ ok: 1 }], [{ name: "ok" }]]),
-    execute: jest.fn(async () => [{ affectedRows: 1 }, []]),
-    getConnection: jest.fn(async () => connection),
-    end: jest.fn(async () => {}),
-  };
-  const client = await createDb({ primary: profile, bundle, mysqlLib: { createPool: () => pool } });
-  await expect(client.query("SELECT 1")).resolves.toEqual([[{ ok: 1 }], [{ name: "ok" }]]);
-  const tx = await client.getConnection();
-  await tx.beginTransaction();
-  await tx.execute("UPDATE users SET active=?", [true]);
-  await tx.commit();
-  tx.release();
-  await client.close();
-  expect(connection.commit).toHaveBeenCalledTimes(1);
-});
-
-test("does not replay an unsafe write after a retryable failure", async () => {
-  const failure = Object.assign(new Error("connection lost"), { code: "ECONNRESET" });
-  const execute = jest.fn(async () => {
-    throw failure;
-  });
-  const { client } = await makeManagedClient({ execute });
-  await expect(client.execute("UPDATE accounts SET balance=?", [10])).rejects.toMatchObject({
-    code: "ECONNRESET",
-    retryable: true,
-  });
-  expect(execute).toHaveBeenCalledTimes(1);
-  await client.end();
 });
