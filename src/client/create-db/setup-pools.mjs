@@ -1,5 +1,4 @@
 import { createRouteFactory } from "../route-factory.mjs";
-import { createRouteSelection } from "./route-selection.mjs";
 
 export function createDbPoolState({
   primaryConfig,
@@ -9,7 +8,6 @@ export function createDbPoolState({
   mysqlLib,
   log,
   quarantineMs,
-  routing,
   metrics,
 }) {
   let activeBundle = bundle;
@@ -22,7 +20,6 @@ export function createDbPoolState({
     activeBalancedConfig || activeBundle?.routes?.balanced?.length
       ? makeRoute("balanced", activeBalancedConfig ?? activePrimaryConfig)
       : null;
-  const selection = () => createRouteSelection({ primaryPool, balancedPool, routing });
   return {
     getPools: () => [primaryPool, balancedPool].filter(Boolean),
     getPrimaryPool: () => primaryPool,
@@ -48,6 +45,5 @@ export function createDbPoolState({
       });
     },
     makeRoute,
-    selection,
   };
 }

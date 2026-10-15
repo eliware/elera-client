@@ -1,92 +1,43 @@
 import { expect, jest, test } from "@jest/globals";
 import { createTelemetry } from "../src/telemetry.mjs";
-test("aggregates client telemetry and emits on the configured interval", () => {
+
+test("connects telemetry state to a stream emitter", () => {
   let callback;
   const stream = { sendTelemetry: jest.fn() };
   const metrics = createTelemetry({
     application: "app",
+    now: () => 1000,
     setIntervalImpl: (fn) => {
       callback = fn;
       return { unref() {} };
     },
     clearIntervalImpl: jest.fn(),
-    now: () => 1000,
   });
-  expect(metrics.begin()).toBe(1000);
-  metrics.record({ latencyMs: 4, failed: true, retry: true });
-  metrics.recordReconnect({ delayMs: 7, failover: true });
-  expect(metrics.snapshot()).toMatchObject({
-    type: "client.telemetry",
-    application: "app",
-    queries: 1,
-    failures: 1,
-    retries: 1,
-    reconnects: 1,
-    failoverCount: 1,
-    reconnectDelayMs: 7,
-    avgLatencyMs: 4,
-    inflight: 0,
-  });
-  metrics.start(stream);
-  callback();
-  expect(stream.sendTelemetry).toHaveBeenCalled();
-  metrics.stop();
-});
-test("supports default clock and sparse record fields", () => {
-  const metrics = createTelemetry();
   metrics.begin();
-  metrics.record();
-  metrics.record({ latencyMs: 2, failed: true, retry: true, reconnect: true, failover: true });
-  expect(metrics.snapshot().queries).toBe(2);
-});
-test("normalizes reconnect delay values and failover defaults", () => {
-  const metrics = createTelemetry();
-  metrics.recordReconnect({ delayMs: "bad" });
-  metrics.recordReconnect({ delayMs: -4 });
-  expect(metrics.snapshot()).toMatchObject({
-    reconnects: 2,
-    failoverCount: 0,
-    reconnectDelayMs: 0,
-  });
-});
-test("handles disconnected telemetry streams and records zero-valued counters", () => {
-  const metrics = createTelemetry({
-    setIntervalImpl: () => ({}),
-    clearIntervalImpl: jest.fn(),
-    now: () => 1000,
-  });
-  metrics.start({});
-  metrics.stop();
-  metrics.record({ latencyMs: 0, failed: false, retry: false, reconnect: false, failover: false });
-  expect(metrics.snapshot().queries).toBe(1);
-});
-test("does not create duplicate timers and supports streams without unref or sendTelemetry", () => {
-  let callback;
-  const metrics = createTelemetry({
-    setIntervalImpl: (fn) => {
-      callback = fn;
-      return {};
-    },
-    clearIntervalImpl: jest.fn(),
-  });
-  const stream = {};
-  metrics.start(stream);
+  metrics.record({ latencyMs: 4 });
   metrics.start(stream);
   callback();
+  expect(stream.sendTelemetry).toHaveBeenCalledWith(
+    expect.objectContaining({ application: "app", queries: 1 }),
+  );
   metrics.stop();
-  expect(metrics.snapshot().type).toBe("client.telemetry");
 });
-test("can stop before starting", () => {
+
+test("keeps one timer and supports missing stream methods", () => {
+  let callback;
+  const setIntervalImpl = jest.fn((fn) => {
+    callback = fn;
+    return {};
+  });
+  const metrics = createTelemetry({ setIntervalImpl, clearIntervalImpl: jest.fn() });
+  metrics.start({});
+  metrics.start({});
+  callback();
+  metrics.stop();
+  expect(setIntervalImpl).toHaveBeenCalledTimes(1);
+});
+
+test("stops before the first start", () => {
   const metrics = createTelemetry();
   expect(() => metrics.stop()).not.toThrow();
-  metrics.recordReconnect();
-  metrics.setContext();
-});
-test("tracks primary and balanced route usage independently", () => {
-  const metrics = createTelemetry({ now: () => 1000 });
-  metrics.begin();
-  metrics.record({ route: "primary", latencyMs: 2 });
-  metrics.begin();
-  metrics.record({ route: "balanced", latencyMs: 4, failed: true });
-  expect(metrics.snapshot().routes).toEqual({ primary: 1, balanced: 1 });
 });

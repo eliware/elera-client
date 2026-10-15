@@ -6,6 +6,6 @@ test("supports explicit routes and rejects unknown routes", () => {
   expect(() => routeFor("SELECT 1", "unknown")).toThrow();
 });
 
-test("defaults automatic and non-string inputs to primary when appropriate", () => {
+test("uses balanced routing for safe reads by default", () => {
   expect(routeFor("SELECT 1")).toBe("balanced");
 });

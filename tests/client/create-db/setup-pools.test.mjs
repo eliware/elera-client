@@ -15,7 +15,6 @@ test("creates and updates primary pool state without a balanced pool", () => {
   });
   expect(state.getPools()).toHaveLength(1);
   expect(state.getBalancedPool()).toBeNull();
-  expect(state.selection().choose("SELECT 1")).toBe(state.getPrimaryPool());
   const primaryPool = {};
   const primaryConfig = { ...profile, host: "next" };
   state.setPrimaryPool(primaryPool);
@@ -40,7 +39,6 @@ test("creates balanced pools from bundle routes and updates telemetry context", 
     metrics: { setContext },
   });
   expect(state.getPools()).toHaveLength(2);
-  expect(state.selection().choose("SELECT 1")).toBe(state.getBalancedPool());
   const updated = { ...bundle, bundleVersion: 2 };
   state.setBundle(updated);
   const balancedPool = {};

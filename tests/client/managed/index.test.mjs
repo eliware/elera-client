@@ -19,7 +19,7 @@ const fetchBundle = (fetchImpl, value = bundle) =>
     json: async () => ({ ok: true, operation: "routing.bundle", data: value }),
   });
 
-test("creates a managed client from endpoint and token", async () => {
+test("creates managed clients from explicit options and environment values", async () => {
   const fetchImpl = jest.fn();
   fetchBundle(fetchImpl);
   const client = await createDb({
@@ -37,20 +37,17 @@ test("creates a managed client from endpoint and token", async () => {
   );
   expect(Object.keys(client).sort()).toEqual(["end", "execute", "getConnection", "probe", "query"]);
   await client.end();
-});
-
-test("uses a supplied environment and rejects missing managed credentials", async () => {
-  await expect(createDb()).rejects.toThrow();
-  const fetchImpl = jest.fn();
-  fetchBundle(fetchImpl);
-  const client = await createDb({
+  const envFetch = jest.fn();
+  fetchBundle(envFetch);
+  const envClient = await createDb({
     env: { ELERA_API_URL: "http://env:8080", ELERA_API_TOKEN: "env-token" },
-    fetchImpl,
+    fetchImpl: envFetch,
     WebSocketImpl: FakeWebSocket,
     mysqlLib: driver,
   });
-  expect(fetchImpl.mock.calls[0][0]).toBe("http://env:8080/api/v1/routing/bundle");
-  await client.end();
+  expect(envFetch.mock.calls[0][0]).toBe("http://env:8080/api/v1/routing/bundle");
+  await envClient.end();
+  await expect(createDb()).rejects.toThrow();
   await expect(createDb({ env: {} })).rejects.toThrow();
 });
 

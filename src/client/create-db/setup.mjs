@@ -5,6 +5,7 @@ import { createClientTelemetry } from "./telemetry.mjs";
 import { prepareDbProfiles } from "./setup-profiles.mjs";
 import { createSetupBundleValidator } from "./setup-bundle.mjs";
 import { createDbPoolState } from "./setup-pools.mjs";
+import { createPoolSelection } from "./pool-selection.mjs";
 
 export async function createDbSetup({
   primary,
@@ -37,11 +38,15 @@ export async function createDbSetup({
     mysqlLib,
     log,
     quarantineMs,
-    routing,
     metrics,
   });
   return {
     ...poolState,
+    selection: createPoolSelection({
+      getPrimaryPool: poolState.getPrimaryPool,
+      getBalancedPool: poolState.getBalancedPool,
+      routing,
+    }),
     validateBundle,
     validateProfile,
     metrics,
