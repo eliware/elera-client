@@ -42,3 +42,20 @@ test("does not expose routing or credential controls from the package", async ()
   expect(JSON.stringify(client)).not.toMatch(/credentials|routes|writer|readers/);
   await client.end();
 });
+
+test("preserves driver query and execute results and arguments", async () => {
+  const rows = [{ id: 1 }];
+  const fields = [{ name: "id" }];
+  const result = [{ affectedRows: 1 }, fields];
+  const client = {
+    query: jest.fn(async () => [rows, fields]),
+    execute: jest.fn(async () => result),
+    getConnection: jest.fn(),
+    probe: jest.fn(),
+  };
+  const exposed = exposeManagedClient(client, jest.fn());
+  await expect(exposed.query("SELECT ?", [1])).resolves.toEqual([rows, fields]);
+  await expect(exposed.execute("UPDATE t SET x=?", [2])).resolves.toBe(result);
+  expect(client.query).toHaveBeenCalledWith("SELECT ?", [1]);
+  expect(client.execute).toHaveBeenCalledWith("UPDATE t SET x=?", [2]);
+});

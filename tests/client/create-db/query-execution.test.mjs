@@ -103,20 +103,6 @@ test("supports client retries and explicit connections", async () => {
   await client.close();
 });
 
-test("forwards driver result tuples and parameters unchanged", async () => {
-  const rows = [{ id: 1 }];
-  const fields = [{ name: "id" }];
-  const result = [{ affectedRows: 1 }, fields];
-  const query = jest.fn(async () => [rows, fields]);
-  const execute = jest.fn(async () => result);
-  const { client } = await makeManagedClient({ query, execute });
-  await expect(client.query("SELECT ?", [1])).resolves.toEqual([rows, fields]);
-  await expect(client.execute("UPDATE t SET x=?", [2])).resolves.toBe(result);
-  expect(query).toHaveBeenCalledWith("SELECT ?", [1]);
-  expect(execute).toHaveBeenCalledWith("UPDATE t SET x=?", [2]);
-  await client.end();
-});
-
 test("does not replay an unsafe write after a retryable failure", async () => {
   const failure = Object.assign(new Error("connection lost"), { code: "ECONNRESET" });
   const execute = jest.fn(async () => {

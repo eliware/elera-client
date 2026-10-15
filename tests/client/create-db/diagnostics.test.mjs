@@ -95,19 +95,3 @@ test("changes availability for a selected route without exposing pool internals"
   client.setNodeAvailability("balanced", "read", true);
   await client.close();
 });
-test("drains the balanced pool when a strict update removes readers", async () => {
-  const client = await createDb({
-    primary: profile,
-    balanced: { host: "read", port: 3306 },
-    bundle,
-    mysqlLib: driver(),
-  });
-  await client.refresh({
-    ...bundle,
-    readers: [],
-    routes: { primary: bundle.routes.primary, balanced: [] },
-    bundleVersion: 2,
-  });
-  expect(client.nodeStates().filter((node) => node.route === "balanced")).toEqual([]);
-  await client.close();
-});

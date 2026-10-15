@@ -1,4 +1,4 @@
-import { expect, test } from "@jest/globals";
+import { expect, jest, test } from "@jest/globals";
 import { createDb } from "../../../src/client/create-db/index.mjs";
 import { createDbSetup } from "../../../src/client/create-db/setup.mjs";
 import { driver, profile, bundle } from "../../../test-fixtures/client/create-db.mjs";
@@ -47,8 +47,21 @@ test("enforces the single-token database context on refresh", async () => {
   await client.close();
 });
 
-test("creates routes through the setup factory and uses its default clock", async () => {
-  const setup = await createDbSetup({ primary: profile, mysqlLib: driver() });
-  expect(setup.now()).toEqual(expect.any(Number));
-  expect(setup.makeRoute("primary", profile).nodes).toHaveLength(1);
+test("applies credential overlays to query errors and bundle refreshes", async () => {
+  const failure = Object.assign(new Error("bad query"), { code: "ER_PARSE_ERROR" });
+  const client = await createDb({
+    primary: profile,
+    balanced: { host: "read", port: 3306 },
+    credentialProvider: async () => ({ user: "u", password: "p" }),
+    mysqlLib: driver({
+      query: jest.fn(async () => {
+        throw failure;
+      }),
+    }),
+  });
+  await expect(client.query("SELECT 1", [], { route: "balanced" })).rejects.toThrow("bad query");
+  await expect(
+    client.refresh({ ...bundle, routes: { primary: [{ host: "new", port: 3306 }], balanced: [] } }),
+  ).resolves.toMatchObject({ bundleVersion: 1 });
+  await client.close();
 });

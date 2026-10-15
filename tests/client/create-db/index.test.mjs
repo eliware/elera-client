@@ -20,11 +20,6 @@ test("creates a client and routes reads, writes, transactions, health, and close
   await expect(client.health()).resolves.toMatchObject({ ok: true, route: "primary" });
   await expect(client.health("balanced")).resolves.toMatchObject({ ok: true, route: "balanced" });
   expect(log.debug).toHaveBeenCalled();
-  await client.close();
-});
-
-test("supports an unbundled client view and the end alias", async () => {
-  const client = await createDb({ primary: profile, mysqlLib: driver() });
   expect(client.bundle()).toBeUndefined();
   await expect(client.attachRoutingStream()).rejects.toThrow("routing stream is required");
   await client.end();
@@ -59,6 +54,23 @@ test("validates bundle updates and applies a primary-only refresh", async () => 
   await expect(client.refresh({ ...bundle, bundleVersion: undefined })).rejects.toThrow(
     "bundleVersion",
   );
+  await client.close();
+});
+
+test("drains the balanced pool when a strict update removes readers", async () => {
+  const client = await createDb({
+    primary: profile,
+    balanced: { host: "read", port: 3306 },
+    bundle,
+    mysqlLib: driver(),
+  });
+  await client.refresh({
+    ...bundle,
+    readers: [],
+    routes: { primary: bundle.routes.primary, balanced: [] },
+    bundleVersion: 2,
+  });
+  expect(client.nodeStates().filter((node) => node.route === "balanced")).toEqual([]);
   await client.close();
 });
 

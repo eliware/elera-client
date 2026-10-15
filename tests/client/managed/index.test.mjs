@@ -5,6 +5,7 @@ import {
   driver,
   FakeWebSocket,
   LifecycleSocket,
+  makeManagedClient,
   sockets,
 } from "../../../test-fixtures/client/managed.mjs";
 
@@ -94,4 +95,29 @@ test("applies routing updates and closes its stream", async () => {
   await new Promise((resolve) => setImmediate(resolve));
   await client.end();
   expect(sockets[0].readyState).toBe(3);
+});
+
+test("preserves SQL error fields and hides credential fields", async () => {
+  const failure = Object.assign(new Error("syntax error"), {
+    code: "ER_PARSE_ERROR",
+    errno: 1064,
+    sqlState: "42000",
+    sqlMessage: "bad SQL",
+    fatal: false,
+  });
+  const { client } = await makeManagedClient({
+    execute: jest.fn(async () => {
+      throw failure;
+    }),
+  });
+  await expect(client.execute("BAD SQL")).rejects.toMatchObject({
+    message: "syntax error",
+    code: "ER_PARSE_ERROR",
+    errno: 1064,
+    sqlState: "42000",
+    sqlMessage: "bad SQL",
+    fatal: false,
+  });
+  await expect(client.execute("BAD SQL")).rejects.not.toHaveProperty("password");
+  await client.end();
 });

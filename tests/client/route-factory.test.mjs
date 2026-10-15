@@ -1,4 +1,7 @@
+import { expect, test } from "@jest/globals";
+import { createDbSetup } from "../../src/client/create-db/setup.mjs";
 import { createRouteFactory } from "../../src/client/route-factory.mjs";
+import { driver, profile } from "../../test-fixtures/client/create-db.mjs";
 
 test("uses the fallback profile when no usable bundle is supplied", () => {
   const mysqlLib = {
@@ -85,4 +88,10 @@ test("accepts an explicit writer without a failover list", () => {
   expect(
     factory("primary", { host: "fallback", port: 3306, user: "u", password: "p" }).nodes[0].host,
   ).toBe("writer");
+});
+
+test("uses the default setup clock and creates routes through its factory", async () => {
+  const setup = await createDbSetup({ primary: profile, mysqlLib: driver() });
+  expect(setup.now()).toEqual(expect.any(Number));
+  expect(setup.makeRoute("primary", profile).nodes).toHaveLength(1);
 });
