@@ -1,5 +1,8 @@
 import { expect, jest, test } from "@jest/globals";
-import { createConnectionFailure } from "../../../src/routing/stream/connection-failure.mjs";
+import {
+  createConnectionFailure,
+  handleMissingWebSocketSupport,
+} from "../../../src/routing/stream/connection-failure.mjs";
 
 test("resets connection state and schedules after a constructor error", async () => {
   const state = { connecting: true, socket: {}, mode: "connecting" };
@@ -10,5 +13,13 @@ test("resets connection state and schedules after a constructor error", async ()
   await createConnectionFailure({ state, fallback, schedule })(error, onError);
   expect(state).toMatchObject({ connecting: false, socket: undefined, mode: "disconnected" });
   expect(onError).toHaveBeenCalledWith(error);
+  expect(schedule).toHaveBeenCalledTimes(1);
+});
+
+test("runs fallback and schedules reconnect when WebSocket support is missing", async () => {
+  const fallback = jest.fn(async () => {});
+  const schedule = jest.fn();
+  await handleMissingWebSocketSupport({ fallback, schedule });
+  expect(fallback).toHaveBeenCalledTimes(1);
   expect(schedule).toHaveBeenCalledTimes(1);
 });

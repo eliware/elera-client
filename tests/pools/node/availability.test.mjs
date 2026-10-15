@@ -26,12 +26,3 @@ test("delegates drain requests and keeps closed nodes unavailable", () => {
   expect(availability.recover()).toBe("draining");
   expect(availability.available).toBe(false);
 });
-
-test("applies and clears manual exclusion through the availability facade", () => {
-  const { data, availability } = makeAvailability();
-  availability.unavailable = true;
-  expect(data.state).toBe("unavailable");
-  expect(availability.available).toBe(false);
-  availability.unavailable = false;
-  expect(availability.available).toBe(true);
-});

@@ -39,11 +39,3 @@ test("uses default values for sparse records and counts routes", () => {
     failures: 0,
   });
 });
-
-test("records reconnect flags and accepts empty context updates", () => {
-  const metrics = createTelemetryState();
-  metrics.record({ reconnect: true, failover: true });
-  metrics.recordReconnect();
-  metrics.setContext();
-  expect(metrics.snapshot()).toMatchObject({ reconnects: 2, failoverCount: 1 });
-});

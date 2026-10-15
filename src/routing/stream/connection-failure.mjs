@@ -8,3 +8,8 @@ export function createConnectionFailure({ state, fallback, schedule }) {
     schedule();
   };
 }
+
+export async function handleMissingWebSocketSupport({ fallback, schedule }) {
+  await fallback();
+  schedule();
+}
