@@ -17,6 +17,10 @@ const requireText = (text, pattern, description) => {
   if (!text.includes(pattern)) failures.push(description);
 };
 
+if (JSON.stringify(Object.keys(packageJson.exports ?? {})) !== '["."]')
+  failures.push("package must expose only its root entrypoint");
+if (packageJson.main !== packageJson.exports?.["."]?.import)
+  failures.push("package main and root import must match");
 if (packageJson.exports?.["."]?.import !== "./src/index.mjs")
   failures.push("package export must point to src/index.mjs");
 if (packageJson.exports?.["."]?.types !== "./src/index.d.ts")
