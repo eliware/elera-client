@@ -1,4 +1,4 @@
-import { compareBundleVersions } from "../bundle-version.mjs";
+import { compareBundleVersions } from "../bundle/version.mjs";
 
 export function classifyEventVersion(version, expectedVersion) {
   if (

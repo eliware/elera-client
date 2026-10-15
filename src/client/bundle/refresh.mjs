@@ -1,6 +1,6 @@
-import { retireObsoletePools } from "./pool-retirement.mjs";
+import { retireObsoletePools } from "../create-db/pool-retirement.mjs";
 import { createRefreshedProfiles } from "./refreshed-profiles.mjs";
-import { createRefreshedPools } from "./refreshed-pools.mjs";
+import { createRefreshedPools } from "./pools.mjs";
 
 export function createBundleRefresh({
   validateBundle,

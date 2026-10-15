@@ -1,6 +1,6 @@
-import { createDbFromBundle, profilesFromBundle } from "../../src/client/from-bundle.mjs";
+import { createDbFromBundle, profilesFromBundle } from "../../../src/client/bundle/factory.mjs";
 import { expect, test } from "@jest/globals";
-import { bundle } from "../../test-fixtures/client/create-db.mjs";
+import { bundle } from "../../../test-fixtures/client/create-db.mjs";
 test("derives generic SQL profiles from a routing bundle", () => {
   expect(profilesFromBundle(bundle)).toMatchObject({
     primary: { host: "db", user: "u", database: "physical_app" },

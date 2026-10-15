@@ -1,5 +1,5 @@
 import { expect, jest, test } from "@jest/globals";
-import { createRefreshedPools } from "../../../src/client/create-db/refreshed-pools.mjs";
+import { createRefreshedPools } from "../../../src/client/bundle/pools.mjs";
 
 test("creates and assigns the refreshed primary and balanced pools", () => {
   const primary = {};

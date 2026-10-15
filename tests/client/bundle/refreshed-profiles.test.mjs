@@ -1,5 +1,5 @@
 import { expect, jest, test } from "@jest/globals";
-import { createRefreshedProfiles } from "../../../src/client/create-db/refreshed-profiles.mjs";
+import { createRefreshedProfiles } from "../../../src/client/bundle/refreshed-profiles.mjs";
 
 test("builds primary and balanced profiles from bundle credentials and routes", () => {
   const validateProfile = jest.fn((value) => value);

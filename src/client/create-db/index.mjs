@@ -5,7 +5,7 @@ import { createClientDrain } from "./drain.mjs";
 import { createClientApi } from "./public-api.mjs";
 import { createDbSetup } from "./setup.mjs";
 import { createDbServices } from "./services.mjs";
-import { redactBundle } from "./bundle-state.mjs";
+import { redactBundle } from "../bundle/state.mjs";
 import { createProbeApi } from "./probe.mjs";
 
 export async function createDb(options = {}) {

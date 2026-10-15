@@ -1,13 +1,13 @@
 import { createTimedOperation } from "../telemetry-wrapper.mjs";
-import { bundleNeedsRefresh } from "../../routing/bundle-expiry.mjs";
+import { bundleNeedsRefresh } from "../../routing/bundle/expiry.mjs";
 import { routeFor } from "../../routing.mjs";
 import { createDiagnostics } from "./diagnostics.mjs";
 import { createQueryExecution } from "./query-execution.mjs";
 import { createQuery } from "./query.mjs";
 import { createExecute } from "./execute.mjs";
 import { createTransactionOperation } from "./transaction.mjs";
-import { createBundleRefresh } from "./bundle-refresh.mjs";
-import { bundlesHaveEquivalentPools, hasUsablePool, isOlderBundle } from "./bundle-state.mjs";
+import { createBundleRefresh } from "../bundle/refresh.mjs";
+import { bundlesHaveEquivalentPools, hasUsablePool, isOlderBundle } from "../bundle/state.mjs";
 import { createPoolShutdown } from "./shutdown.mjs";
 
 export function createDbServices({ setup, drainTimeoutMs }) {

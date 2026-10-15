@@ -1,4 +1,4 @@
-import { createDbFromBundle } from "../from-bundle.mjs";
+import { createDbFromBundle } from "../bundle/factory.mjs";
 
 export async function createManagedSetup(fetchBundle) {
   const bundle = await fetchBundle();

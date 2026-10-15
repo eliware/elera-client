@@ -1,5 +1,5 @@
 import { expect, test } from "@jest/globals";
-import { createSetupBundleValidator } from "../../../src/client/create-db/setup-bundle.mjs";
+import { createSetupBundleValidator } from "../../../src/client/bundle/validate.mjs";
 import { bundle } from "../../../test-fixtures/client/create-db.mjs";
 
 test("validates a shared routing bundle without a token context", () => {

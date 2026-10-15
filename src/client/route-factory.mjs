@@ -1,6 +1,6 @@
-import { bundleExpired } from "../routing/bundle-expiry.mjs";
+import { bundleExpired } from "../routing/bundle/expiry.mjs";
 import { createNodePool, createRoutePool } from "../pools.mjs";
-import { bundleProfiles } from "./bundle-profiles.mjs";
+import { bundleProfiles } from "./bundle/profiles.mjs";
 
 const routeProfiles = (bundle, route, baseProfile, now) => {
   if (!bundle) return [baseProfile];

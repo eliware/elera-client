@@ -1,4 +1,4 @@
-import { compareBundleVersions } from "../../routing/bundle-version.mjs";
+import { compareBundleVersions } from "../../routing/bundle/version.mjs";
 
 export const isOlderBundle = (candidate, current) => compareBundleVersions(candidate, current) < 0;
 

@@ -3,7 +3,7 @@ import * as mysql from "mysql2/promise";
 import { validateProfile } from "../../config.mjs";
 import { createClientTelemetry } from "./telemetry.mjs";
 import { prepareDbProfiles } from "./setup-profiles.mjs";
-import { createSetupBundleValidator } from "./setup-bundle.mjs";
+import { createSetupBundleValidator } from "../bundle/validate.mjs";
 import { createDbPoolState } from "./setup-pools.mjs";
 import { createPoolSelection } from "./pool-selection.mjs";
 

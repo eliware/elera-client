@@ -1,5 +1,5 @@
 import { expect, test } from "@jest/globals";
-import { bundleExpired, bundleNeedsRefresh } from "../../src/routing/bundle-expiry.mjs";
+import { bundleExpired, bundleNeedsRefresh } from "../../../src/routing/bundle/expiry.mjs";
 
 const valid = { expiresAt: "2030-01-01T00:00:00Z" };
 test("detects expiration and refresh deadlines", () => {

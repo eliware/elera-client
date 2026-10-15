@@ -1,5 +1,5 @@
 import { expect, test } from "@jest/globals";
-import { bundleProfiles } from "../../src/client/bundle-profiles.mjs";
+import { bundleProfiles } from "../../../src/client/bundle/profiles.mjs";
 
 test("uses explicit readers for balanced routing", () => {
   const base = { database: "app" };
