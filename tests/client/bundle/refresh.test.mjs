@@ -1,6 +1,6 @@
 import { expect, test, jest } from "@jest/globals";
 import { createBundleRefresh } from "../../../src/client/bundle/refresh.mjs";
-import { createDb } from "../../../src/client/create-db/index.mjs";
+import { createDb } from "../../../src/client/runtime/index.mjs";
 import { bundle, driver, profile } from "../../../test-fixtures/client/create-db.mjs";
 import { refreshForState } from "../../../test-fixtures/client/create-db/refresh.mjs";
 
