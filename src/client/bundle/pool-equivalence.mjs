@@ -13,5 +13,3 @@ export const bundlesHaveEquivalentPools = (candidate, current) =>
       writer: current.writer,
       routes: current.routes,
     });
-
-export const hasUsablePool = (pool) => pool?.nodes?.some((node) => node.available);
