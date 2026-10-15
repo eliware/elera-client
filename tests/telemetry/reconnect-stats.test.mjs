@@ -3,8 +3,7 @@ import { createReconnectStats } from "../../src/telemetry/reconnect-stats.mjs";
 
 test("tracks reconnects, delay, and failover counts", () => {
   const stats = createReconnectStats();
-  stats.recordOperation();
-  stats.recordOperation({ reconnect: true, failover: true });
+  stats.recordReconnect({ failover: true });
   stats.recordReconnect();
   stats.recordReconnect({ delayMs: "bad" });
   stats.recordReconnect({ delayMs: -4 });

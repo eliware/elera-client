@@ -15,7 +15,6 @@ export function createTelemetryState({
   const context = createTelemetryContext({ application, credentialName, database, scopes });
   const record = (value = {}) => {
     operations.record(value);
-    reconnects.recordOperation(value);
   };
   return {
     begin: () => operations.begin(now),

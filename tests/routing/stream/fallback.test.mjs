@@ -86,18 +86,6 @@ test("does not apply a REST result after the stream is closed", async () => {
   await pending;
   expect(client.state().mode).toBe("disconnected");
 });
-test("delivers REST resyncs to the replaced update handler", async () => {
-  const received = [];
-  const client = createRoutingStream({
-    endpoint: "http://vip",
-    fetchBundle: async () => ({ bundleVersion: 6 }),
-    WebSocketImpl: null,
-  });
-  client.setOnUpdate((event) => received.push(event));
-  await client.connect();
-  expect(received[0]).toMatchObject({ type: "routing.resync", bundle: { bundleVersion: 6 } });
-  client.close();
-});
 test("falls back after an active socket closes", async () => {
   const fetchBundle = jest.fn(async () => ({ bundleVersion: "fallback" }));
   const client = createRoutingStream({

@@ -4,7 +4,14 @@ import { createTelemetryState } from "../../src/telemetry/state.mjs";
 test("aggregates request and reconnect telemetry", () => {
   const metrics = createTelemetryState({ application: "app", now: () => 1000 });
   expect(metrics.begin()).toBe(1000);
-  metrics.record({ latencyMs: 4, failed: true, retry: true, route: "balanced" });
+  metrics.record({
+    latencyMs: 4,
+    failed: true,
+    retry: true,
+    route: "balanced",
+    reconnect: true,
+    failover: true,
+  });
   metrics.recordReconnect({ delayMs: 7, failover: true });
   expect(metrics.snapshot()).toMatchObject({
     type: "client.telemetry",
