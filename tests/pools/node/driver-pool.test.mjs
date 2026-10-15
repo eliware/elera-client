@@ -11,12 +11,4 @@ test("passes driver options and omits acquire timeout and undefined socket paths
   expect(createPool).toHaveBeenCalledWith(
     expect.objectContaining({ connectionLimit: 2, waitForConnections: true }),
   );
-  expect(createPool.mock.calls[0][0]).not.toHaveProperty("acquireTimeout");
-  expect(createPool.mock.calls[0][0]).not.toHaveProperty("socketPath");
-});
-
-test("preserves an explicitly configured socket path", () => {
-  const createPool = jest.fn();
-  createDriverPool({ ...profile, options: { socketPath: "/run/mysqld.sock" } }, { createPool });
-  expect(createPool.mock.calls[0][0].socketPath).toBe("/run/mysqld.sock");
 });

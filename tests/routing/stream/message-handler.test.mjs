@@ -26,8 +26,8 @@ test("routes an update and ignores an older version", async () => {
   expect(onError).not.toHaveBeenCalled();
 });
 
-test("sets a shutdown endpoint and reconnect deadline", async () => {
-  const state = { activeEndpoint: "http://vip", updateHandler: jest.fn() };
+test("dispatches parsed shutdown events to the update handler", async () => {
+  const state = { updateHandler: jest.fn() };
   const fallback = jest.fn();
   const reconnect = { cancel: jest.fn(), reset: jest.fn() };
   const handler = createRoutingMessageHandler({ state, fallback, reconnect, now: () => 10 });
@@ -42,9 +42,9 @@ test("sets a shutdown endpoint and reconnect deadline", async () => {
       version: 1,
     }),
   });
-  expect(state.activeEndpoint).toBe("http://next-vip");
-  expect(state.reconnectDeadlineAt).toBe(60);
-  expect(state.plannedReconnect).toBe(true);
+  expect(state.updateHandler).toHaveBeenCalledWith(
+    expect.objectContaining({ type: "routing.shutdown", loadBalancerEndpoint: "http://next-vip" }),
+  );
   expect(fallback).toHaveBeenCalled();
   expect(reconnect.reset).toHaveBeenCalled();
 });

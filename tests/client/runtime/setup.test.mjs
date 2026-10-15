@@ -3,13 +3,15 @@ import { createDb } from "../../../src/client/runtime/index.mjs";
 import { createDbSetup } from "../../../src/client/runtime/setup.mjs";
 import { driver, profile, bundle } from "../../../test-fixtures/client/runtime.mjs";
 
-test("rejects invalid setup and expired bundles", async () => {
+test("rejects missing and invalid primary profiles", async () => {
   await expect(createDbSetup()).rejects.toThrow("primary connection profile");
   await expect(createDb()).rejects.toThrow("primary connection profile");
   await expect(createDb({ primary: { ...profile, user: "" }, mysqlLib: driver() })).rejects.toThrow(
     "primary.user",
   );
-  const client = await createDb({ primary: profile, mysqlLib: driver() });
+});
+
+test("rejects an expired initial bundle", async () => {
   await expect(
     createDb({
       primary: profile,
@@ -17,6 +19,10 @@ test("rejects invalid setup and expired bundles", async () => {
       mysqlLib: driver(),
     }),
   ).rejects.toThrow("future");
+});
+
+test("rejects an expired bundle refresh", async () => {
+  const client = await createDb({ primary: profile, mysqlLib: driver() });
   await expect(client.refresh({ ...bundle, expiresAt: new Date(0).toISOString() })).rejects.toThrow(
     "future",
   );

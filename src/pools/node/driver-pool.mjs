@@ -1,6 +1,7 @@
+import { normalizeDriverOptions } from "./driver-options.mjs";
+
 export function createDriverPool(profile, mysqlLib) {
-  const { acquireTimeout: _acquireTimeout, ...driverOptions } = profile.options ?? {};
-  if (driverOptions.socketPath === undefined) delete driverOptions.socketPath;
+  const driverOptions = normalizeDriverOptions(profile.options);
   return mysqlLib.createPool({
     host: profile.host,
     port: profile.port,

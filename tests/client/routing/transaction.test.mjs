@@ -1,5 +1,12 @@
 import { expect, jest, test } from "@jest/globals";
 import { createTransactionOperation } from "../../../src/client/routing/transaction.mjs";
+import { createDb } from "../../../src/client/runtime/index.mjs";
+import {
+  bundle,
+  connection as makeConnection,
+  driver,
+  profile,
+} from "../../../test-fixtures/client/runtime.mjs";
 
 const run = (connection) =>
   createTransactionOperation({
@@ -81,4 +88,18 @@ test("uses the current primary pool after a pool refresh", async () => {
 
   expect(first.release).toHaveBeenCalledTimes(1);
   expect(second.release).toHaveBeenCalledTimes(1);
+});
+
+test("rolls back application transaction failures through the client", async () => {
+  const failure = Object.assign(new Error("boom"), { code: "ER_LOCK_DEADLOCK" });
+  const conn = makeConnection();
+  conn.query.mockRejectedValueOnce(failure);
+  const client = await createDb({
+    primary: profile,
+    bundle,
+    mysqlLib: driver({ getConnection: jest.fn(async () => conn) }),
+  });
+  await expect(client.transaction((tx) => tx.query("UPDATE x"))).rejects.toThrow("boom");
+  expect(conn.rollback).toHaveBeenCalled();
+  await client.close();
 });

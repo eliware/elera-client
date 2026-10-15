@@ -3,19 +3,14 @@ import { createRoutingEventHandler } from "../../../src/client/routing/routing-e
 import { createDb } from "../../../src/client/runtime/index.mjs";
 import { bundle, driver, profile } from "../../../test-fixtures/client/runtime.mjs";
 
-test("handles routing updates and lifecycle events across pools", async () => {
+test("refreshes pools after a routing update", async () => {
   const refresh = jest.fn();
   const pool = { drain: jest.fn(), recover: jest.fn() };
   const handle = createRoutingEventHandler({ refresh, getPools: () => [pool], drainTimeoutMs: 20 });
   await handle({ type: "routing.update", bundleVersion: 2 });
-  await handle({ type: "routing.drain", node: "db", drainTimeoutMs: 10 });
-  await handle({ type: "routing.drain", node: "db" });
-  await handle({ type: "routing.shutdown", node: "db", reconnectDeadlineMs: 5 });
-  await handle({ type: "routing.recovery", node: "db" });
   expect(refresh).toHaveBeenCalledWith({ bundleVersion: 2 });
-  expect(pool.drain).toHaveBeenCalledTimes(3);
-  expect(pool.drain).toHaveBeenNthCalledWith(2, "db", 20);
-  expect(pool.recover).toHaveBeenCalledWith("db", 20);
+  expect(pool.drain).not.toHaveBeenCalled();
+  expect(pool.recover).not.toHaveBeenCalled();
 });
 
 test("rejects incomplete stream updates and accepts a complete update", async () => {

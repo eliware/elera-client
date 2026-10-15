@@ -47,3 +47,30 @@ test("does not retry an uncertain write on another node", async () => {
   expect(runQuery).toHaveBeenCalledTimes(1);
   await client.close();
 });
+
+test("retries safe reads and honors explicit connections through the client", async () => {
+  const error = Object.assign(new Error("temporary"), { code: "ECONNRESET" });
+  const mysqlLib = driver({
+    query: jest
+      .fn()
+      .mockRejectedValueOnce(error)
+      .mockResolvedValue([["ok"]]),
+  });
+  const client = await createDb({
+    primary: profile,
+    bundle,
+    credentialProvider: async () => ({ user: "u", password: "p" }),
+    mysqlLib,
+    log: { warn: () => {} },
+  });
+  await client.query("SELECT 1", [], { route: "balanced" });
+  const explicit = {
+    query: jest.fn(async () => ["explicit"]),
+    execute: jest.fn(async () => ["explicit"]),
+  };
+  await client.query("SELECT 1", [], { connection: explicit });
+  await client.execute("SELECT 1", [], { connection: explicit });
+  expect(explicit.query).toHaveBeenCalledWith("SELECT 1", []);
+  expect(explicit.execute).toHaveBeenCalledWith("SELECT 1", []);
+  await client.close();
+});

@@ -1,55 +1,54 @@
 import { expect, test, jest } from "@jest/globals";
 import { createDb } from "../../../src/client/runtime/index.mjs";
-import { bundle, connection, driver, profile } from "../../../test-fixtures/client/runtime.mjs";
+import { bundle, driver, profile } from "../../../test-fixtures/client/runtime.mjs";
 
-test("creates a client and routes reads, writes, transactions, health, and close", async () => {
-  const log = { debug: jest.fn() };
+test("routes reads to balanced pools and writes to the primary pool", async () => {
+  const mysqlLib = driver();
   const client = await createDb({
     primary: profile,
     balanced: { host: "read", port: 3306 },
-    mysqlLib: driver(),
-    log,
+    mysqlLib,
   });
   await client.query("SELECT 1");
   await client.query("SELECT 1", [], { route: "balanced" });
   await client.execute("UPDATE app SET x=1");
-  await client.transaction(async (tx) => {
-    await tx.query("SELECT 1");
-    await tx.execute("UPDATE app SET x=1");
+  const pools = mysqlLib.createPool.mock.results.map((result) => result.value);
+  expect(pools[0].query).toHaveBeenCalledTimes(0);
+  expect(pools[0].execute).toHaveBeenCalledTimes(1);
+  expect(pools.slice(1).reduce((count, pool) => count + pool.query.mock.calls.length, 0)).toBe(2);
+  await client.close();
+});
+
+test("runs application transactions through the client", async () => {
+  const client = await createDb({ primary: profile, mysqlLib: driver() });
+  await expect(
+    client.transaction(async (tx) => {
+      await tx.query("SELECT 1");
+      return tx.execute("UPDATE app SET x=1");
+    }),
+  ).resolves.toBeTruthy();
+  await client.close();
+});
+
+test("reports primary and balanced health through the client", async () => {
+  const client = await createDb({
+    primary: profile,
+    balanced: { host: "read", port: 3306 },
+    mysqlLib: driver(),
   });
   await expect(client.health()).resolves.toMatchObject({ ok: true, route: "primary" });
   await expect(client.health("balanced")).resolves.toMatchObject({ ok: true, route: "balanced" });
+  await client.close();
+});
+
+test("logs setup and closes the client", async () => {
+  const log = { debug: jest.fn() };
+  const client = await createDb({ primary: profile, mysqlLib: driver(), log });
   expect(log.debug).toHaveBeenCalled();
   expect(client.bundle()).toBeUndefined();
   await expect(client.attachRoutingStream()).rejects.toThrow("routing stream is required");
   await client.end();
-});
-
-test("retries safe client queries and honors explicit connections", async () => {
-  const error = Object.assign(new Error("temporary"), { code: "ECONNRESET" });
-  const mysqlLib = driver({
-    query: jest
-      .fn()
-      .mockRejectedValueOnce(error)
-      .mockResolvedValue([["ok"]]),
-  });
-  const client = await createDb({
-    primary: profile,
-    bundle,
-    credentialProvider: async () => ({ user: "u", password: "p" }),
-    mysqlLib,
-    log: { warn: () => {} },
-  });
-  await client.query("SELECT 1", [], { route: "balanced" });
-  const explicit = {
-    query: jest.fn(async () => ["explicit"]),
-    execute: jest.fn(async () => ["explicit"]),
-  };
-  await client.query("SELECT 1", [], { connection: explicit });
-  await client.execute("SELECT 1", [], { connection: explicit });
-  expect(explicit.query).toHaveBeenCalledWith("SELECT 1", []);
-  expect(explicit.execute).toHaveBeenCalledWith("SELECT 1", []);
-  await client.close();
+  await client.end();
 });
 
 test("preserves MariaDB query, execute, and connection results", async () => {
@@ -76,20 +75,6 @@ test("preserves MariaDB query, execute, and connection results", async () => {
   tx.release();
   await client.close();
   expect(connection.commit).toHaveBeenCalledTimes(1);
-});
-
-test("rolls back application transaction failures through the client", async () => {
-  const failure = Object.assign(new Error("boom"), { code: "ER_LOCK_DEADLOCK" });
-  const conn = connection();
-  conn.query.mockRejectedValueOnce(failure);
-  const client = await createDb({
-    primary: profile,
-    bundle,
-    mysqlLib: driver({ getConnection: jest.fn(async () => conn) }),
-  });
-  await expect(client.transaction((tx) => tx.query("UPDATE x"))).rejects.toThrow("boom");
-  expect(conn.rollback).toHaveBeenCalled();
-  await client.close();
 });
 
 test("keeps refresh updates isolated between client instances", async () => {
