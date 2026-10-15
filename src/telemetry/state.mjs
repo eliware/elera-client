@@ -1,3 +1,7 @@
+import { createOperationStats } from "./operation-stats.mjs";
+import { createReconnectStats } from "./reconnect-stats.mjs";
+import { createTelemetryContext } from "./context.mjs";
+
 export function createTelemetryState({
   application = "default",
   credentialName = undefined,
@@ -5,60 +9,30 @@ export function createTelemetryState({
   scopes = undefined,
   now = () => Date.now(),
 } = {}) {
-  const stats = {
-    queries: 0,
-    failures: 0,
-    retries: 0,
-    reconnects: 0,
-    failoverCount: 0,
-    reconnectDelayMs: 0,
-    inflight: 0,
-    totalLatencyMs: 0,
-    maxLatencyMs: 0,
-    routes: { primary: 0, balanced: 0 },
-  };
-  const context = { application, credentialName, database, scopes };
-  const begin = () => {
-    stats.inflight += 1;
-    return now();
-  };
-  const record = ({
-    latencyMs = 0,
-    failed = false,
-    retry = false,
-    reconnect = false,
-    failover = false,
-    route,
-  } = {}) => {
-    stats.queries += 1;
-    stats.inflight = Math.max(0, stats.inflight - 1);
-    stats.totalLatencyMs += latencyMs;
-    stats.maxLatencyMs = Math.max(stats.maxLatencyMs, latencyMs);
-    if (route === "primary" || route === "balanced") stats.routes[route] += 1;
-    if (failed) stats.failures += 1;
-    if (retry) stats.retries += 1;
-    if (reconnect) stats.reconnects += 1;
-    if (failover) stats.failoverCount += 1;
-  };
-  const snapshot = () => ({
-    type: "client.telemetry",
-    ...context,
-    ...stats,
-    avgLatencyMs: stats.queries ? stats.totalLatencyMs / stats.queries : 0,
-    sentAt: new Date(now()).toISOString(),
-  });
-  const recordReconnect = ({ delayMs = 0, failover = false } = {}) => {
-    stats.reconnects += 1;
-    stats.reconnectDelayMs += Math.max(0, Number(delayMs) || 0);
-    if (failover) stats.failoverCount += 1;
+  const operations = createOperationStats();
+  const reconnects = createReconnectStats();
+  const context = createTelemetryContext({ application, credentialName, database, scopes });
+  const record = (value = {}) => {
+    operations.record(value);
+    reconnects.recordOperation(value);
   };
   return {
-    begin,
+    begin: () => operations.begin(now),
     record,
-    recordReconnect,
-    snapshot,
-    setContext(value = {}) {
-      Object.assign(context, value);
+    recordReconnect: reconnects.recordReconnect,
+    snapshot: () => {
+      const operationStats = operations.snapshot();
+      return {
+        type: "client.telemetry",
+        ...context.snapshot(),
+        ...operationStats,
+        ...reconnects.snapshot(),
+        avgLatencyMs: operationStats.queries
+          ? operationStats.totalLatencyMs / operationStats.queries
+          : 0,
+        sentAt: new Date(now()).toISOString(),
+      };
     },
+    setContext: context.set,
   };
 }

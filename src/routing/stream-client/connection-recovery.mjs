@@ -1,19 +1,11 @@
-import { stopHeartbeat } from "./heartbeat.mjs";
+import { clearSocketState } from "./socket-cleanup.mjs";
+import { recoverConnectionClose } from "./reconnect-recovery.mjs";
 
 export function createConnectionRecovery({ state, now, fallback, schedule }) {
   return {
     close() {
-      state.connecting = false;
-      stopHeartbeat(state.heartbeat);
-      state.heartbeat = undefined;
-      state.socket = undefined;
-      state.mode = "disconnected";
-      if (state.closed) return;
-      state.disconnectedAt = now();
-      state.lastReconnectWasPlanned = state.plannedReconnect;
-      if (!state.plannedReconnect) void fallback();
-      state.plannedReconnect = false;
-      schedule();
+      clearSocketState(state);
+      recoverConnectionClose({ state, now, fallback, schedule });
     },
   };
 }

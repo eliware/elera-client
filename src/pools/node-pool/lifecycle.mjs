@@ -1,16 +1,15 @@
 import { createDrainController } from "./drain-controller.mjs";
+import { createNodeAvailability } from "./availability.mjs";
 
 export function createNodeLifecycle({ now, timeoutMs = 45000, onForceClose }) {
   let state = "ready";
   let active = 0;
   const idleWaiters = new Set();
-  let forcedUnavailable = false;
   let closed = false;
   const forceClose = async () => {
     if (closed) return;
     closed = true;
-    state = "unavailable";
-    forcedUnavailable = true;
+    availability.markClosed();
     await onForceClose();
   };
   const begin = () => {
@@ -26,7 +25,7 @@ export function createNodeLifecycle({ now, timeoutMs = 45000, onForceClose }) {
   const drainController = createDrainController({ forceClose });
   const drain = (timeout = timeoutMs) => {
     state = "draining";
-    forcedUnavailable = true;
+    availability.markDraining();
     drainController.drain(timeout);
     return { state, active };
   };
@@ -42,27 +41,27 @@ export function createNodeLifecycle({ now, timeoutMs = 45000, onForceClose }) {
     clearTimeout(timer);
     return active === 0;
   };
-  const recover = () => {
-    if (closed) return state;
-    drainController.cancel();
-    state = "ready";
-    forcedUnavailable = false;
-    return state;
-  };
+  const availability = createNodeAvailability({
+    now,
+    getState: () => state,
+    setState: (value) => (state = value),
+    isClosed: () => closed,
+    cancelDrain: drainController.cancel,
+    drain,
+  });
   return {
     begin,
     end,
     drain,
     waitForIdle,
-    recover,
+    recover: availability.recover,
     forceClose,
     close: async () => {
       drainController.cancel();
       await forceClose();
     },
     set available(value) {
-      if (value) recover();
-      else drain();
+      availability.available = value;
     },
     get closed() {
       return closed;
@@ -75,13 +74,10 @@ export function createNodeLifecycle({ now, timeoutMs = 45000, onForceClose }) {
       return state;
     },
     get available() {
-      return !closed && state === "ready" && !forcedUnavailable && now() >= 0;
+      return availability.available;
     },
     set unavailable(value) {
-      if (value) {
-        state = "unavailable";
-        forcedUnavailable = true;
-      } else recover();
+      availability.unavailable = value;
     },
   };
 }

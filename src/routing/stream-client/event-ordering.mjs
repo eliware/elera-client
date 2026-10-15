@@ -1,21 +1,10 @@
-import { compareBundleVersions } from "../bundle-version.mjs";
+import { classifyEventVersion } from "./version-classification.mjs";
 
 export function orderRoutingEvent(event, { state, fallback }) {
-  const version = event.version;
-  if (
-    version !== undefined &&
-    state.expectedVersion !== 0 &&
-    compareBundleVersions(version, state.expectedVersion) <= 0
-  )
-    return { accepted: false };
-  const numericVersion = Number(version);
-  const numericExpected = Number(state.expectedVersion);
-  if (
-    Number.isInteger(numericVersion) &&
-    Number.isInteger(numericExpected) &&
-    numericExpected > 0 &&
-    numericVersion > numericExpected + 1
-  ) {
+  const { version } = event;
+  const classification = classifyEventVersion(version, state.expectedVersion);
+  if (classification === "stale") return { accepted: false };
+  if (classification === "gap") {
     const recovery = fallback();
     return {
       accepted: true,
