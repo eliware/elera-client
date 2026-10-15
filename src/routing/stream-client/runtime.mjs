@@ -1,7 +1,7 @@
 import { log as defaultLog } from "@eliware/common";
 import { websocketUrl } from "./address.mjs";
 import { createReconnectPolicy } from "./reconnect.mjs";
-import { createRestFallback } from "./fallback.mjs";
+import { createRuntimeFallback } from "./fallback.mjs";
 import { createRoutingConnector } from "./connector.mjs";
 import { createRoutingMessageHandler } from "./message-handler.mjs";
 import { stopHeartbeat } from "./heartbeat.mjs";
@@ -37,13 +37,9 @@ export function createRoutingRuntime(options) {
     telemetry,
   };
   const log = options.log ?? defaultLog;
-  const fallback = createRestFallback({
+  const fallback = createRuntimeFallback({
     fetchBundle,
-    getEndpoint: () => state.activeEndpoint,
-    isClosed: () => state.closed,
-    getVersion: () => state.expectedVersion,
-    setMode: (value) => (state.mode = value),
-    update: (event) => state.updateHandler?.(event),
+    state,
     onError,
     log,
     now,

@@ -1,5 +1,5 @@
 import { expect, jest, test } from "@jest/globals";
-import { createDrainTimer } from "../../../src/pools/node-pool/drain-timer.mjs";
+import { createDrainController } from "../../../src/pools/node-pool/drain-controller.mjs";
 
 test("replaces drain timers and supports unref", () => {
   const first = { unref: jest.fn() };
@@ -7,29 +7,31 @@ test("replaces drain timers and supports unref", () => {
   const timers = [first, second];
   const setTimeoutImpl = jest.fn(() => timers.shift());
   const clearTimeoutImpl = jest.fn();
-  const onExpire = jest.fn();
-  const drainTimer = createDrainTimer({ onExpire, setTimeoutImpl, clearTimeoutImpl });
-  drainTimer.schedule(10);
-  drainTimer.schedule(20);
-  drainTimer.clear();
+  const forceClose = jest.fn();
+  const drainController = createDrainController({ forceClose, setTimeoutImpl, clearTimeoutImpl });
+  drainController.drain(10);
+  drainController.drain(20);
+  drainController.cancel();
   expect(clearTimeoutImpl).toHaveBeenCalledWith(first);
   expect(clearTimeoutImpl).toHaveBeenLastCalledWith(second);
   expect(first.unref).toHaveBeenCalledTimes(1);
   expect(second.unref).toHaveBeenCalledTimes(1);
-  expect(setTimeoutImpl).toHaveBeenNthCalledWith(2, onExpire, 20);
+  expect(setTimeoutImpl).toHaveBeenNthCalledWith(2, expect.any(Function), 20);
+  setTimeoutImpl.mock.calls[1][0]();
+  expect(forceClose).toHaveBeenCalledTimes(1);
 });
 
 test("clears safely before a timer starts and supports handles without unref", () => {
   const handle = {};
   const clearTimeoutImpl = jest.fn();
-  const drainTimer = createDrainTimer({
-    onExpire: jest.fn(),
+  const drainController = createDrainController({
+    forceClose: jest.fn(),
     setTimeoutImpl: () => handle,
     clearTimeoutImpl,
   });
-  drainTimer.clear();
-  drainTimer.schedule(10);
-  drainTimer.clear();
-  drainTimer.clear();
+  drainController.cancel();
+  drainController.drain(10);
+  drainController.cancel();
+  drainController.cancel();
   expect(clearTimeoutImpl).toHaveBeenCalledTimes(1);
 });

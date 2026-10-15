@@ -1,6 +1,9 @@
 import { expect, jest, test } from "@jest/globals";
 import { createRoutingStream } from "../../../src/routing/stream-client/index.mjs";
-import { createRestFallback } from "../../../src/routing/stream-client/fallback.mjs";
+import {
+  createRestFallback,
+  createRuntimeFallback,
+} from "../../../src/routing/stream-client/fallback.mjs";
 import { FakeWebSocket, sockets } from "../../../test-fixtures/routing/stream-client.mjs";
 
 test("returns REST resync data to the update handler", async () => {
@@ -20,6 +23,28 @@ test("returns REST resync data to the update handler", async () => {
   expect(setMode).toHaveBeenCalledWith("rest");
   expect(update).toHaveBeenCalledWith(
     expect.objectContaining({ type: "routing.resync", version: 3, receivedAt: 10 }),
+  );
+});
+
+test("connects fallback state and update callbacks", async () => {
+  const state = {
+    activeEndpoint: "http://vip",
+    closed: false,
+    expectedVersion: 2,
+    mode: "websocket",
+    updateHandler: jest.fn(),
+  };
+  const fallback = createRuntimeFallback({
+    fetchBundle: jest.fn(async () => ({ bundleVersion: 3 })),
+    state,
+    now: () => 10,
+    onError: jest.fn(),
+    log: { warn: jest.fn() },
+  });
+  await fallback();
+  expect(state.mode).toBe("rest");
+  expect(state.updateHandler).toHaveBeenCalledWith(
+    expect.objectContaining({ type: "routing.resync", version: 2 }),
   );
 });
 

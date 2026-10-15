@@ -1,17 +1,17 @@
-export function createDrainTimer({
-  onExpire,
+export function createDrainController({
+  forceClose,
   setTimeoutImpl = setTimeout,
   clearTimeoutImpl = clearTimeout,
 }) {
   let timer;
   return {
-    schedule(timeout) {
+    drain(timeout) {
       if (timer) clearTimeoutImpl(timer);
-      timer = setTimeoutImpl(onExpire, timeout);
+      timer = setTimeoutImpl(() => void forceClose(), timeout);
       timer.unref?.();
       return timer;
     },
-    clear() {
+    cancel() {
       if (timer) clearTimeoutImpl(timer);
       timer = undefined;
     },

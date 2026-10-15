@@ -25,3 +25,17 @@ export function createRestFallback({
     }
   };
 }
+
+export function createRuntimeFallback({ fetchBundle, state, onError, log, now }) {
+  return createRestFallback({
+    fetchBundle,
+    getEndpoint: () => state.activeEndpoint,
+    isClosed: () => state.closed,
+    getVersion: () => state.expectedVersion,
+    setMode: (value) => (state.mode = value),
+    update: (event) => state.updateHandler?.(event),
+    onError,
+    log,
+    now,
+  });
+}
