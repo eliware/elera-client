@@ -1,4 +1,4 @@
-import { createTelemetry } from "../../telemetry.mjs";
+import { createTelemetry } from "../../telemetry/index.mjs";
 
 export function createClientTelemetry({ telemetry, bundle, now }) {
   if (telemetry !== true) return telemetry;

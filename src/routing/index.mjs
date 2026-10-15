@@ -1,4 +1,4 @@
-import { classifyQuery } from "./routing/query/classify.mjs";
+import { classifyQuery } from "./query/classify.mjs";
 export { classifyQuery };
 
 export function routeFor(sql, requested = "auto") {

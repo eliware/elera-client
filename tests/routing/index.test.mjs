@@ -1,5 +1,5 @@
 import { expect, test } from "@jest/globals";
-import { routeFor } from "../src/routing.mjs";
+import { routeFor } from "../../src/routing/index.mjs";
 
 test("supports explicit routes and rejects unknown routes", () => {
   expect(routeFor("UPDATE t SET x = 1", "balanced")).toBe("balanced");

@@ -1,4 +1,4 @@
-import { classifyQuery, routeFor } from "../../routing.mjs";
+import { classifyQuery, routeFor } from "../../routing/index.mjs";
 
 export function createRouteSelection({ primaryPool, balancedPool, routing }) {
   const choose = (sql, options = {}) =>

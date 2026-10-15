@@ -1,4 +1,4 @@
-import { asSqlError } from "../../errors.mjs";
+import { asSqlError } from "../../errors/index.mjs";
 
 export function createNodeHealth({ profile, pool, state, isRetryable, quarantine }) {
   return async function health() {

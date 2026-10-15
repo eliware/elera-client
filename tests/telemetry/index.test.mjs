@@ -1,5 +1,5 @@
 import { expect, jest, test } from "@jest/globals";
-import { createTelemetry } from "../src/telemetry.mjs";
+import { createTelemetry } from "../../src/telemetry/index.mjs";
 
 test("connects telemetry state to a stream emitter", () => {
   let callback;

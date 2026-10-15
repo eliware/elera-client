@@ -1,5 +1,5 @@
-import { createTelemetryEmitter } from "./telemetry/emitter.mjs";
-import { createTelemetryState } from "./telemetry/state.mjs";
+import { createTelemetryEmitter } from "./emitter.mjs";
+import { createTelemetryState } from "./state.mjs";
 
 export function createTelemetry({
   intervalMs = 1000,

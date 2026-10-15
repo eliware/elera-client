@@ -1,5 +1,5 @@
 import { expect, test } from "@jest/globals";
-import { redactedProfile, validateProfile } from "../src/config.mjs";
+import { redactedProfile, validateProfile } from "../../src/config/index.mjs";
 
 test("validates profile defaults and redacts secrets", () => {
   const profile = validateProfile({ host: "db", user: "u", password: "p", database: "app" });

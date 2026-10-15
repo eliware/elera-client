@@ -1,4 +1,4 @@
-import { asSqlError } from "../../errors.mjs";
+import { asSqlError } from "../../errors/index.mjs";
 
 export function createNodeMethods({
   profile,

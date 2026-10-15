@@ -1,6 +1,6 @@
 import { log as defaultLog } from "@eliware/common";
 import * as mysql from "mysql2/promise";
-import { validateProfile } from "../../config.mjs";
+import { validateProfile } from "../../config/index.mjs";
 import { createClientTelemetry } from "../telemetry/context.mjs";
 import { prepareDbProfiles } from "../auth/profiles.mjs";
 import { createSetupBundleValidator } from "../bundle/validate.mjs";

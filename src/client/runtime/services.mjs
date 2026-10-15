@@ -1,6 +1,6 @@
 import { createTimedOperation } from "../telemetry/operation.mjs";
 import { bundleNeedsRefresh } from "../../routing/bundle/expiry.mjs";
-import { routeFor } from "../../routing.mjs";
+import { routeFor } from "../../routing/index.mjs";
 import { createDiagnostics } from "../diagnostics/diagnostics.mjs";
 import { createQueryExecution } from "../routing/query-execution.mjs";
 import { createQuery } from "../routing/query.mjs";

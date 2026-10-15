@@ -1,5 +1,5 @@
 import { bundleExpired } from "../../routing/bundle/expiry.mjs";
-import { createNodePool, createRoutePool } from "../../pools.mjs";
+import { createNodePool, createRoutePool } from "../../pools/index.mjs";
 import { bundleProfiles } from "../bundle/profiles.mjs";
 
 const routeProfiles = (bundle, route, baseProfile, now) => {

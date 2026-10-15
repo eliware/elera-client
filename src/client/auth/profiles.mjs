@@ -1,4 +1,4 @@
-import { validateProfile } from "../../config.mjs";
+import { validateProfile } from "../../config/index.mjs";
 import { credentialContext } from "./context.mjs";
 import { resolveCredentials } from "./resolve.mjs";
 

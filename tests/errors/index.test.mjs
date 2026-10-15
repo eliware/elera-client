@@ -5,7 +5,7 @@ import {
   ClusterUnavailableError,
   ServerUnavailableError,
   SqlClientError,
-} from "../src/errors.mjs";
+} from "../../src/errors/index.mjs";
 
 test("classifies retryable and non-retryable SQL failures", () => {
   expect(classifyError({ code: "ECONNRESET" }).retryable).toBe(true);
