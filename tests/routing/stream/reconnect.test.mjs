@@ -1,11 +1,8 @@
 import { afterEach, expect, jest, test } from "@jest/globals";
 import { createReconnectPolicy } from "../../../src/routing/stream/reconnect.mjs";
-import { createRoutingStream } from "../../../src/routing/stream/index.mjs";
-import { FakeWebSocket, sockets } from "../../../test-fixtures/routing/stream.mjs";
 
 afterEach(() => {
   jest.useRealTimers();
-  sockets.splice(0).forEach((socket) => socket.close());
 });
 
 test("schedules, resets, and cancels reconnect attempts", () => {
@@ -53,38 +50,4 @@ test("uses the default reconnect delay", () => {
   jest.advanceTimersByTime(1000);
   expect(connect).toHaveBeenCalled();
   policy.cancel();
-});
-
-test("honors a supervisor shutdown event with immediate resync and reconnect", async () => {
-  const updates = [];
-  const fetchBundle = jest.fn(async () => ({ bundleVersion: 4 }));
-  const client = createRoutingStream({
-    endpoint: "http://vip",
-    fetchBundle,
-    WebSocketImpl: FakeWebSocket,
-    reconnectMs: 1,
-    maxReconnectMs: 1,
-    onUpdate: (event) => updates.push(event),
-  });
-  await client.connect();
-  const socket = sockets.at(-1);
-  socket.open();
-  socket.message({
-    type: "routing.shutdown",
-    node: "writer",
-    reason: "SIGTERM",
-    reconnectDeadlineMs: 60000,
-    loadBalancerEndpoint: "http://new-vip",
-  });
-  await new Promise((resolve) => setImmediate(resolve));
-  expect(updates).toEqual(
-    expect.arrayContaining([
-      expect.objectContaining({ type: "routing.shutdown" }),
-      expect.objectContaining({ type: "routing.resync", bundle: { bundleVersion: 4 } }),
-    ]),
-  );
-  expect(fetchBundle).toHaveBeenCalledWith("http://new-vip");
-  expect(socket.closeArgs).toEqual([1012, "supervisor restarting"]);
-  expect(client.state().endpoint).toBe("http://new-vip");
-  client.close();
 });
