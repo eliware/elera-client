@@ -2,7 +2,7 @@
 
 ## Package install fails
 
-Use Node.js 26 or later. Run `npm ci` from the application folder. Check that the lock file is current.
+Use Node.js 26 or later. Run `npm ci` from the application folder. Check that `package-lock.json` matches `package.json`.
 
 ## Client setup fails
 

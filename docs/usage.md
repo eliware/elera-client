@@ -21,7 +21,7 @@ const db = await createDb({
 });
 ```
 
-You can omit either option when its environment variable is set. You can pass a custom environment map with `env`:
+Set an environment variable to omit its matching option. Pass a custom environment map with `env`:
 
 ```js
 const db = await createDb({
@@ -71,7 +71,7 @@ Call `probe` to run a query and test a transaction connection. The method rolls 
 
 ```js
 const status = await db.probe();
-if (!status.ok) throw new Error("Elera client check failed");
+console.log(status);
 ```
 
 The default probe query is `SELECT 1`. Pass a query string to use another query. The result has `ok`, `route`, `result`, `transaction`, and `released` fields.

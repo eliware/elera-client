@@ -50,6 +50,6 @@ Keep one test module for each source module.
 
 ## npm publication
 
-Publish `@eliware/elera-client` from a matching version tag.
+Check that a release tag matches the package version.
 Include the package files required by the supported API.
 Run `npm run pack` before publication review.
