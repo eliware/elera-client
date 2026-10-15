@@ -10,8 +10,10 @@ test("classifies connection failures and sets the quarantine deadline", () => {
   expect(policy.isRetryable(Object.assign(new Error("bad"), { code: "ER_PARSE_ERROR" }))).toBe(
     false,
   );
+  expect(policy.isQuarantined()).toBe(false);
   policy.quarantine();
   expect(state.unavailableUntil).toBe(15);
+  expect(policy.isQuarantined()).toBe(true);
   policy.clearQuarantine();
   expect(state.unavailableUntil).toBe(0);
 });
