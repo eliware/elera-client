@@ -1,3 +1,5 @@
+import { probeClient } from "./probe.mjs";
+
 export function createClientApi({
   execution,
   transaction,
@@ -19,28 +21,13 @@ export function createClientApi({
     async execute(sql, values, options) {
       return execution.execute(sql, values, options);
     },
-    // Intentional diagnostic contract: the query route and transaction route are
-    // reported separately by their operations; probe only promises that both
-    // checks completed without error, not that they used the same connection.
     async probe(sql = "SELECT 1") {
-      const route = routeFor(sql);
-      const result = await client.query(sql);
-      let connection;
-      let transactionState = "started";
-      try {
-        connection = await client.getConnection();
-        await connection.beginTransaction();
-        await connection.rollback();
-      } finally {
-        connection?.release?.();
-      }
-      return {
-        ok: true,
-        route,
-        result,
-        transaction: transactionState,
-        released: Boolean(connection),
-      };
+      return probeClient({
+        sql,
+        routeFor,
+        query: (statement) => client.query(statement),
+        getConnection: () => client.getConnection(),
+      });
     },
     async transaction(callback) {
       return transaction(callback);

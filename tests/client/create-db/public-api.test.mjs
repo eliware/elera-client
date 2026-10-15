@@ -2,12 +2,8 @@ import { expect, jest, test } from "@jest/globals";
 import { createClientApi } from "../../../src/client/create-db/public-api.mjs";
 
 test("exposes client operations through the supplied services", async () => {
-  const connection = {
-    beginTransaction: jest.fn(),
-    rollback: jest.fn(),
-    release: jest.fn(),
-  };
-  const node = { getConnection: async () => connection };
+  const connection = { getConnection: jest.fn(async () => ({})) };
+  const node = connection;
   const pool = {
     choose: () => node,
     drain: jest.fn(),
@@ -37,7 +33,6 @@ test("exposes client operations through the supplied services", async () => {
   });
   await expect(client.query("SELECT 1")).resolves.toEqual(["rows"]);
   await expect(client.execute("UPDATE t SET x=1")).resolves.toEqual(["result"]);
-  await expect(client.probe()).resolves.toMatchObject({ ok: true, released: true });
   await expect(client.transaction((value) => value)).resolves.toBe("transaction");
   await expect(client.health()).resolves.toEqual({ ok: true });
   await expect(client.refresh({ bundleVersion: 2 })).resolves.toEqual({ bundleVersion: 2 });

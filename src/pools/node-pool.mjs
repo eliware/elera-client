@@ -22,14 +22,8 @@ export function createNodePool({
   const sessionStatements = profile.options?.sessionStatements ?? [];
   const state = { failures: 0, unavailableUntil: 0 };
   let lifecycle;
-  let closed = false;
-  const forceClose = async () => {
-    if (closed) return;
-    closed = true;
-    lifecycle.unavailable = true;
-    await pool.end();
-  };
-  lifecycle = createNodeLifecycle({ pool, now, onForceClose: forceClose });
+  const forceClosePool = () => pool.end();
+  lifecycle = createNodeLifecycle({ pool, now, onForceClose: forceClosePool });
   const operations = createNodeOperations({
     pool,
     sessionStatements,
@@ -55,10 +49,8 @@ export function createNodePool({
       return lifecycle.available && now() >= state.unavailableUntil;
     },
     set available(value) {
-      if (value) {
-        if (!closed) lifecycle.recover();
-        state.unavailableUntil = 0;
-      } else lifecycle.drain();
+      lifecycle.available = value;
+      if (value && !lifecycle.closed) state.unavailableUntil = 0;
     },
     get failures() {
       return state.failures;
@@ -71,15 +63,14 @@ export function createNodePool({
     },
     drain: lifecycle.drain,
     recover: () => {
-      if (!closed) lifecycle.recover();
+      lifecycle.recover();
       return lifecycle.state;
     },
     waitForIdle: lifecycle.waitForIdle,
-    forceClose,
+    forceClose: lifecycle.forceClose,
     ...methods,
     async close() {
-      lifecycle.clear();
-      await forceClose();
+      await lifecycle.close();
     },
   };
 }

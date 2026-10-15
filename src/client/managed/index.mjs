@@ -2,6 +2,7 @@ import { createDbFromBundle } from "../from-bundle.mjs";
 import { createRoutingStream } from "../../routing/stream-client/index.mjs";
 import { resolveManagedConfig, createBundleFetcher } from "./configuration.mjs";
 import { exposeManagedClient } from "./public-api.mjs";
+import { createManagedShutdown } from "./shutdown.mjs";
 
 export async function createDb({
   endpoint,
@@ -49,14 +50,6 @@ export async function createDb({
     telemetry,
   });
   const detach = await client.attachRoutingStream(stream);
-  const close = client.close.bind(client);
-  let ending;
-  const end = async () => {
-    ending ??= (async () => {
-      await detach?.();
-      await close();
-    })();
-    return ending;
-  };
+  const end = createManagedShutdown(detach, client.close.bind(client));
   return exposeManagedClient(client, end);
 }
