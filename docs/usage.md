@@ -1,3 +1,95 @@
 # Usage
 
-See the project README for installation and the supported Elera client API.
+## Install
+
+Use Node.js 26 or later. Install the package in your application:
+
+```sh
+npm install @eliware/elera-client
+```
+
+## Configure
+
+Set the Elera API URL and application token. Pass both values to `createDb`:
+
+```js
+import { createDb } from "@eliware/elera-client";
+
+const db = await createDb({
+  endpoint: process.env.ELERA_API_URL,
+  token: process.env.ELERA_API_TOKEN,
+});
+```
+
+You can omit either option when its environment variable is set. You can pass a custom environment map with `env`:
+
+```js
+const db = await createDb({
+  env: {
+    ELERA_API_URL: "https://elera.example.test",
+    ELERA_API_TOKEN: "replace-with-application-token",
+  },
+});
+```
+
+Use an application token. Do not use a supervisor token. Keep tokens out of source control, logs, and URLs.
+
+## Run SQL
+
+Use `query` for SQL statements. Use `execute` for prepared statements:
+
+```js
+const [rows] = await db.query("SELECT id, name FROM accounts WHERE id = ?", [accountId]);
+const [result] = await db.execute("UPDATE accounts SET name = ? WHERE id = ?", [name, accountId]);
+```
+
+Both methods return mysql2 result tuples. Pass values as an array. Do not build SQL by joining untrusted values.
+
+## Use a connection
+
+Use `getConnection` when one connection must own a transaction. Always release the connection:
+
+```js
+const connection = await db.getConnection();
+try {
+  await connection.beginTransaction();
+  await connection.execute("UPDATE accounts SET active = ? WHERE id = ?", [true, accountId]);
+  await connection.commit();
+} catch (error) {
+  await connection.rollback();
+  throw error;
+} finally {
+  connection.release();
+}
+```
+
+The connection uses the primary route. It does not move between SQL nodes during a transaction.
+
+## Check the client
+
+Call `probe` to run a query and test a transaction connection. The method rolls back its test transaction and releases its connection:
+
+```js
+const status = await db.probe();
+if (!status.ok) throw new Error("Elera client check failed");
+```
+
+The default probe query is `SELECT 1`. Pass a query string to use another query. The result has `ok`, `route`, `result`, `transaction`, and `released` fields.
+
+## Close the client
+
+Call `end` when the application no longer needs the client:
+
+```js
+await db.end();
+```
+
+This call closes the routing stream and SQL pools. It can run more than once.
+
+## Runtime behavior
+
+The client gets SQL credentials and route data from the Elera API. It keeps bearer tokens out of WebSocket URLs. It reconnects after a stream failure and requests fresh route data after a version gap.
+
+The client retries a query only when it can route that query safely. It does not replay an uncertain write on another SQL node.
+
+See [Public API](public-api.md) for method details. See [Troubleshooting](troubleshooting.md) for common failures.

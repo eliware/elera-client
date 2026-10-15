@@ -12,8 +12,5 @@
     "target": "ES2024",
     "skipLibCheck": true
   },
-  "include": [
-    "src/**/*.mjs",
-    "src/**/*.d.ts"
-  ]
+  "include": ["src/**/*.mjs", "src/**/*.d.ts"]
 }

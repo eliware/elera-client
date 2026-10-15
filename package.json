@@ -1,91 +1,124 @@
 {
-    "name": "@eliware/elera-client",
-    "version": "0.3.1",
-    "description": "Application-facing Elera client for managed MySQL/MariaDB routing, failover, lifecycle, and telemetry",
-    "keywords": [
-        "eliware",
-        "elera",
-        "mysql",
-        "mariadb",
-        "database",
-        "routing",
-        "failover",
-        "telemetry",
-        "websocket",
-        "connection-pool",
-        "application-client"
+  "name": "@eliware/elera-client",
+  "version": "12.0.0",
+  "type": "module",
+  "description": "Application-facing Elera client for managed MySQL/MariaDB routing, failover, lifecycle, and telemetry",
+  "keywords": [
+    "eliware",
+    "elera",
+    "mysql",
+    "mariadb",
+    "database",
+    "routing",
+    "failover",
+    "telemetry",
+    "websocket",
+    "connection-pool",
+    "application-client"
+  ],
+  "private": false,
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "main": "./src/index.mjs",
+  "files": [
+    "src/",
+    "docs/",
+    "README.md",
+    "AGENTS.md",
+    "LICENSE",
+    "RELEASE_NOTES.md",
+    "examples/",
+    "specs/",
+    ".env.example"
+  ],
+  "scripts": {
+    "test": "eliware-test",
+    "lint": "eliware-test --lint",
+    "check": "node --check src/index.mjs",
+    "contracts": "node test-fixtures/verify-contracts.mjs",
+    "typecheck": "tsc --project tsconfig.json",
+    "pack": "eliware-test --pack",
+    "audit": "eliware-test --audit",
+    "format": "eliware-test --format",
+    "format:check": "eliware-test --format-check"
+  },
+  "engines": {
+    "node": ">=26"
+  },
+  "dependencies": {
+    "@eliware/common": "^12.0.1",
+    "@eliware/elera-lib": "^12.0.0",
+    "@eliware/snowflake": "^12.0.0",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "mysql2": "^3.24.6",
+    "ws": "^8.22.0"
+  },
+  "devDependencies": {
+    "@eliware/test": "^12.0.0",
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/tests/**/*.test.mjs"
     ],
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/eliware/elera-client.git"
-    },
-    "homepage": "https://github.com/eliware/elera-client#readme",
-    "bugs": {
-        "url": "https://github.com/eliware/elera-client/issues"
-    },
-    "author": "Eli Sterling, eliware.org <eli@eliware.org>",
-    "license": "Apache-2.0",
-    "type": "module",
-    "engines": {
-        "node": ">=26"
-    },
-    "exports": {
-        ".": {
-            "types": "./src/index.d.ts",
-            "import": "./src/index.mjs"
-        }
-    },
-    "files": [
-        "src",
-        "docs",
-        "README.md",
-        "RELEASE_NOTES.md",
-        "LICENSE",
-        "THIRD-PARTY-NOTICES.md"
+    "collectCoverageFrom": [
+      "src/**/*.mjs"
     ],
-    "scripts": {
-        "test": "eliware-test",
-        "lint": "eliware-test --lint",
-        "check": "node --check src/index.mjs",
-        "contracts": "node scripts/verify-contracts.mjs",
-        "typecheck": "tsc --project tsconfig.json",
-        "pack": "npm pack --dry-run",
-        "audit": "node scripts/audit.mjs"
-    },
-    "dependencies": {
-        "@eliware/common": "^2.0.0",
-        "@eliware/elera-lib": "file:../elera-lib",
-        "@eliware/snowflake": "^2.0.0",
-        "ajv": "^8.20.0",
-        "ajv-formats": "^3.0.1",
-        "mysql2": "^3.24.2",
-        "ws": "^8.21.3"
-    },
-    "devDependencies": {
-        "@eliware/test": "^5.0.0",
-        "@types/node": "^26.4.1",
-        "typescript": "^7.0.2"
-    },
-    "publishConfig": {
-        "access": "public"
-    },
-    "prettier": {
-      "printWidth": 100,
-      "tabWidth": 2,
-      "useTabs": false,
-      "semi": true,
-      "singleQuote": false,
-      "quoteProps": "as-needed",
-      "jsxSingleQuote": false,
-      "trailingComma": "all",
-      "bracketSpacing": true,
-      "bracketSameLine": false,
-      "arrowParens": "always",
-      "proseWrap": "preserve",
-      "endOfLine": "lf"
-    },
-    "eliware": {
-      "id": "E-211",
-      "apply": ["general", "library", "npm-published"]
+    "coverageReporters": [
+      "text",
+      "json-summary"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 100,
+        "functions": 100,
+        "lines": 100,
+        "statements": 100
+      }
     }
+  },
+  "prettier": {
+    "printWidth": 100,
+    "tabWidth": 2,
+    "useTabs": false,
+    "semi": true,
+    "singleQuote": false,
+    "quoteProps": "as-needed",
+    "jsxSingleQuote": false,
+    "trailingComma": "all",
+    "bracketSpacing": true,
+    "bracketSameLine": false,
+    "arrowParens": "always",
+    "proseWrap": "preserve",
+    "endOfLine": "lf"
+  },
+  "author": "Eliware <eliware@eliware.org>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eliware/elera-client.git"
+  },
+  "homepage": "https://github.com/eliware/elera-client#readme",
+  "bugs": {
+    "url": "https://github.com/eliware/elera-client/issues"
+  },
+  "eliware": {
+    "id": "E-1323",
+    "apply": [
+      "general",
+      "library",
+      "npm-published"
+    ]
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.mjs"
+    }
+  }
 }

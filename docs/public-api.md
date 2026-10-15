@@ -1,54 +1,39 @@
-# Elera Client Public API
+# Public API
 
-`@eliware/elera-client` is the application-facing SDK. Its public surface is
-intentionally limited to the managed mysql2-compatible database client.
+The package exports one function: `createDb`. It returns a managed MySQL or MariaDB client.
 
-## Application configuration
+## `createDb(options)`
 
-Applications provide only the Elera HTTP endpoint and an application-scoped
-API token:
+| Option     | Type     | Required source             | Description                                 |
+| ---------- | -------- | --------------------------- | ------------------------------------------- |
+| `endpoint` | `string` | Option or `ELERA_API_URL`   | Elera API URL.                              |
+| `token`    | `string` | Option or `ELERA_API_TOKEN` | Application API token.                      |
+| `env`      | `object` | Optional                    | Environment map. Defaults to `process.env`. |
 
-```js
-import { createDb } from '@eliware/elera-client';
+Pass endpoint and token as options or environment values. The function rejects a missing URL, a missing token, an invalid bundle, or a failed API request.
 
-const db = await createDb({
-  endpoint: process.env.ELERA_API_URL,
-  token: process.env.ELERA_API_TOKEN
-});
-```
+## Client methods
 
-Both values are optional when passed explicitly because `createDb()` reads
-`ELERA_API_URL` and `ELERA_API_TOKEN` automatically when they are omitted.
-`createDb({ env })` is also supported for dependency-injected environments.
-Applications do not provide SQL hosts, ports, usernames, passwords, physical
-database names, Galera settings, or supervisor credentials.
+| Method                  | Result                         | Use                                         |
+| ----------------------- | ------------------------------ | ------------------------------------------- |
+| `query(sql, values?)`   | mysql2 result tuple            | Run SQL.                                    |
+| `execute(sql, values?)` | mysql2 result tuple            | Run a prepared statement.                   |
+| `getConnection()`       | Promise of a mysql2 connection | Run work on one primary connection.         |
+| `probe(sql?)`           | Promise of a status object     | Check a query and a transaction connection. |
+| `end()`                 | Promise of `undefined`         | Close the client.                           |
 
-The supported application configuration is endpoint/token, either explicitly,
-through `env`, or from `process.env`. Transport, routing, pool, and telemetry
-controls are internal test/integration injection points and are not part of
-the supported application API.
+`query` and `execute` accept mysql2-compatible SQL parameters. Both return the driver's result tuple. `getConnection` returns a writer-pinned connection. Release each connection after use.
 
-## Public exports
+`probe` runs `SELECT 1` when you omit `sql`. It runs the query, starts and rolls back a transaction, then releases the connection. Its result has `ok`, `route`, `result`, `transaction`, and `released` fields.
 
-The package exports:
+## Errors
 
-- `createDb()` for creating the managed application client.
+The client rejects a call when the API request fails, the bundle is invalid, or no eligible SQL node is available. SQL errors keep supported mysql2 fields such as `code`, `errno`, and `sqlState`.
 
-The managed client exposes `query`, `execute`, `getConnection`, and `end`.
-Acquired connections expose `beginTransaction`, `commit`, `rollback`, and
-`release`, matching the mysql2/promise lifecycle.
-It obtains routing bundles and SQL credentials internally, applies writer/read
- routing, and responds to supervisor lifecycle events. Its Node WebSocket
- transport authenticates with the `Authorization: Bearer …` handshake header and does not
-put bearer tokens in query strings.
+## Route behavior
 
-Bundle parsing, routing pools, WebSocket handling, credential materialization,
-Galera operations, provisioning, recovery, and supervisor administration are
-implementation details. They must not become application-facing exports.
+The client gets SQL routes and credentials from the Elera API. It does not accept SQL hosts or passwords as public options. It does not place the API token in a URL.
 
-## Boundary rule
+The client can retry a query when the query is safe for another route. It does not replay an uncertain write. `end` closes the stream and SQL pools.
 
-The client package owns application integration. Shared bundle/event contracts
-and validation remain in `@eliware/elera-lib`. Client errors, lifecycle policy,
-telemetry, transport, SQL pools, and routing behavior belong to this package.
-Supervisor-only and CLI-only operations remain in their respective repositories.
+See [Usage](usage.md) for setup and code examples. See [Troubleshooting](troubleshooting.md) for failure steps.

@@ -3,6 +3,7 @@ export function resolveManagedConfig({ endpoint, token, env = process.env } = {}
 }
 
 export function createBundleFetcher({ endpoint, token, fetchImpl, fetchPath }) {
-  return (targetEndpoint = endpoint) => fetchRoutingBundle({ endpoint: targetEndpoint, token, fetchImpl, path: fetchPath });
+  return (targetEndpoint = endpoint) =>
+    fetchRoutingBundle({ endpoint: targetEndpoint, token, fetchImpl, path: fetchPath });
 }
-import { fetchRoutingBundle } from '../../routing/bundle-fetcher.mjs';
+import { fetchRoutingBundle } from "../../routing/bundle-fetcher.mjs";

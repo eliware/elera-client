@@ -1,5 +1,12 @@
 node_modules/
+.git/
 coverage/
-.env
-.env.*
-!.env.example
+dist/
+build/
+generated/
+artifacts/
+test-results/
+.env*
+!.env*.example
+.DS_Store
+Thumbs.db

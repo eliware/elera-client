@@ -1,1 +1,9 @@
-console.log('Elera client example: run the commands documented in README.md from the project root.');
+import { createDb } from "@eliware/elera-client";
+
+const db = await createDb();
+try {
+  const [rows] = await db.query("SELECT 1 AS connected");
+  console.log(rows);
+} finally {
+  await db.end();
+}

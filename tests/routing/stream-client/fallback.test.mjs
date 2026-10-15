@@ -1,9 +1,91 @@
-import { expect, jest, test } from '@jest/globals';
-import { createRoutingStream } from '../../../src/routing/stream-client/index.mjs';
-import { FakeWebSocket, sockets } from './fixtures.mjs';
+import { expect, jest, test } from "@jest/globals";
+import { createRoutingStream } from "../../../src/routing/stream-client/index.mjs";
+import { createRestFallback } from "../../../src/routing/stream-client/fallback.mjs";
+import { FakeWebSocket, sockets } from "../../../test-fixtures/routing/stream-client.mjs";
 
-test('requires endpoint and REST fallback', () => { expect(() => createRoutingStream()).toThrow('endpoint and fetchBundle'); });
-test('falls back to REST when WebSocket is unavailable or fails', async () => { const fetchBundle = jest.fn(async () => { throw new Error('offline'); }); const warn = jest.fn(); const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle, WebSocketImpl: null, reconnectMs: 1, maxReconnectMs: 1, log: { warn } }); await client.connect(); await new Promise((resolve) => setTimeout(resolve, 5)); client.close(); expect(fetchBundle).toHaveBeenCalled(); expect(warn).toHaveBeenCalled(); });
-test('does not apply a REST result after the stream is closed', async () => { let resolve; const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle: () => new Promise((done) => { resolve = done; }), WebSocketImpl: null }); const pending = client.connect(); client.close(); resolve({ bundleVersion: 'late' }); await pending; expect(client.state().mode).toBe('disconnected'); });
-test('delivers REST resyncs to the replaced update handler', async () => { const received = []; const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle: async () => ({ bundleVersion: 6 }), WebSocketImpl: null }); client.setOnUpdate((event) => received.push(event)); await client.connect(); expect(received[0]).toMatchObject({ type: 'routing.resync', bundle: { bundleVersion: 6 } }); client.close(); });
-test('falls back after an active socket closes', async () => { const fetchBundle = jest.fn(async () => ({ bundleVersion: 'fallback' })); const client = createRoutingStream({ endpoint: 'http://vip', fetchBundle, WebSocketImpl: FakeWebSocket, reconnectMs: 100000 }); await client.connect(); const socket = sockets.at(-1); socket.open(); socket.close(); await new Promise((resolve) => setImmediate(resolve)); expect(client.state().mode).toBe('rest'); client.close(); });
+test("returns REST resync data to the update handler", async () => {
+  const update = jest.fn();
+  const setMode = jest.fn();
+  const fallback = createRestFallback({
+    fetchBundle: async (endpoint) => ({ endpoint, bundleVersion: 4 }),
+    getEndpoint: () => "http://vip",
+    isClosed: () => false,
+    getVersion: () => 3,
+    setMode,
+    update,
+    now: () => 10,
+    log: { warn: jest.fn() },
+  });
+  await fallback();
+  expect(setMode).toHaveBeenCalledWith("rest");
+  expect(update).toHaveBeenCalledWith(
+    expect.objectContaining({ type: "routing.resync", version: 3, receivedAt: 10 }),
+  );
+});
+
+test("requires endpoint and REST fallback", () => {
+  expect(() => createRoutingStream()).toThrow("endpoint and fetchBundle");
+});
+test("falls back to REST when WebSocket is unavailable or fails", async () => {
+  const fetchBundle = jest.fn(async () => {
+    throw new Error("offline");
+  });
+  const warn = jest.fn();
+  const client = createRoutingStream({
+    endpoint: "http://vip",
+    fetchBundle,
+    WebSocketImpl: null,
+    reconnectMs: 1,
+    maxReconnectMs: 1,
+    log: { warn },
+  });
+  await client.connect();
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  client.close();
+  expect(fetchBundle).toHaveBeenCalled();
+  expect(warn).toHaveBeenCalled();
+});
+test("does not apply a REST result after the stream is closed", async () => {
+  let resolve;
+  const client = createRoutingStream({
+    endpoint: "http://vip",
+    fetchBundle: () =>
+      new Promise((done) => {
+        resolve = done;
+      }),
+    WebSocketImpl: null,
+  });
+  const pending = client.connect();
+  client.close();
+  resolve({ bundleVersion: "late" });
+  await pending;
+  expect(client.state().mode).toBe("disconnected");
+});
+test("delivers REST resyncs to the replaced update handler", async () => {
+  const received = [];
+  const client = createRoutingStream({
+    endpoint: "http://vip",
+    fetchBundle: async () => ({ bundleVersion: 6 }),
+    WebSocketImpl: null,
+  });
+  client.setOnUpdate((event) => received.push(event));
+  await client.connect();
+  expect(received[0]).toMatchObject({ type: "routing.resync", bundle: { bundleVersion: 6 } });
+  client.close();
+});
+test("falls back after an active socket closes", async () => {
+  const fetchBundle = jest.fn(async () => ({ bundleVersion: "fallback" }));
+  const client = createRoutingStream({
+    endpoint: "http://vip",
+    fetchBundle,
+    WebSocketImpl: FakeWebSocket,
+    reconnectMs: 100000,
+  });
+  await client.connect();
+  const socket = sockets.at(-1);
+  socket.open();
+  socket.close();
+  await new Promise((resolve) => setImmediate(resolve));
+  expect(client.state().mode).toBe("rest");
+  client.close();
+});

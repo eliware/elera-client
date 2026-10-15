@@ -1,60 +1,100 @@
+import { log as defaultLog } from "@eliware/common";
+import { websocketUrl } from "./address.mjs";
+import { createReconnectPolicy } from "./reconnect.mjs";
+import { createRestFallback } from "./fallback.mjs";
+import { connectRoutingSocket } from "./connection.mjs";
+import { createRoutingMessageHandler } from "./message-handler.mjs";
+import { stopHeartbeat } from "./heartbeat.mjs";
 
-import { log as defaultLog } from '@eliware/common';
-import { compareBundleVersions } from '../bundle-version.mjs';
-import { websocketUrl, activeEndpointFromShutdown } from './address.mjs';
-import { createReconnectPolicy } from './reconnect.mjs';
-import { startHeartbeat, stopHeartbeat } from './heartbeat.mjs';
-import { parseRoutingEvent } from './events.mjs';
-import { createRestFallback } from './fallback.mjs';
-
-export function createRoutingStream({ endpoint, token, fetchBundle, WebSocketImpl = globalThis.WebSocket, onUpdate, onError, reconnectMs = 1000, maxReconnectMs = 30000, heartbeatMs = 45000, now = () => Date.now(), telemetry } = {}) {
-  if (!endpoint || typeof fetchBundle !== 'function') throw new TypeError('endpoint and fetchBundle are required');
-  let socket; let closed = false; let connecting = false; let heartbeat; let expectedVersion = 0; let updateHandler = onUpdate; let mode = 'disconnected'; let plannedReconnect = false; let lastReconnectWasPlanned = false; let disconnectedAt; let reconnectDeadlineAt; let activeEndpoint = endpoint;
-  const log = arguments[0]?.log ?? defaultLog;
-  const streamUrl = () => websocketUrl(activeEndpoint);
-  const fallback = createRestFallback({ fetchBundle, getEndpoint: () => activeEndpoint, isClosed: () => closed, getVersion: () => expectedVersion, setMode: (value) => { mode = value; }, update: (event) => updateHandler?.(event), onError, log, now });
-  const reconnect = createReconnectPolicy({ reconnectMs, maxReconnectMs, now, isClosed: () => closed, getDeadline: () => reconnectDeadlineAt, scheduleConnect: connect });
+export function createRoutingStream(options = {}) {
+  const {
+    endpoint,
+    token,
+    fetchBundle,
+    WebSocketImpl = globalThis.WebSocket,
+    onUpdate,
+    onError,
+    reconnectMs = 1000,
+    maxReconnectMs = 30000,
+    heartbeatMs = 45000,
+    now = () => Date.now(),
+    telemetry,
+  } = options;
+  if (!endpoint || typeof fetchBundle !== "function")
+    throw new TypeError("endpoint and fetchBundle are required");
+  const state = {
+    socket: undefined,
+    closed: false,
+    connecting: false,
+    heartbeat: undefined,
+    expectedVersion: 0,
+    updateHandler: onUpdate,
+    mode: "disconnected",
+    plannedReconnect: false,
+    lastReconnectWasPlanned: false,
+    disconnectedAt: undefined,
+    reconnectDeadlineAt: undefined,
+    activeEndpoint: endpoint,
+    telemetry,
+  };
+  const log = options.log ?? defaultLog;
+  const fallback = createRestFallback({
+    fetchBundle,
+    getEndpoint: () => state.activeEndpoint,
+    isClosed: () => state.closed,
+    getVersion: () => state.expectedVersion,
+    setMode: (value) => (state.mode = value),
+    update: (event) => state.updateHandler?.(event),
+    onError,
+    log,
+    now,
+  });
+  const reconnect = createReconnectPolicy({
+    reconnectMs,
+    maxReconnectMs,
+    now,
+    isClosed: () => state.closed,
+    getDeadline: () => state.reconnectDeadlineAt,
+    scheduleConnect: connect,
+  });
   const schedule = reconnect.schedule;
+  const onMessage = createRoutingMessageHandler({ state, fallback, reconnect, now, onError });
   async function connect() {
-    if (closed || connecting || socket?.readyState === 1 || (reconnectDeadlineAt !== undefined && now() >= reconnectDeadlineAt)) return;
-    if (closed || typeof WebSocketImpl !== 'function') { await fallback(); schedule(); return; }
-    try {
-      connecting = true;
-      socket = new WebSocketImpl(streamUrl(), { headers: { authorization: `Bearer ${token ?? ''}` } });
-      socket.onopen = () => { connecting = false; mode = 'websocket'; reconnectDeadlineAt = undefined; reconnect.reset(); if (disconnectedAt !== undefined) { telemetry?.recordReconnect?.({ delayMs: Math.max(0, now() - disconnectedAt), failover: lastReconnectWasPlanned }); disconnectedAt = undefined; lastReconnectWasPlanned = false; } heartbeat = startHeartbeat({ getSocket: () => socket, heartbeatMs, now }); };
-      socket.onmessage = async ({ data }) => {
-        try {
-          const event = parseRoutingEvent(data);
-          if (event.type === 'routing.shutdown') {
-            activeEndpoint = activeEndpointFromShutdown(activeEndpoint, event);
-            updateHandler?.(event);
-            if (typeof event.loadBalancerEndpoint === 'string' && event.loadBalancerEndpoint) {
-              endpoint = event.loadBalancerEndpoint;
-              activeEndpoint = endpoint;
-            }
-            const deadlineMs = event.reconnectDeadlineMs;
-            reconnectDeadlineAt = now() + deadlineMs;
-            // Mark the close as planned even for a zero deadline so onclose
-            // cannot schedule an unintended reconnect.
-            plannedReconnect = true;
-            if (deadlineMs <= 0) reconnect.cancel();
-            reconnect.reset();
-            await fallback();
-            socket?.close?.(1012, 'supervisor restarting');
-            return;
-          }
-          const version = event.version;
-          if (version !== undefined && expectedVersion !== 0 && compareBundleVersions(version, expectedVersion) <= 0) return;
-          const numericVersion = Number(version); const numericExpected = Number(expectedVersion);
-          if (Number.isInteger(numericVersion) && Number.isInteger(numericExpected) && numericExpected > 0 && numericVersion > numericExpected + 1) await fallback();
-          expectedVersion = version;
-          if (event.type === 'routing.topology') { await fallback(); return; }
-          updateHandler?.(event);
-        } catch (error) { onError?.(error); }
-      };
-      socket.onerror = (error) => { onError?.(error); };
-      socket.onclose = () => { connecting = false; stopHeartbeat(heartbeat); heartbeat = undefined; socket = undefined; mode = 'disconnected'; if (!closed) { disconnectedAt = now(); lastReconnectWasPlanned = plannedReconnect; if (!plannedReconnect) void fallback(); plannedReconnect = false; schedule(); } };
-    } catch (error) { connecting = false; socket = undefined; mode = 'disconnected'; onError?.(error); await fallback(); schedule(); }
+    await connectRoutingSocket({
+      state,
+      WebSocketImpl,
+      streamUrl: () => websocketUrl(state.activeEndpoint),
+      token,
+      heartbeatMs,
+      now,
+      telemetry: state.telemetry,
+      reconnect,
+      fallback,
+      schedule,
+      onMessage,
+      onError,
+    });
   }
-  return { connect, sendTelemetry: (payload) => { if (socket?.readyState === 1) socket.send(JSON.stringify(payload)); }, setOnUpdate: (handler) => { updateHandler = handler; }, setTelemetry: (value) => { telemetry = value; }, close: () => { closed = true; mode = 'disconnected'; reconnect.cancel(); stopHeartbeat(heartbeat); socket?.close?.(); }, state: () => ({ connected: socket?.readyState === 1, mode, expectedVersion, endpoint: activeEndpoint, reconnectDeadlineAt }) };
+  return {
+    connect,
+    sendTelemetry: (payload) => {
+      if (state.socket?.readyState === 1) state.socket.send(JSON.stringify(payload));
+    },
+    setOnUpdate: (handler) => (state.updateHandler = handler),
+    setTelemetry: (value) => (state.telemetry = value),
+    close: () => {
+      state.closed = true;
+      state.mode = "disconnected";
+      reconnect.cancel();
+      stopHeartbeat(state.heartbeat);
+      state.socket?.close?.();
+    },
+    state: () => ({
+      connected: state.socket?.readyState === 1,
+      mode: state.mode,
+      expectedVersion: state.expectedVersion,
+      endpoint: state.activeEndpoint,
+      reconnectDeadlineAt: state.reconnectDeadlineAt,
+    }),
+  };
 }

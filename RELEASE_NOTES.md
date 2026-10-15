@@ -1,48 +1,52 @@
-# Release notes
+# Release Notes
 
-## Unreleased
+## 12.0.0 — 2026-10-14
 
-- Redesign the application-facing client around the canonical mysql2-compatible
-  `createDb()` pool and connection contract.
-- Use `ELERA_API_URL` and `ELERA_API_TOKEN` as the supported application
-  configuration variables.
-- Keep routing bundles, credentials, lifecycle controls, and diagnostics
-  private to the managed client.
-- Elid2 migration remains intentionally pending until its dependency and
-  legacy SQL environment configuration are updated in the dependent project.
+### Added
 
-## v0.3.1
+- Add the managed `createDb` API for MySQL and MariaDB applications.
+- Add `query`, `execute`, `getConnection`, `probe`, and `end` methods.
+- Add TypeScript declarations for the public client API.
+- Add user guides for setup, SQL calls, connections, and troubleshooting.
+- Add CI and npm publication workflows for the current package profile.
 
-Refined the managed client boundary and routing transport.
+### Changed
 
-- Require WebSocket authentication through the `Authorization` handshake
-  header; query-string bearer tokens are no longer accepted.
-- Tighten managed-client bundle validation and routing update handling.
-- Keep client-specific SQL error classification local to the client package and
-  synchronize the public exports and declarations.
-- Add route-level telemetry and clearer standalone/cluster availability states.
-- Document the public application API and package boundary.
-- Reorganize focused routing and contract tests while retaining complete 100×4
-  coverage.
+- Read the API URL and application token from options or environment values.
+- Get SQL credentials and route data from the Elera API.
+- Route SQL work through current writer and reader routes.
+- Reconnect the routing stream after a connection loss.
+- Request fresh route data after a version gap.
+- Retry safe queries and avoid replay of uncertain writes.
+- Keep API tokens out of WebSocket URLs and SQL credentials out of the public bundle.
+- Require Node.js 26 or later and use native ECMAScript modules.
+- Align package metadata, dependencies, workflows, tests, and documentation with convention v12.0.
 
-## v0.3.0
+### Breaking changes
 
-Initial baseline release of the Elera application client.
+- Use the managed client API instead of direct internal routing, pool, lifecycle, or telemetry exports.
 
-- Create a managed MySQL/MariaDB client with an Elera endpoint and
-  application-scoped API token.
-- Read `ELERA_API_URL` and `ELERA_API_TOKEN` from the environment by
-  default, with explicit options available when needed.
-- Retrieve and validate routing bundles containing database credentials,
-  writers, readers, failover nodes, versions, expiry, and node metadata.
-- Route writes to the assigned writer and reads through balanced reader
-  routes.
-- Handle ordered failover and node quarantine for unavailable SQL nodes.
-- Receive routing updates and lifecycle events over WebSocket.
-- Recover through REST bundle retrieval when the WebSocket stream is
-  unavailable or out of date.
-- Honor drain, shutdown, reconnect, and cluster-unavailable states.
-- Enforce bounded client-side drain behavior for in-flight operations.
-- Expose client telemetry for query activity, failures, retries, reconnects,
-  failover, latency, and in-flight work.
-- Provide typed public declarations and client-specific SQL error types.
+## 0.3.1 — 2026-08-29
+
+### Changed
+
+- Require WebSocket authentication through the `Authorization` handshake header.
+- Reject bearer tokens in WebSocket query strings.
+- Validate managed-client bundles and routing updates.
+- Keep SQL error classification inside the client package.
+- Add route telemetry and availability states.
+- Document the public API and package boundary.
+
+## 0.3.0 — 2026-08-29
+
+### Added
+
+- Create a managed MySQL or MariaDB client with an Elera URL and application token.
+- Read `ELERA_API_URL` and `ELERA_API_TOKEN` from the environment.
+- Retrieve and validate routing bundles with SQL credentials and route data.
+- Route writes to the writer and reads through reader routes.
+- Handle failover, node quarantine, routing updates, and lifecycle events.
+- Recover through REST when the WebSocket stream fails or falls behind.
+- Bound drain time for active SQL work.
+- Report query, failure, retry, reconnect, failover, and latency metrics.
+- Provide TypeScript declarations and SQL error types.

@@ -1,4 +1,10 @@
+import { createNodePool as createNode } from "./pools/node-pool.mjs";
+import { createRoutePool as createRoute } from "./pools/route-pool/index.mjs";
 
-export { createNodePool } from './pools/node-pool.mjs';
-export { createRoutePool } from './pools/route-pool/index.mjs';
-/* istanbul ignore file -- barrel exports only. */
+export function createNodePool(options) {
+  return createNode(options);
+}
+
+export function createRoutePool(nodes, options) {
+  return createRoute(nodes, options);
+}
