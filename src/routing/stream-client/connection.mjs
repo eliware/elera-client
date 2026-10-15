@@ -1,4 +1,5 @@
-import { startHeartbeat, stopHeartbeat } from "./heartbeat.mjs";
+import { startHeartbeat } from "./heartbeat.mjs";
+import { createConnectionRecovery } from "./connection-recovery.mjs";
 
 export async function connectRoutingSocket({
   state,
@@ -14,6 +15,7 @@ export async function connectRoutingSocket({
   onMessage,
   onError,
 }) {
+  const recovery = createConnectionRecovery({ state, now, fallback, schedule });
   if (
     state.closed ||
     state.connecting ||
@@ -48,26 +50,8 @@ export async function connectRoutingSocket({
     };
     state.socket.onmessage = onMessage;
     state.socket.onerror = (error) => onError?.(error);
-    state.socket.onclose = () => {
-      state.connecting = false;
-      stopHeartbeat(state.heartbeat);
-      state.heartbeat = undefined;
-      state.socket = undefined;
-      state.mode = "disconnected";
-      if (!state.closed) {
-        state.disconnectedAt = now();
-        state.lastReconnectWasPlanned = state.plannedReconnect;
-        if (!state.plannedReconnect) void fallback();
-        state.plannedReconnect = false;
-        schedule();
-      }
-    };
+    state.socket.onclose = () => recovery.close();
   } catch (error) {
-    state.connecting = false;
-    state.socket = undefined;
-    state.mode = "disconnected";
-    onError?.(error);
-    await fallback();
-    schedule();
+    await recovery.fail(error, onError);
   }
 }
