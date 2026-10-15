@@ -1,4 +1,5 @@
 import { createConnectionRecovery } from "./connection-recovery.mjs";
+import { createConnectionFailure } from "./connection-failure.mjs";
 import { bindSocketHandlers } from "./socket-handlers.mjs";
 
 export async function connectRoutingSocket({
@@ -16,6 +17,7 @@ export async function connectRoutingSocket({
   onError,
 }) {
   const recovery = createConnectionRecovery({ state, now, fallback, schedule });
+  const failConnection = createConnectionFailure({ state, fallback, schedule });
   if (
     state.closed ||
     state.connecting ||
@@ -45,6 +47,6 @@ export async function connectRoutingSocket({
       onError,
     });
   } catch (error) {
-    await recovery.fail(error, onError);
+    await failConnection(error, onError);
   }
 }

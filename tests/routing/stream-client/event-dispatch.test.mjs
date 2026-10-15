@@ -1,5 +1,13 @@
 import { expect, jest, test } from "@jest/globals";
-import { dispatchRoutingEvent } from "../../../src/routing/stream-client/event-dispatch.mjs";
+import {
+  dispatchRoutingEvent,
+  isShutdownEvent,
+} from "../../../src/routing/stream-client/event-dispatch.mjs";
+
+test("recognizes shutdown event types", () => {
+  expect(isShutdownEvent({ type: "routing.shutdown" })).toBe(true);
+  expect(isShutdownEvent({ type: "routing.update" })).toBe(false);
+});
 
 test("sends ordinary events to the current update handler", async () => {
   const event = { type: "routing.update" };

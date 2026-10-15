@@ -37,7 +37,6 @@ test("cancels immediate reconnect and accepts an event without optional handlers
   await expect(
     handleShutdownEvent({ type: "routing.shutdown", reconnectDeadlineMs: 0 }, context),
   ).resolves.toBe(true);
-  expect(handleShutdownEvent({ type: "routing.update" }, context)).toBe(false);
   expect(reconnect.cancel).toHaveBeenCalledTimes(1);
   expect(fallback).toHaveBeenCalledTimes(1);
 });

@@ -1,7 +1,6 @@
 import { activeEndpointFromShutdown } from "./address.mjs";
 
 export function handleShutdownEvent(event, context) {
-  if (event.type !== "routing.shutdown") return false;
   return runShutdown(event, context);
 }
 

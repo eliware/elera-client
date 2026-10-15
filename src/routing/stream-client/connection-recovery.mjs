@@ -15,13 +15,5 @@ export function createConnectionRecovery({ state, now, fallback, schedule }) {
       state.plannedReconnect = false;
       schedule();
     },
-    async fail(error, onError) {
-      state.connecting = false;
-      state.socket = undefined;
-      state.mode = "disconnected";
-      onError?.(error);
-      await fallback();
-      schedule();
-    },
   };
 }

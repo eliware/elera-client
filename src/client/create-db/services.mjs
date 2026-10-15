@@ -3,6 +3,7 @@ import { bundleNeedsRefresh } from "../../routing/bundle-expiry.mjs";
 import { routeFor } from "../../routing.mjs";
 import { createDiagnostics } from "./diagnostics.mjs";
 import { createQueryExecution } from "./query-execution.mjs";
+import { createQuery } from "./query.mjs";
 import { createTransactionOperation } from "./transaction.mjs";
 import { createBundleRefresh } from "./bundle-refresh.mjs";
 import { bundlesHaveEquivalentPools, hasUsablePool, isOlderBundle } from "./bundle-state.mjs";
@@ -18,14 +19,22 @@ export function createDbServices({ setup, drainTimeoutMs }) {
     getBalancedPool: setup.getBalancedPool,
     now,
   });
-  const execution = createQueryExecution({
-    selection,
-    timed,
-    metrics,
-    getBalancedPool: setup.getBalancedPool,
-    routeFor,
-    routing,
-  });
+  const execution = {
+    query: createQuery({
+      selection,
+      timed,
+      metrics,
+      getBalancedPool: setup.getBalancedPool,
+      routeFor,
+      routing,
+    }),
+    ...createQueryExecution({
+      selection,
+      timed,
+      routeFor,
+      routing,
+    }),
+  };
   const transaction = createTransactionOperation({ primaryPool: setup.getPrimaryPool(), timed });
   const refreshBundle = createBundleRefresh({
     validateBundle: setup.validateBundle,

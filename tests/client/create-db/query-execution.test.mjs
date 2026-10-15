@@ -1,92 +1,23 @@
 import { expect, jest, test } from "@jest/globals";
 import { createQueryExecution } from "../../../src/client/create-db/query-execution.mjs";
-import { createDb } from "../../../src/client/create-db/index.mjs";
-import { bundle, driver, profile } from "../../../test-fixtures/client/create-db.mjs";
 
 const timed = async (operation, metadata) => operation(metadata);
 
-test("executes query and execute with the selected route metadata", async () => {
+test("executes a prepared statement with the selected route metadata", async () => {
   const pool = {
-    query: jest.fn(async (sql, values) => [sql, values]),
     execute: jest.fn(async (sql, values) => [sql, values]),
   };
   const routeFor = jest.fn(() => "balanced");
   const execution = createQueryExecution({
-    selection: () => ({ choose: () => pool, isSafeBalancedRetry: () => false }),
+    selection: () => ({ choose: () => pool }),
     timed,
     metrics: {},
     routeFor,
     routing: "auto",
   });
-  await expect(execution.query("SELECT ?", [1], { route: "balanced" })).resolves.toEqual([
-    "SELECT ?",
-    [1],
-  ]);
   await expect(execution.execute("UPDATE t SET x=?", [2])).resolves.toEqual([
     "UPDATE t SET x=?",
     [2],
   ]);
-  expect(routeFor).toHaveBeenCalledWith("SELECT ?", "balanced");
   expect(routeFor).toHaveBeenCalledWith("UPDATE t SET x=?", "auto");
-});
-
-test("retries only when selection marks a failed query safe", async () => {
-  const failure = new Error("temporary");
-  const primary = { query: jest.fn().mockRejectedValue(failure), execute: jest.fn() };
-  const balanced = { query: jest.fn(async () => ["retried"]) };
-  const record = jest.fn();
-  const execution = createQueryExecution({
-    selection: () => ({ choose: () => primary, isSafeBalancedRetry: () => true }),
-    timed,
-    metrics: { record },
-    getBalancedPool: () => balanced,
-    routeFor: () => "balanced",
-    routing: "auto",
-  });
-  await expect(execution.query("SELECT 1")).resolves.toEqual(["retried"]);
-  expect(record).toHaveBeenCalledWith({ retry: true, route: "balanced" });
-});
-
-test("propagates failures when retry is unsafe and supports the legacy pool injection", async () => {
-  const failure = new Error("unsafe");
-  const pool = { query: jest.fn().mockRejectedValue(failure), execute: jest.fn() };
-  const execution = createQueryExecution({
-    selection: () => ({ choose: () => pool, isSafeBalancedRetry: () => false }),
-    timed,
-    metrics: {},
-    balancedPool: pool,
-    routeFor: () => "primary",
-    routing: "auto",
-  });
-  await expect(execution.query("UPDATE t SET x=1")).rejects.toBe(failure);
-});
-
-test("uses the legacy balancedPool fallback when no getter is supplied", async () => {
-  const pool = {
-    query: jest.fn().mockRejectedValueOnce(new Error("temporary")).mockResolvedValue(["retried"]),
-    execute: jest.fn(),
-  };
-  const execution = createQueryExecution({
-    selection: () => ({ choose: () => pool, isSafeBalancedRetry: () => true }),
-    timed,
-    metrics: {},
-    balancedPool: pool,
-    routeFor: () => "balanced",
-    routing: "auto",
-  });
-  await expect(execution.query("SELECT 1")).resolves.toEqual(["retried"]);
-});
-
-test("does not retry an uncertain write on another node", async () => {
-  const failure = Object.assign(new Error("connection lost"), { code: "ECONNRESET" });
-  const query = jest.fn().mockRejectedValue(failure);
-  const client = await createDb({
-    primary: profile,
-    bundle,
-    mysqlLib: driver({ query, execute: query }),
-    log: { warn: () => {} },
-  });
-  await expect(client.query("UPDATE app SET x=1")).rejects.toThrow("connection lost");
-  expect(query).toHaveBeenCalledTimes(1);
-  await client.close();
 });

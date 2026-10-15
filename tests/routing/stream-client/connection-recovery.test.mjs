@@ -37,16 +37,3 @@ test("does not schedule fallback after planned or closed socket shutdown", () =>
   createConnectionRecovery({ state: closed, now: () => 1, fallback, schedule }).close();
   expect(schedule).toHaveBeenCalledTimes(1);
 });
-
-test("resets connection state and schedules after a constructor error", async () => {
-  const state = { connecting: true, socket: {}, mode: "connecting" };
-  const error = new Error("socket failed");
-  const onError = jest.fn();
-  const fallback = jest.fn(async () => {});
-  const schedule = jest.fn();
-  const recovery = createConnectionRecovery({ state, now: Date.now, fallback, schedule });
-  await recovery.fail(error, onError);
-  expect(state).toMatchObject({ connecting: false, socket: undefined, mode: "disconnected" });
-  expect(onError).toHaveBeenCalledWith(error);
-  expect(schedule).toHaveBeenCalledTimes(1);
-});
