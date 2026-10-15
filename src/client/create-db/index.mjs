@@ -42,8 +42,8 @@ export async function createDb(options = {}) {
   const drain = createClientDrain({ getPools: setup.getPools, defaultTimeout: drainTimeoutMs });
   const probe = createProbeApi({
     routeFor,
-    query: (sql) => services.execution.query(sql),
-    getConnection: () => setup.getPrimaryPool().choose().getConnection(),
+    execution: services.execution,
+    getPrimaryPool: setup.getPrimaryPool,
   });
   const client = createClientApi({
     ...services,

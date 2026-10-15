@@ -18,6 +18,12 @@ export async function probeClient({ sql = "SELECT 1", routeFor, query, getConnec
   };
 }
 
-export function createProbeApi({ routeFor, query, getConnection }) {
-  return (sql = "SELECT 1") => probeClient({ sql, routeFor, query, getConnection });
+export function createProbeApi({ routeFor, execution, getPrimaryPool }) {
+  return (sql = "SELECT 1") =>
+    probeClient({
+      sql,
+      routeFor,
+      query: (statement) => execution.query(statement),
+      getConnection: () => getPrimaryPool().choose().getConnection(),
+    });
 }

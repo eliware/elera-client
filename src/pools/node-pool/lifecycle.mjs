@@ -1,8 +1,9 @@
+import { createDrainTimer } from "./drain-timer.mjs";
+
 export function createNodeLifecycle({ now, timeoutMs = 45000, onForceClose }) {
   let state = "ready";
   let active = 0;
   const idleWaiters = new Set();
-  let drainTimer;
   let forcedUnavailable = false;
   let closed = false;
   const forceClose = async () => {
@@ -22,14 +23,11 @@ export function createNodeLifecycle({ now, timeoutMs = 45000, onForceClose }) {
       idleWaiters.clear();
     }
   };
+  const drainTimer = createDrainTimer({ onExpire: () => void forceClose() });
   const drain = (timeout = timeoutMs) => {
     state = "draining";
     forcedUnavailable = true;
-    clearTimeout(drainTimer);
-    drainTimer = setTimeout(() => {
-      void forceClose();
-    }, timeout);
-    drainTimer.unref?.();
+    drainTimer.schedule(timeout);
     return { state, active };
   };
   const waitForIdle = async (timeout = timeoutMs) => {
@@ -46,8 +44,7 @@ export function createNodeLifecycle({ now, timeoutMs = 45000, onForceClose }) {
   };
   const recover = () => {
     if (closed) return state;
-    clearTimeout(drainTimer);
-    drainTimer = undefined;
+    drainTimer.clear();
     state = "ready";
     forcedUnavailable = false;
     return state;
@@ -60,7 +57,7 @@ export function createNodeLifecycle({ now, timeoutMs = 45000, onForceClose }) {
     recover,
     forceClose,
     close: async () => {
-      clearTimeout(drainTimer);
+      drainTimer.clear();
       await forceClose();
     },
     set available(value) {
@@ -70,7 +67,7 @@ export function createNodeLifecycle({ now, timeoutMs = 45000, onForceClose }) {
     get closed() {
       return closed;
     },
-    clear: () => clearTimeout(drainTimer),
+    clear: drainTimer.clear,
     get active() {
       return active;
     },

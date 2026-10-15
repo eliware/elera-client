@@ -36,27 +36,6 @@ test("drains route pools and reports node lifecycle state", async () => {
   await client.close();
 });
 
-test("does not retry an uncertain write on another node", async () => {
-  const failure = Object.assign(new Error("connection lost"), { code: "ECONNRESET" });
-  const query = jest.fn().mockRejectedValue(failure);
-  const client = await createDb({
-    primary: profile,
-    bundle,
-    mysqlLib: {
-      createPool: () => ({
-        query,
-        execute: query,
-        getConnection: async () => ({}),
-        end: async () => {},
-      }),
-    },
-    log: { warn: () => {} },
-  });
-  await expect(client.query("UPDATE app SET x=1")).rejects.toThrow("connection lost");
-  expect(query).toHaveBeenCalledTimes(1);
-  await client.close();
-});
-
 test("shutdown shares concurrent close completion", async () => {
   const end = jest.fn(async () => {});
   const client = await createDb({

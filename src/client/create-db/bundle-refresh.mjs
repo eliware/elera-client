@@ -64,7 +64,6 @@ export function createBundleRefresh({
       nextBalanced = makeRoute("balanced", balancedConfig);
       setBalancedPool(nextBalanced);
     } else if (balanced) {
-      for (const node of balanced.nodes) node.drain(drainTimeoutMs);
       nextBalanced = null;
       setBalancedPool(null);
     }

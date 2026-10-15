@@ -1,5 +1,7 @@
 import { expect, jest, test } from "@jest/globals";
 import { createQueryExecution } from "../../../src/client/create-db/query-execution.mjs";
+import { createDb } from "../../../src/client/create-db/index.mjs";
+import { bundle, driver, profile } from "../../../test-fixtures/client/create-db.mjs";
 
 const timed = async (operation, metadata) => operation(metadata);
 
@@ -73,4 +75,18 @@ test("uses the legacy balancedPool fallback when no getter is supplied", async (
     routing: "auto",
   });
   await expect(execution.query("SELECT 1")).resolves.toEqual(["retried"]);
+});
+
+test("does not retry an uncertain write on another node", async () => {
+  const failure = Object.assign(new Error("connection lost"), { code: "ECONNRESET" });
+  const query = jest.fn().mockRejectedValue(failure);
+  const client = await createDb({
+    primary: profile,
+    bundle,
+    mysqlLib: driver({ query, execute: query }),
+    log: { warn: () => {} },
+  });
+  await expect(client.query("UPDATE app SET x=1")).rejects.toThrow("connection lost");
+  expect(query).toHaveBeenCalledTimes(1);
+  await client.close();
 });
