@@ -1,6 +1,7 @@
 # Architecture
 
-The package exposes `src/index.mjs`. Keep internal modules private in `package.json`.
+The package exposes `src/index.mjs` and `src/index.d.ts`.
+Keep internal modules private in `package.json`.
 
 ## Client modules
 
@@ -23,15 +24,23 @@ Keep stream connection and event rules in `src/routing/stream/`.
 Keep routing node checks in `src/routing/nodes/`.
 Keep configuration checks in `src/config/`.
 Keep telemetry state and output in `src/telemetry/`.
-Keep SQL error rules in `src/errors.mjs`.
+Keep SQL error rules in `src/errors/`.
 
 ## Tests and fixtures
 
-Mirror each source module with one test module at the same path under `tests/`.
+Mirror each source module with tests at the same path under `tests/`.
+Keep package entry tests in `tests/index.test.mjs`.
+Keep client runtime tests in `tests/client/runtime/`.
+Keep pool tests in `tests/pools/`.
+Keep shared routing tests in `tests/routing/`.
+Keep configuration tests in `tests/config/`.
+Keep SQL error tests in `tests/errors/`.
+Keep telemetry tests in `tests/telemetry/`.
 Keep shared test data in `test-fixtures/`.
 Keep client fixtures under `test-fixtures/client/`.
 Keep bundle fixtures under `test-fixtures/client/bundle/`.
 Keep pool fixtures under `test-fixtures/pools/`.
 Keep stream fixtures under `test-fixtures/routing/`.
 
-Run `npm test` after a major change.
+Run focused tests for each change.
+Run `npm test` before each sprint commit.
