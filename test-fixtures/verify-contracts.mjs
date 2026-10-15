@@ -17,6 +17,11 @@ requireText(entrypoint, "export { createDb }", "public entrypoint must export cr
 requireText(declarations, "export function createDb(", "declarations must declare createDb");
 requireText(declarations, "getConnection()", "declarations must expose getConnection");
 requireText(declarations, "end(): Promise<void>", "declarations must expose end");
+requireText(
+  declarations,
+  "export interface ProbeResult",
+  "declarations must name the probe result",
+);
 for (const legacyName of [
   "bundle",
   "refresh",

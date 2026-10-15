@@ -47,7 +47,7 @@ test("enforces the single-token database context on refresh", async () => {
   await client.close();
 });
 
-test("applies credential overlays to query errors and bundle refreshes", async () => {
+test("applies credential overlays to query errors", async () => {
   const failure = Object.assign(new Error("bad query"), { code: "ER_PARSE_ERROR" });
   const client = await createDb({
     primary: profile,
@@ -60,8 +60,5 @@ test("applies credential overlays to query errors and bundle refreshes", async (
     }),
   });
   await expect(client.query("SELECT 1", [], { route: "balanced" })).rejects.toThrow("bad query");
-  await expect(
-    client.refresh({ ...bundle, routes: { primary: [{ host: "new", port: 3306 }], balanced: [] } }),
-  ).resolves.toMatchObject({ bundleVersion: 1 });
   await client.close();
 });
