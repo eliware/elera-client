@@ -60,3 +60,49 @@ test("quarantines retryable requests and recovers after the deadline", async () 
   now = 11;
   expect(node.available).toBe(true);
 });
+
+test("quarantines retryable execute and connection failures", async () => {
+  const failure = Object.assign(new Error("down"), { code: "ECONNREFUSED" });
+  const makeMethods = ({ execute, getConnection }) => {
+    const state = { failures: 0, unavailableUntil: 0 };
+    const failurePolicy = createNodeFailurePolicy({ state, now: () => 1, quarantineMs: 10 });
+    const methods = createNodeMethods({
+      profile,
+      pool: { getConnection },
+      operations: { query: jest.fn(), execute },
+      lifecycle: { begin: jest.fn(), end: jest.fn() },
+      state,
+      ...failurePolicy,
+      isAvailable: () => true,
+    });
+    return { methods, state };
+  };
+  const execute = makeMethods({ execute: jest.fn().mockRejectedValue(failure) });
+  await expect(execute.methods.execute("SELECT 1")).rejects.toThrow("down");
+  expect(execute.state).toEqual({ failures: 1, unavailableUntil: 11 });
+  const connection = makeMethods({ getConnection: jest.fn().mockRejectedValue(failure) });
+  await expect(connection.methods.getConnection()).rejects.toThrow("down");
+  expect(connection.state.unavailableUntil).toBe(11);
+});
+
+test("maps non-retryable requests without quarantining the node", async () => {
+  const failure = Object.assign(new Error("invalid"), { code: "ER_PARSE_ERROR" });
+  const state = { failures: 0, unavailableUntil: 0 };
+  const failurePolicy = createNodeFailurePolicy({ state, now: () => 1, quarantineMs: 10 });
+  const methods = createNodeMethods({
+    profile,
+    pool: { getConnection: jest.fn().mockRejectedValue(failure) },
+    operations: {
+      query: jest.fn().mockRejectedValue(failure),
+      execute: jest.fn().mockRejectedValue(failure),
+    },
+    lifecycle: { begin: jest.fn(), end: jest.fn() },
+    state,
+    ...failurePolicy,
+    isAvailable: () => true,
+  });
+  await expect(methods.query("BAD")).rejects.toThrow("invalid");
+  await expect(methods.execute("BAD")).rejects.toThrow("invalid");
+  await expect(methods.getConnection()).rejects.toThrow("invalid");
+  expect(state).toEqual({ failures: 0, unavailableUntil: 0 });
+});

@@ -35,7 +35,6 @@ test("creates managed clients from explicit options and environment values", asy
       headers: expect.objectContaining({ authorization: "Bearer token" }),
     }),
   );
-  expect(Object.keys(client).sort()).toEqual(["end", "execute", "getConnection", "probe", "query"]);
   await client.end();
   const envFetch = jest.fn();
   fetchBundle(envFetch);

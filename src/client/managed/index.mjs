@@ -1,9 +1,8 @@
-import { createDbFromBundle } from "../from-bundle.mjs";
 import { createRoutingStream } from "../../routing/stream-client/index.mjs";
 import { resolveManagedConfig, createBundleFetcher } from "./configuration.mjs";
 import { exposeManagedClient } from "./public-api.mjs";
 import { createManagedShutdown } from "./shutdown.mjs";
-import { createManagedSetup } from "./setup.mjs";
+import { createManagedClient, createManagedSetup } from "./setup.mjs";
 
 export async function createDb({
   endpoint,
@@ -32,18 +31,20 @@ export async function createDb({
     now,
     telemetry,
   });
-  const client = await createDbFromBundle({
+  const { client, detach } = await createManagedClient({
     bundle,
     tokenContext,
-    mysqlLib,
-    log,
-    routing,
-    quarantineMs,
-    drainTimeoutMs,
-    now,
-    telemetry,
+    stream,
+    options: {
+      mysqlLib,
+      log,
+      routing,
+      quarantineMs,
+      drainTimeoutMs,
+      now,
+      telemetry,
+    },
   });
-  const detach = await client.attachRoutingStream(stream);
   const end = createManagedShutdown(detach, client.close.bind(client));
   return exposeManagedClient(client, end);
 }

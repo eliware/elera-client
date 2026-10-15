@@ -1,3 +1,5 @@
+import { createDbFromBundle } from "../from-bundle.mjs";
+
 export async function createManagedSetup(fetchBundle) {
   const bundle = await fetchBundle();
   const tokenContext = {
@@ -8,4 +10,16 @@ export async function createManagedSetup(fetchBundle) {
     scopes: bundle.scopes,
   };
   return { bundle, tokenContext };
+}
+
+export async function createManagedClient({
+  bundle,
+  tokenContext,
+  stream,
+  options,
+  createClient = createDbFromBundle,
+}) {
+  const client = await createClient({ ...options, bundle, tokenContext });
+  const detach = await client.attachRoutingStream(stream);
+  return { client, detach };
 }

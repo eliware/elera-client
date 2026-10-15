@@ -75,3 +75,17 @@ test("force-closes after the drain deadline and protects release accounting", as
   expect(end).toHaveBeenCalled();
   await expect(node.waitForIdle()).resolves.toBe(true);
 });
+
+test("keeps a closed node unavailable after repeated close and recovery", async () => {
+  const end = jest.fn(async () => {});
+  const node = createNodePool({
+    profile,
+    mysqlLib: driver({ end }),
+  });
+  await node.close();
+  await node.close();
+  expect(node.recover()).toBe("unavailable");
+  node.available = true;
+  expect(node.available).toBe(false);
+  expect(end).toHaveBeenCalledTimes(1);
+});
