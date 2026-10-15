@@ -1,4 +1,4 @@
-import { validateBundle } from "@eliware/elera-lib";
+import { validateBundle } from "./validation.mjs";
 
 const DEFAULT_BUNDLE_PATH = "/api/v1/routing/bundle";
 
