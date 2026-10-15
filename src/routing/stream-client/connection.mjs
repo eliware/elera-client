@@ -1,5 +1,5 @@
-import { startHeartbeat } from "./heartbeat.mjs";
 import { createConnectionRecovery } from "./connection-recovery.mjs";
+import { bindSocketHandlers } from "./socket-handlers.mjs";
 
 export async function connectRoutingSocket({
   state,
@@ -33,24 +33,17 @@ export async function connectRoutingSocket({
     state.socket = new WebSocketImpl(streamUrl(), {
       headers: { authorization: `Bearer ${token ?? ""}` },
     });
-    state.socket.onopen = () => {
-      state.connecting = false;
-      state.mode = "websocket";
-      state.reconnectDeadlineAt = undefined;
-      reconnect.reset();
-      if (state.disconnectedAt !== undefined) {
-        telemetry?.recordReconnect?.({
-          delayMs: Math.max(0, now() - state.disconnectedAt),
-          failover: state.lastReconnectWasPlanned,
-        });
-        state.disconnectedAt = undefined;
-        state.lastReconnectWasPlanned = false;
-      }
-      state.heartbeat = startHeartbeat({ getSocket: () => state.socket, heartbeatMs, now });
-    };
-    state.socket.onmessage = onMessage;
-    state.socket.onerror = (error) => onError?.(error);
-    state.socket.onclose = () => recovery.close();
+    bindSocketHandlers({
+      socket: state.socket,
+      state,
+      heartbeatMs,
+      now,
+      telemetry,
+      reconnect,
+      recovery,
+      onMessage,
+      onError,
+    });
   } catch (error) {
     await recovery.fail(error, onError);
   }
