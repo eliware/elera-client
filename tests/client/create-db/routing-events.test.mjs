@@ -121,6 +121,53 @@ test("updates one application client without changing another client assignment"
       .filter((node) => node.route === "primary")
       .map((node) => node.host),
   ).toEqual(["app-b-writer", "b-backup"]);
+  await update({
+    ...bundle,
+    type: "routing.update",
+    writer: { host: "app-a-final-writer", port: 3306 },
+    failover: [],
+    bundleVersion: 3,
+    routes: { ...bundle.routes, primary: [{ host: "app-a-final-writer", port: 3306 }] },
+  });
+  expect(clientA.nodeStates().find((node) => node.route === "primary").host).toBe(
+    "app-a-final-writer",
+  );
+  expect(
+    clientA
+      .nodeStates()
+      .filter((node) => node.route === "balanced")
+      .map((node) => node.host),
+  ).toEqual(bundle.routes.balanced.map((node) => node.host));
+  expect(clientB.bundle().writer.host).toBe("app-b-writer");
   await clientA.close();
   await clientB.close();
+});
+
+test("drains the addressed node after a shutdown event", async () => {
+  const eventBundle = {
+    ...bundle,
+    writer: { host: "writer", port: 3306 },
+    failover: [{ host: "backup", port: 3306 }],
+    routes: {
+      primary: [
+        { host: "writer", port: 3306 },
+        { host: "backup", port: 3306 },
+      ],
+      balanced: [],
+    },
+  };
+  const client = await createDb({ primary: profile, bundle: eventBundle, mysqlLib: driver() });
+  let update;
+  await client.attachRoutingStream({
+    connect: async () => {},
+    setOnUpdate: (handler) => {
+      update = handler;
+    },
+  });
+  await update({ type: "routing.shutdown", node: "writer" });
+  expect(client.nodeStates().find((node) => node.host === "writer")).toMatchObject({
+    state: "draining",
+    available: false,
+  });
+  await client.close();
 });

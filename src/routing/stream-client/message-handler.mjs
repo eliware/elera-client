@@ -1,21 +1,14 @@
 import { compareBundleVersions } from "../bundle-version.mjs";
-import { activeEndpointFromShutdown } from "./address.mjs";
 import { parseRoutingEvent } from "./events.mjs";
+import { handleShutdownEvent } from "./shutdown-event.mjs";
 
 export function createRoutingMessageHandler({ state, fallback, reconnect, now, onError }) {
   return async ({ data }) => {
     try {
       const event = parseRoutingEvent(data);
-      if (event.type === "routing.shutdown") {
-        state.activeEndpoint = activeEndpointFromShutdown(state.activeEndpoint, event);
-        state.updateHandler?.(event);
-        const deadlineMs = event.reconnectDeadlineMs;
-        state.reconnectDeadlineAt = now() + deadlineMs;
-        state.plannedReconnect = true;
-        if (deadlineMs <= 0) reconnect.cancel();
-        reconnect.reset();
-        await fallback();
-        state.socket?.close?.(1012, "supervisor restarting");
+      const shutdown = handleShutdownEvent(event, { state, fallback, reconnect, now });
+      if (shutdown) {
+        await shutdown;
         return;
       }
       const version = event.version;

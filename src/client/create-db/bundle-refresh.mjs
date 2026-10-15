@@ -68,19 +68,15 @@ export function createBundleRefresh({
       nextBalanced = null;
       setBalancedPool(null);
     }
-    previous
-      .filter(Boolean)
-      .filter((pool) => pool !== nextPrimary && pool !== nextBalanced)
-      .forEach((pool) => {
-        pool.nodes.forEach((node) => node.drain(drainTimeoutMs));
-        void (async () => {
-          await pool.waitForIdle(drainTimeoutMs);
-          await pool.close();
-        })();
-      });
+    retireObsoletePools({
+      previous,
+      retained: [nextPrimary, nextBalanced],
+      drainTimeoutMs,
+    });
     return {
       bundleVersion: candidate.bundleVersion,
       refreshRequired: bundleNeedsRefresh(candidate, now()),
     };
   };
 }
+import { retireObsoletePools } from "./pool-retirement.mjs";

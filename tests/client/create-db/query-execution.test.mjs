@@ -103,6 +103,32 @@ test("supports client retries and explicit connections", async () => {
   await client.close();
 });
 
+test("preserves MariaDB query, execute, and connection results", async () => {
+  const connection = {
+    beginTransaction: jest.fn(),
+    commit: jest.fn(),
+    rollback: jest.fn(),
+    query: jest.fn(async () => [[{ ok: 1 }], [{ name: "ok" }]]),
+    execute: jest.fn(async () => [{ affectedRows: 1 }, []]),
+    release: jest.fn(),
+  };
+  const pool = {
+    query: jest.fn(async () => [[{ ok: 1 }], [{ name: "ok" }]]),
+    execute: jest.fn(async () => [{ affectedRows: 1 }, []]),
+    getConnection: jest.fn(async () => connection),
+    end: jest.fn(async () => {}),
+  };
+  const client = await createDb({ primary: profile, bundle, mysqlLib: { createPool: () => pool } });
+  await expect(client.query("SELECT 1")).resolves.toEqual([[{ ok: 1 }], [{ name: "ok" }]]);
+  const tx = await client.getConnection();
+  await tx.beginTransaction();
+  await tx.execute("UPDATE users SET active=?", [true]);
+  await tx.commit();
+  tx.release();
+  await client.close();
+  expect(connection.commit).toHaveBeenCalledTimes(1);
+});
+
 test("does not replay an unsafe write after a retryable failure", async () => {
   const failure = Object.assign(new Error("connection lost"), { code: "ECONNRESET" });
   const execute = jest.fn(async () => {

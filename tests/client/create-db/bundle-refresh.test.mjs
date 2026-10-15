@@ -1,34 +1,13 @@
 import { expect, test, jest } from "@jest/globals";
 import { createBundleRefresh } from "../../../src/client/create-db/bundle-refresh.mjs";
-
-const refreshForState = ({ active, primary, balanced, equivalent, usable, older }) => {
-  const state = { active, primary, balanced };
-  const refresh = createBundleRefresh({
-    validateBundle: (value) => value,
-    getBundle: () => state.active,
-    setBundle: (value) => (state.active = value),
-    getPrimaryConfig: () => ({}),
-    setPrimaryConfig: () => {},
-    getPrimaryPool: () => state.primary,
-    setPrimaryPool: (value) => (state.primary = value),
-    getBalancedPool: () => state.balanced,
-    setBalancedPool: (value) => (state.balanced = value),
-    makeRoute: () => ({ nodes: [] }),
-    validateProfile: (value) => value,
-    bundleNeedsRefresh: () => false,
-    isOlderBundle: older ?? (() => false),
-    equivalentPools: equivalent ?? (() => false),
-    usablePool: usable ?? (() => true),
-    drainTimeoutMs: 10,
-    now: () => 0,
-  });
-  return { refresh, state };
-};
+import { createDb } from "../../../src/client/create-db/index.mjs";
+import { bundle, driver, profile } from "../../../test-fixtures/client/create-db.mjs";
+import { refreshForState } from "../../../test-fixtures/client/create-db/refresh.mjs";
 
 test("keeps equivalent usable pools and rejects an older candidate", async () => {
   const active = { bundleVersion: 3 };
   const primary = { nodes: [{ available: true }] };
-  const same = refreshForState({
+  const same = refreshForState(createBundleRefresh, {
     active,
     primary,
     balanced: null,
@@ -40,7 +19,12 @@ test("keeps equivalent usable pools and rejects an older candidate", async () =>
   });
   expect(same.state.primary).toBe(primary);
 
-  const old = refreshForState({ active, primary, balanced: null, older: () => true });
+  const old = refreshForState(createBundleRefresh, {
+    active,
+    primary,
+    balanced: null,
+    older: () => true,
+  });
   await expect(old.refresh({ bundleVersion: 2 })).resolves.toEqual({
     bundleVersion: 3,
     refreshRequired: false,
@@ -56,7 +40,7 @@ test("refreshes equivalent bundles when a pool is not usable", async () => {
     readers: [],
     routes: { balanced: [] },
   };
-  const refresh = refreshForState({
+  const refresh = refreshForState(createBundleRefresh, {
     active: { bundleVersion: 1 },
     primary: { nodes: [], waitForIdle: async () => {}, close: async () => {} },
     balanced: { nodes: [], waitForIdle: async () => {}, close: async () => {} },
@@ -75,7 +59,7 @@ test("refreshes equivalent bundles when a pool is not usable", async () => {
     waitForIdle: async () => {},
     close: async () => {},
   };
-  const balancedRefresh = refreshForState({
+  const balancedRefresh = refreshForState(createBundleRefresh, {
     active: { bundleVersion: 1 },
     primary: usablePrimary,
     balanced: balancedPool,
@@ -101,7 +85,7 @@ test("replaces writer and reader pools and drains obsolete pools", async () => {
     readers: [{ host: "reader", port: 3306 }],
     routes: { balanced: [{ host: "reader", port: 3306 }] },
   };
-  const result = refreshForState({
+  const result = refreshForState(createBundleRefresh, {
     active,
     primary: oldPool,
     balanced: oldPool,
@@ -122,7 +106,7 @@ test("removes and drains a balanced pool when the new bundle has no reader", asy
     waitForIdle: jest.fn(async () => {}),
     close: jest.fn(async () => {}),
   };
-  const state = refreshForState({
+  const state = refreshForState(createBundleRefresh, {
     active: { bundleVersion: 1 },
     primary: { nodes: [], waitForIdle: async () => {}, close: async () => {} },
     balanced,
@@ -140,7 +124,7 @@ test("removes and drains a balanced pool when the new bundle has no reader", asy
   expect(drain).toHaveBeenCalledWith(10);
   expect(balanced.close).toHaveBeenCalledTimes(1);
 
-  const primaryOnly = refreshForState({
+  const primaryOnly = refreshForState(createBundleRefresh, {
     active: { bundleVersion: 1 },
     primary: { nodes: [], waitForIdle: async () => {}, close: async () => {} },
     balanced: null,
@@ -154,4 +138,41 @@ test("removes and drains a balanced pool when the new bundle has no reader", asy
     routes: { balanced: [] },
   });
   expect(primaryOnly.state.balanced).toBeNull();
+});
+
+test("rejects invalid refreshes and applies a primary-only client refresh", async () => {
+  const client = await createDb({
+    primary: profile,
+    balanced: { host: "read", port: 3306 },
+    bundle,
+    mysqlLib: driver(),
+  });
+  await expect(
+    client.refresh({
+      ...bundle,
+      writer: undefined,
+      routes: { primary: [], balanced: bundle.routes.balanced },
+      bundleVersion: 2,
+    }),
+  ).rejects.toThrow("writer");
+  await expect(
+    client.refresh({
+      ...bundle,
+      writer: { host: "new", port: 3306 },
+      routes: { primary: [{ host: "new", port: 3306 }], balanced: [] },
+      readers: [],
+      bundleVersion: 2,
+    }),
+  ).resolves.toMatchObject({ bundleVersion: 2 });
+  expect(client.nodeStates().filter((node) => node.route === "balanced")).toEqual([]);
+  await expect(client.refresh({ ...bundle, bundleVersion: 1 })).resolves.toMatchObject({
+    bundleVersion: 2,
+  });
+  await expect(client.refresh({ ...bundle, bundleVersion: 0 })).resolves.toMatchObject({
+    bundleVersion: 2,
+  });
+  await expect(client.refresh({ ...bundle, bundleVersion: undefined })).rejects.toThrow(
+    "bundleVersion",
+  );
+  await client.close();
 });
