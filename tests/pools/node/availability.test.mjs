@@ -25,11 +25,38 @@ test("delegates availability changes to lifecycle drain", () => {
   expect(availability.available).toBe(false);
 });
 
+test("applies and clears manual exclusion through node availability", () => {
+  const data = { state: "ready", closed: false };
+  const availability = createNodeAvailability({
+    getState: () => data.state,
+    setState: (value) => (data.state = value),
+    isClosed: () => data.closed,
+    cancelDrain: jest.fn(),
+    drain: jest.fn(() => (data.state = "draining")),
+  });
+  availability.unavailable = true;
+  expect(data.state).toBe("unavailable");
+  expect(availability.available).toBe(false);
+  availability.unavailable = false;
+  expect(availability.available).toBe(true);
+});
+
 test("node defaults and toggles availability", async () => {
   const node = createNodePool({ profile, mysqlLib: driver() });
   expect(node.available).toBe(true);
   expect(node.failures).toBe(0);
   node.available = false;
+  expect(node.available).toBe(false);
+  node.available = true;
+  expect(node.available).toBe(true);
+  await node.close();
+});
+
+test("keeps manual exclusion active after failure quarantine expires", async () => {
+  let now = 0;
+  const node = createNodePool({ profile, mysqlLib: driver(), now: () => now, quarantineMs: 10 });
+  node.available = false;
+  now = 100;
   expect(node.available).toBe(false);
   node.available = true;
   expect(node.available).toBe(true);

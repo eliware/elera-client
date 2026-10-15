@@ -2,6 +2,12 @@ import { expect, test, jest } from "@jest/globals";
 import { createDb } from "../../../src/client/runtime/index.mjs";
 import { bundle, driver, profile } from "../../../test-fixtures/client/runtime.mjs";
 
+const primaryHosts = (client) =>
+  client
+    .nodeStates()
+    .filter((node) => node.route === "primary")
+    .map((node) => node.host);
+
 test("routes reads to balanced pools and writes to the primary pool", async () => {
   const mysqlLib = driver();
   const client = await createDb({
@@ -113,18 +119,8 @@ test("keeps refresh updates isolated between client instances", async () => {
   });
   expect(clientA.bundle().writer.host).toBe("app-a-next");
   expect(clientB.bundle().writer.host).toBe("app-b-writer");
-  expect(
-    clientA
-      .nodeStates()
-      .filter((node) => node.route === "primary")
-      .map((node) => node.host),
-  ).toEqual(["app-a-next", "a-backup"]);
-  expect(
-    clientB
-      .nodeStates()
-      .filter((node) => node.route === "primary")
-      .map((node) => node.host),
-  ).toEqual(["app-b-writer", "b-backup"]);
+  expect(primaryHosts(clientA)).toEqual(["app-a-next", "a-backup"]);
+  expect(primaryHosts(clientB)).toEqual(["app-b-writer", "b-backup"]);
   await update({
     ...bundle,
     type: "routing.update",
