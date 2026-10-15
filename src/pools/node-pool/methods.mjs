@@ -1,7 +1,4 @@
 import { asSqlError } from "../../errors.mjs";
-import { createNodeHealth } from "./health.mjs";
-
-const connectionFailure = (error) => asSqlError(error).retryable;
 
 export function createNodeMethods({
   profile,
@@ -10,20 +7,10 @@ export function createNodeMethods({
   lifecycle,
   state,
   log,
-  now,
-  quarantineMs,
+  isRetryable,
+  quarantine,
   isAvailable,
 }) {
-  const quarantine = () => {
-    state.unavailableUntil = now() + quarantineMs;
-  };
-  const health = createNodeHealth({
-    profile,
-    pool,
-    state,
-    isRetryable: connectionFailure,
-    quarantine,
-  });
   return {
     async query(sql, values) {
       if (!isAvailable()) throw new Error(`SQL node ${profile.host} is unavailable`);
@@ -32,7 +19,7 @@ export function createNodeMethods({
         state.failures = 0;
         return result;
       } catch (error) {
-        if (connectionFailure(error)) {
+        if (isRetryable(error)) {
           state.failures += 1;
           quarantine();
           log?.warn?.("SQL node quarantined", {
@@ -51,7 +38,7 @@ export function createNodeMethods({
         state.failures = 0;
         return result;
       } catch (error) {
-        if (connectionFailure(error)) {
+        if (isRetryable(error)) {
           state.failures += 1;
           quarantine();
         }
@@ -73,10 +60,9 @@ export function createNodeMethods({
         };
         return connection;
       } catch (error) {
-        if (connectionFailure(error)) quarantine();
+        if (isRetryable(error)) quarantine();
         throw asSqlError(error);
       }
     },
-    health,
   };
 }

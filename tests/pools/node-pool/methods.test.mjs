@@ -1,6 +1,7 @@
 import { expect, test, jest } from "@jest/globals";
 import { createNodeMethods } from "../../../src/pools/node-pool/methods.mjs";
 import { createNodePool } from "../../../src/pools/node-pool.mjs";
+import { createNodeFailurePolicy } from "../../../src/pools/node-pool/failure-policy.mjs";
 import { driver, profile } from "../../../test-fixtures/node-pool.mjs";
 
 test("delegates node requests and connection lifecycle", async () => {
@@ -12,14 +13,14 @@ test("delegates node requests and connection lifecycle", async () => {
   const operations = { query: async () => ["rows"], execute: async () => ["result"] };
   const lifecycle = { begin: jest.fn(), end: jest.fn() };
   const state = { failures: 0, unavailableUntil: 0 };
+  const failurePolicy = createNodeFailurePolicy({ state, now: () => 1, quarantineMs: 10 });
   const methods = createNodeMethods({
     profile: { host: "db", port: 3306 },
     pool,
     operations,
     lifecycle,
     state,
-    now: () => 1,
-    quarantineMs: 10,
+    ...failurePolicy,
     isAvailable: () => true,
   });
   await expect(methods.query("SELECT 1")).resolves.toEqual(["rows"]);

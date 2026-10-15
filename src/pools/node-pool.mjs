@@ -2,6 +2,8 @@ import { createNodeOperations } from "./node-pool/operations.mjs";
 import { createNodeLifecycle } from "./node-pool/lifecycle.mjs";
 import { createNodeMethods } from "./node-pool/methods.mjs";
 import { createDriverPool } from "./node-pool/driver-pool.mjs";
+import { createNodeHealth } from "./node-pool/health.mjs";
+import { createNodeFailurePolicy } from "./node-pool/failure-policy.mjs";
 export function createNodePool({
   profile,
   mysqlLib,
@@ -12,6 +14,7 @@ export function createNodePool({
   const pool = createDriverPool(profile, mysqlLib);
   const sessionStatements = profile.options?.sessionStatements ?? [];
   const state = { failures: 0, unavailableUntil: 0 };
+  const failurePolicy = createNodeFailurePolicy({ state, now, quarantineMs });
   let lifecycle;
   const forceClosePool = () => pool.end();
   lifecycle = createNodeLifecycle({ pool, now, onForceClose: forceClosePool });
@@ -28,10 +31,10 @@ export function createNodePool({
     lifecycle,
     state,
     log,
-    now,
-    quarantineMs,
+    ...failurePolicy,
     isAvailable: () => lifecycle.available && now() >= state.unavailableUntil,
   });
+  const health = createNodeHealth({ profile, pool, state, ...failurePolicy });
   return {
     host: profile.host,
     port: profile.port,
@@ -60,6 +63,7 @@ export function createNodePool({
     waitForIdle: lifecycle.waitForIdle,
     forceClose: lifecycle.forceClose,
     ...methods,
+    health,
     async close() {
       await lifecycle.close();
     },
