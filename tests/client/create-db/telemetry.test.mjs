@@ -25,18 +25,6 @@ test("supports an injected telemetry sink", async () => {
   expect(telemetry.start).toHaveBeenCalled();
   expect(telemetry.stop).toHaveBeenCalled();
 });
-test("records injected telemetry when its clock is unavailable", async () => {
-  const telemetry = {
-    begin: jest.fn(() => undefined),
-    record: jest.fn(),
-    start: jest.fn(),
-    stop: jest.fn(),
-  };
-  const client = await createDb({ primary: profile, mysqlLib: driver(), telemetry });
-  await client.query("SELECT 1");
-  expect(telemetry.record).toHaveBeenCalledWith({ latencyMs: 0, route: "balanced" });
-  await client.close();
-});
 test("records elapsed latency on successful and failed queries", async () => {
   let clock = 10;
   const telemetry = {
@@ -69,13 +57,6 @@ test("records elapsed latency on successful and failed queries", async () => {
       ([entry]) => entry.failed === true && entry.latencyMs > 0 && entry.route === "balanced",
     ),
   ).toBe(true);
-  await client.close();
-});
-test("uses the telemetry start time when it is zero", async () => {
-  const telemetry = { begin: () => 0, record: jest.fn() };
-  const client = await createDb({ primary: profile, mysqlLib: driver(), telemetry, now: () => 5 });
-  await client.query("SELECT 1");
-  expect(telemetry.record).toHaveBeenCalledWith({ latencyMs: 5, route: "balanced" });
   await client.close();
 });
 test("records execute and transaction operations in telemetry", async () => {

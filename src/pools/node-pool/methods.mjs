@@ -1,4 +1,5 @@
 import { asSqlError } from "../../errors.mjs";
+import { createNodeHealth } from "./health.mjs";
 
 const connectionFailure = (error) => asSqlError(error).retryable;
 
@@ -16,6 +17,13 @@ export function createNodeMethods({
   const quarantine = () => {
     state.unavailableUntil = now() + quarantineMs;
   };
+  const health = createNodeHealth({
+    profile,
+    pool,
+    state,
+    isRetryable: connectionFailure,
+    quarantine,
+  });
   return {
     async query(sql, values) {
       if (!isAvailable()) throw new Error(`SQL node ${profile.host} is unavailable`);
@@ -69,19 +77,6 @@ export function createNodeMethods({
         throw asSqlError(error);
       }
     },
-    async health() {
-      try {
-        await pool.query("SELECT 1");
-        state.failures = 0;
-        state.unavailableUntil = 0;
-        return { ok: true, host: profile.host, port: profile.port };
-      } catch (error) {
-        if (connectionFailure(error)) {
-          state.failures += 1;
-          quarantine();
-        }
-        throw asSqlError(error);
-      }
-    },
+    health,
   };
 }
