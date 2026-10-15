@@ -54,15 +54,18 @@ test("authenticates, applies updates, and resynchronizes gaps", async () => {
   expect(client.state().mode).toBe("rest");
   client.close();
 });
-test("replaces the update handler", () => {
+test("uses the replacement update handler", async () => {
   const client = createRoutingStream({
     endpoint: "http://vip",
-    fetchBundle: async () => ({}),
-    WebSocketImpl: FakeWebSocket,
+    fetchBundle: async () => ({ bundleVersion: 1 }),
+    WebSocketImpl: null,
   });
   const handler = jest.fn();
   client.setOnUpdate(handler);
-  expect(client.state().mode).toBe("disconnected");
+  await client.connect();
+  expect(handler).toHaveBeenCalledWith(
+    expect.objectContaining({ type: "routing.resync", bundle: { bundleVersion: 1 } }),
+  );
   client.close();
 });
 test("ignores a failed REST fallback after shutdown", async () => {

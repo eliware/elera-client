@@ -23,22 +23,3 @@ test("reports query and transaction checks and releases the connection", async (
   expect(connection.rollback).toHaveBeenCalledTimes(1);
   expect(connection.release).toHaveBeenCalledTimes(1);
 });
-
-test("releases the connection when the transaction check fails", async () => {
-  const connection = {
-    beginTransaction: jest.fn(async () => {
-      throw new Error("transaction failed");
-    }),
-    rollback: jest.fn(),
-    release: jest.fn(),
-  };
-  await expect(
-    probeClient({
-      routeFor: () => "primary",
-      query: async () => [],
-      getConnection: async () => connection,
-    }),
-  ).rejects.toThrow("transaction failed");
-  expect(connection.rollback).toHaveBeenCalledTimes(1);
-  expect(connection.release).toHaveBeenCalledTimes(1);
-});

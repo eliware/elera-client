@@ -1,5 +1,6 @@
 import { validateProfile } from "../../config/index.mjs";
 import { credentialContext } from "./context.mjs";
+import { revalidateCredentialOverlay } from "./credential-overlay.mjs";
 import { resolveCredentials } from "./resolve.mjs";
 
 export async function prepareDbProfiles({ primary, balanced, credentialProvider, identity } = {}) {
@@ -16,9 +17,11 @@ export async function prepareDbProfiles({ primary, balanced, credentialProvider,
     ? validateProfile({ ...primaryConfig, ...balanced, ...credentials }, "balanced")
     : undefined;
   if (credentialProvider !== undefined) {
-    primaryConfig = validateProfile({ ...primaryConfig, ...credentials }, "primary");
-    if (balancedConfig)
-      balancedConfig = validateProfile({ ...balancedConfig, ...credentials }, "balanced");
+    ({ primaryConfig, balancedConfig } = revalidateCredentialOverlay({
+      primaryConfig,
+      balancedConfig,
+      credentials,
+    }));
   }
   return { credentials, primaryConfig, balancedConfig };
 }

@@ -19,23 +19,7 @@ const fetchBundle = (fetchImpl, value = bundle) =>
     json: async () => ({ ok: true, operation: "routing.bundle", data: value }),
   });
 
-test("creates managed clients from explicit options and environment values", async () => {
-  const fetchImpl = jest.fn();
-  fetchBundle(fetchImpl);
-  const client = await createDb({
-    endpoint: "http://vip:8080",
-    token: "token",
-    fetchImpl,
-    WebSocketImpl: FakeWebSocket,
-    mysqlLib: driver,
-  });
-  expect(fetchImpl).toHaveBeenCalledWith(
-    "http://vip:8080/api/v1/routing/bundle",
-    expect.objectContaining({
-      headers: expect.objectContaining({ authorization: "Bearer token" }),
-    }),
-  );
-  await client.end();
+test("creates managed clients from environment values and rejects missing config", async () => {
   const envFetch = jest.fn();
   fetchBundle(envFetch);
   const envClient = await createDb({

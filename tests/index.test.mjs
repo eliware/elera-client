@@ -51,7 +51,9 @@ test("public entrypoint creates a managed client with only endpoint and token", 
   });
   expect(fetchImpl).toHaveBeenCalledWith(
     "http://vip:8080/api/v1/routing/bundle",
-    expect.any(Object),
+    expect.objectContaining({
+      headers: expect.objectContaining({ authorization: "Bearer app-token" }),
+    }),
   );
   expect(client.getConnection).toEqual(expect.any(Function));
   expect(client.probe).toEqual(expect.any(Function));
