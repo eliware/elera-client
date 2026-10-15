@@ -7,6 +7,7 @@ import { createNodeHealth } from "./health.mjs";
 import { createNodeFailurePolicy } from "./failure-policy.mjs";
 import { createNodeInterface } from "./interface.mjs";
 import { createNodeEligibility } from "./eligibility.mjs";
+import { createNodeSetup } from "./setup.mjs";
 export function createNodePool({
   profile,
   mysqlLib,
@@ -15,8 +16,7 @@ export function createNodePool({
   quarantineMs = 5000,
 }) {
   const pool = createDriverPool(profile, mysqlLib);
-  const sessionStatements = profile.options?.sessionStatements ?? [];
-  const state = { failures: 0, unavailableUntil: 0 };
+  const { state, sessionStatements } = createNodeSetup(profile);
   const failurePolicy = createNodeFailurePolicy({ state, now, quarantineMs });
   let lifecycle;
   lifecycle = createNodeLifecycle({ onForceClose: createDriverPoolCloser(pool) });
