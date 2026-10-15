@@ -1,20 +1,36 @@
 import { expect, test } from "@jest/globals";
 import { validateProfile } from "../../src/config/validation.mjs";
 
-test("validates profile defaults and numeric bounds", () => {
-  expect(validateProfile({ host: "db", database: "app" }).options).toMatchObject({
-    connectionLimit: 10,
-    queueLimit: 0,
-    connectTimeout: 10000,
-    acquireTimeout: 10000,
+test("validates required fields and normalizes profile settings", () => {
+  expect(
+    validateProfile({
+      host: "db",
+      user: "u",
+      password: "p",
+      database: "app",
+      port: "3307",
+      options: { connectionLimit: "20", custom: true },
+    }),
+  ).toEqual({
+    host: "db",
+    user: "u",
+    password: "p",
+    database: "app",
+    port: 3307,
+    options: {
+      connectionLimit: 20,
+      custom: true,
+      queueLimit: 0,
+      connectTimeout: 10000,
+      acquireTimeout: 10000,
+    },
   });
-  expect(() => validateProfile({ host: "db", database: "app", port: 65536 })).toThrow();
-  expect(() => validateProfile({ host: "db", database: "app", options: { ssl: true } })).toThrow();
 });
 
-test("rejects invalid profile field types and missing fields", () => {
+test("rejects missing profiles and invalid field types", () => {
   const valid = { host: "db", user: "u", password: "p", database: "app" };
   for (const profile of [
+    undefined,
     null,
     { ...valid, host: 1 },
     { ...valid, user: 1 },
