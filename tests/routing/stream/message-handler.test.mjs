@@ -1,6 +1,9 @@
-import { expect, test, jest } from "@jest/globals";
+import { afterEach, expect, test, jest } from "@jest/globals";
 import { createRoutingMessageHandler } from "../../../src/routing/stream/message-handler.mjs";
-import { streamBundle } from "../../../test-fixtures/routing/stream.mjs";
+import { createRoutingStream } from "../../../src/routing/stream/index.mjs";
+import { FakeWebSocket, sockets, streamBundle } from "../../../test-fixtures/routing/stream.mjs";
+
+afterEach(() => sockets.splice(0).forEach((socket) => socket.close()));
 
 test("routes an update and ignores an older version", async () => {
   const state = { expectedVersion: 2, updateHandler: jest.fn() };
@@ -88,4 +91,58 @@ test("awaits gap recovery and topology resynchronization", async () => {
   expect(fallback).toHaveBeenCalledTimes(2);
   expect(updateHandler).toHaveBeenCalledTimes(1);
   expect(onError).not.toHaveBeenCalled();
+});
+
+test("reports malformed events and socket errors", async () => {
+  const errors = [];
+  const client = createRoutingStream({
+    endpoint: "http://vip",
+    fetchBundle: async () => ({}),
+    WebSocketImpl: FakeWebSocket,
+    onError: (error) => errors.push(error),
+    reconnectMs: 100000,
+  });
+  await client.connect();
+  const socket = sockets.at(-1);
+  socket.open();
+  socket.onmessage?.({ data: "{" });
+  socket.onerror?.(new Error("socket"));
+  client.close();
+  expect(errors).toHaveLength(2);
+});
+
+test("rejects unsupported and malformed canonical events without delivery", async () => {
+  const errors = [];
+  const updates = [];
+  const client = createRoutingStream({
+    endpoint: "http://vip",
+    fetchBundle: async () => ({}),
+    WebSocketImpl: FakeWebSocket,
+    onUpdate: (event) => updates.push(event),
+    onError: (error) => errors.push(error),
+  });
+  await client.connect();
+  const socket = sockets.at(-1);
+  socket.open();
+  socket.onmessage?.({
+    data: JSON.stringify({
+      type: "routing.unknown",
+      version: 1,
+      generatedAt: "2099-01-01T00:00:00Z",
+    }),
+  });
+  socket.onmessage?.({
+    data: JSON.stringify({
+      type: "routing.topology",
+      version: 2,
+      generatedAt: "2099-01-01T00:00:00Z",
+      node: "writer",
+      context: {},
+      topology: {},
+    }),
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+  expect(updates).toHaveLength(0);
+  expect(errors).toHaveLength(2);
+  client.close();
 });

@@ -19,14 +19,24 @@ const fetchBundle = (fetchImpl, value = bundle) =>
     json: async () => ({ ok: true, operation: "routing.bundle", data: value }),
   });
 
-test("creates managed clients from environment values and rejects missing config", async () => {
-  const envFetch = jest.fn();
-  fetchBundle(envFetch);
-  const envClient = await createDb({
-    env: { ELERA_API_URL: "http://env:8080", ELERA_API_TOKEN: "env-token" },
-    fetchImpl: envFetch,
-    WebSocketImpl: FakeWebSocket,
+const createManagedDb = async ({ WebSocketImpl = FakeWebSocket, ...options } = {}) => {
+  const fetchImpl = jest.fn();
+  fetchBundle(fetchImpl);
+  const endpointOptions =
+    options.env === undefined ? { endpoint: "http://vip:8080", token: "token" } : {};
+  const client = await createDb({
+    ...endpointOptions,
+    fetchImpl,
+    WebSocketImpl,
     mysqlLib: driver,
+    ...options,
+  });
+  return { client, fetchImpl };
+};
+
+test("creates managed clients from environment values and rejects missing config", async () => {
+  const { client: envClient, fetchImpl: envFetch } = await createManagedDb({
+    env: { ELERA_API_URL: "http://env:8080", ELERA_API_TOKEN: "env-token" },
   });
   expect(envFetch.mock.calls[0][0]).toBe("http://env:8080/api/v1/routing/bundle");
   await envClient.end();
@@ -35,31 +45,16 @@ test("creates managed clients from environment values and rejects missing config
 });
 
 test("starts and stops an injected telemetry sink", async () => {
-  const fetchImpl = jest.fn();
-  fetchBundle(fetchImpl);
   const telemetry = { start: jest.fn(), stop: jest.fn() };
-  const client = await createDb({
-    endpoint: "http://vip:8080",
-    token: "token",
-    telemetry,
-    fetchImpl,
-    WebSocketImpl: FakeWebSocket,
-    mysqlLib: driver,
-  });
+  const { client } = await createManagedDb({ telemetry });
   expect(telemetry.start).toHaveBeenCalledTimes(1);
   await client.end();
   expect(telemetry.stop).toHaveBeenCalledTimes(1);
 });
 
 test("attaches and closes its routing stream", async () => {
-  const fetchImpl = jest.fn();
-  fetchBundle(fetchImpl);
-  const client = await createDb({
-    endpoint: "http://vip:8080",
-    token: "token",
-    fetchImpl,
+  const { client } = await createManagedDb({
     WebSocketImpl: LifecycleSocket,
-    mysqlLib: driver,
   });
   expect(sockets[0].url).toBe("ws://vip:8080/api/v1/routing/stream");
   await client.end();

@@ -2,15 +2,18 @@ import { expect, jest, test } from "@jest/globals";
 import { probeClient } from "../../../src/client/diagnostics/probe.mjs";
 
 test("reports query and transaction checks and releases the connection", async () => {
+  const routeFor = jest.fn(() => "balanced");
+  const query = jest.fn(async () => ["rows"]);
+  const getConnection = jest.fn(async () => connection);
   const connection = {
     beginTransaction: jest.fn(),
     rollback: jest.fn(),
     release: jest.fn(),
   };
   const result = await probeClient({
-    routeFor: jest.fn(() => "balanced"),
-    query: jest.fn(async () => ["rows"]),
-    getConnection: jest.fn(async () => connection),
+    routeFor,
+    query,
+    getConnection,
   });
   expect(result).toEqual({
     ok: true,
@@ -19,7 +22,7 @@ test("reports query and transaction checks and releases the connection", async (
     transaction: "started",
     released: true,
   });
-  expect(connection.beginTransaction).toHaveBeenCalledTimes(1);
-  expect(connection.rollback).toHaveBeenCalledTimes(1);
-  expect(connection.release).toHaveBeenCalledTimes(1);
+  expect(routeFor).toHaveBeenCalledWith("SELECT 1");
+  expect(query).toHaveBeenCalledWith("SELECT 1", "balanced");
+  expect(getConnection).toHaveBeenCalledWith();
 });

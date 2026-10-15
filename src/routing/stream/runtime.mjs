@@ -6,6 +6,7 @@ import { createRoutingConnector } from "./connector.mjs";
 import { createRoutingMessageHandler } from "./message-handler.mjs";
 import { stopHeartbeat } from "./heartbeat.mjs";
 import { createRoutingStreamApi } from "./public-api.mjs";
+import { createRoutingStreamState } from "./state.mjs";
 
 export function createRoutingRuntime(options) {
   const {
@@ -21,21 +22,7 @@ export function createRoutingRuntime(options) {
     now = () => Date.now(),
     telemetry,
   } = options;
-  const state = {
-    socket: undefined,
-    closed: false,
-    connecting: false,
-    heartbeat: undefined,
-    expectedVersion: 0,
-    updateHandler: onUpdate,
-    mode: "disconnected",
-    plannedReconnect: false,
-    lastReconnectWasPlanned: false,
-    disconnectedAt: undefined,
-    reconnectDeadlineAt: undefined,
-    activeEndpoint: endpoint,
-    telemetry,
-  };
+  const state = createRoutingStreamState({ endpoint, onUpdate, telemetry });
   const log = options.log ?? defaultLog;
   const fallback = createRuntimeFallback({
     fetchBundle,
