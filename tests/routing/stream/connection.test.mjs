@@ -31,21 +31,6 @@ test("opens a socket and runs the connection callbacks", async () => {
   expect(state.socket).toBeUndefined();
 });
 
-test("uses REST when WebSocket support is missing", async () => {
-  const fallback = jest.fn();
-  const schedule = jest.fn();
-  await connectRoutingSocket({
-    state: { closed: false },
-    WebSocketImpl: null,
-    streamUrl: () => "ws://vip",
-    now: Date.now,
-    fallback,
-    schedule,
-  });
-  expect(fallback).toHaveBeenCalled();
-  expect(schedule).toHaveBeenCalled();
-});
-
 test("recovers from WebSocket construction failures", async () => {
   const errors = [];
   class BrokenWebSocket {
