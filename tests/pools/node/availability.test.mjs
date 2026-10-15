@@ -38,3 +38,15 @@ test("applies and clears manual exclusion through node availability", () => {
   availability.unavailable = false;
   expect(availability.available).toBe(true);
 });
+
+test("clears manual exclusion when lifecycle recovery restores availability", () => {
+  const { drain, availability } = makeAvailability();
+  availability.unavailable = true;
+  availability.available = false;
+  expect(drain).toHaveBeenCalledTimes(1);
+  expect(availability.available).toBe(false);
+
+  availability.available = true;
+
+  expect(availability.available).toBe(true);
+});
