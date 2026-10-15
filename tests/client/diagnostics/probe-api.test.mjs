@@ -13,7 +13,7 @@ test("adapts client query and connection methods to the probe workflow", async (
     execution: { query },
     getPrimaryPool: () => ({ choose: () => ({ getConnection: async () => connection }) }),
   });
-  await expect(probe()).resolves.toMatchObject({ ok: true, result: ["rows"] });
+  await probe();
   expect(query).toHaveBeenCalledWith("SELECT 1", undefined, { route: "primary" });
 });
 

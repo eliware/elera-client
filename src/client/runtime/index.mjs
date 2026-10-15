@@ -7,6 +7,7 @@ import { createDbSetup } from "./setup.mjs";
 import { createDbServices } from "./services.mjs";
 import { redactBundle } from "../bundle/state.mjs";
 import { createProbeApi } from "../diagnostics/probe-api.mjs";
+import { logClientCreated } from "./setup-log.mjs";
 
 export async function createDb(options = {}) {
   const {
@@ -66,9 +67,6 @@ export async function createDb(options = {}) {
     drain,
     telemetry: setup.metrics,
   });
-  log.debug?.("SQL client created", {
-    balanced: Boolean(setup.getBalancedPool()),
-    routing,
-  });
+  logClientCreated(log, { getBalancedPool: setup.getBalancedPool, routing });
   return client;
 }

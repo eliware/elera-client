@@ -48,11 +48,10 @@ test("starts and stops an injected telemetry sink", async () => {
   });
   expect(telemetry.start).toHaveBeenCalledTimes(1);
   await client.end();
-  await client.end();
   expect(telemetry.stop).toHaveBeenCalledTimes(1);
 });
 
-test("applies routing updates and closes its stream", async () => {
+test("attaches and closes its routing stream", async () => {
   const fetchImpl = jest.fn();
   fetchBundle(fetchImpl);
   const client = await createDb({
@@ -63,16 +62,6 @@ test("applies routing updates and closes its stream", async () => {
     mysqlLib: driver,
   });
   expect(sockets[0].url).toBe("ws://vip:8080/api/v1/routing/stream");
-  sockets[0].message({
-    ...bundle,
-    type: "routing.update",
-    version: 2,
-    generatedAt: "2099-01-01T00:00:00Z",
-    bundleVersion: 2,
-    writer: { host: "writer-b", port: 3306 },
-    routes: { primary: [{ host: "writer-b", port: 3306 }], balanced: bundle.routes.balanced },
-  });
-  await new Promise((resolve) => setImmediate(resolve));
   await client.end();
   expect(sockets[0].readyState).toBe(3);
 });

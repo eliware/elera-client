@@ -1,5 +1,6 @@
 import { applyShutdownState } from "./shutdown-state.mjs";
 import { shouldCancelShutdownReconnect } from "./shutdown-policy.mjs";
+import { notifyShutdownUpdate } from "./shutdown-notification.mjs";
 
 export function handleShutdownEvent(event, context) {
   return runShutdown(event, context);
@@ -7,7 +8,7 @@ export function handleShutdownEvent(event, context) {
 
 async function runShutdown(event, { state, fallback, reconnect, now }) {
   applyShutdownState(event, { state, now });
-  state.updateHandler?.(event);
+  notifyShutdownUpdate(state, event);
   if (shouldCancelShutdownReconnect(event)) reconnect.cancel();
   reconnect.reset();
   await fallback();
