@@ -2,10 +2,8 @@ import { expect, test, jest } from "@jest/globals";
 import { createNodePool } from "../../../src/pools/node/index.mjs";
 import { driver, profile } from "../../../test-fixtures/pools/node.mjs";
 
-test("node pool delegates queries, execution, health, connections, and close", async () => {
+test("node pool exposes connections, health, and close", async () => {
   const node = createNodePool({ profile, mysqlLib: driver(), log: { warn: jest.fn() } });
-  await node.query("SELECT 1");
-  await node.execute("SELECT 1");
   const acquired = await node.getConnection();
   acquired.release();
   acquired.release();

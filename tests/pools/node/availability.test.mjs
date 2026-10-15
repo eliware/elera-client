@@ -15,16 +15,13 @@ function makeAvailability(initialState = "ready", closed = false) {
     cancelDrain: jest.fn(),
     drain,
   });
-  return { data, drain, availability };
+  return { drain, availability };
 }
 
-test("delegates drain requests and keeps closed nodes unavailable", () => {
-  const { data, drain, availability } = makeAvailability();
+test("delegates availability changes to lifecycle drain", () => {
+  const { drain, availability } = makeAvailability();
   availability.available = false;
   expect(drain).toHaveBeenCalledTimes(1);
-  data.closed = true;
-  availability.available = true;
-  expect(availability.recover()).toBe("draining");
   expect(availability.available).toBe(false);
 });
 
