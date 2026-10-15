@@ -1,4 +1,5 @@
 import { createRouteFactory } from "../routing/route-factory.mjs";
+import { updateBundleMetricsContext } from "./bundle-context.mjs";
 
 export function createDbPoolState({
   primaryConfig,
@@ -37,12 +38,7 @@ export function createDbPoolState({
     getBundle: () => activeBundle,
     setBundle: (value) => {
       activeBundle = value;
-      metrics?.setContext?.({
-        application: value.application,
-        credentialName: value.credentialName,
-        database: value.database,
-        scopes: value.scopes,
-      });
+      updateBundleMetricsContext(metrics, value);
     },
     makeRoute,
   };

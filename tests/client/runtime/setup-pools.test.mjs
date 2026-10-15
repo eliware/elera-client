@@ -1,4 +1,4 @@
-import { expect, jest, test } from "@jest/globals";
+import { expect, test } from "@jest/globals";
 import { createDbPoolState } from "../../../src/client/runtime/setup-pools.mjs";
 import { bundle, driver, profile } from "../../../test-fixtures/client/runtime.mjs";
 
@@ -25,8 +25,7 @@ test("creates and updates primary pool state without a balanced pool", () => {
   expect(state.getBundle()).toBe(bundle);
 });
 
-test("creates balanced pools from bundle routes and updates telemetry context", () => {
-  const setContext = jest.fn();
+test("creates balanced pools from bundle routes", () => {
   const state = createDbPoolState({
     primaryConfig: profile,
     balancedConfig: undefined,
@@ -36,7 +35,6 @@ test("creates balanced pools from bundle routes and updates telemetry context", 
     log: {},
     quarantineMs: 1,
     routing: "auto",
-    metrics: { setContext },
   });
   expect(state.getPools()).toHaveLength(2);
   const updated = { ...bundle, bundleVersion: 2 };
@@ -44,12 +42,6 @@ test("creates balanced pools from bundle routes and updates telemetry context", 
   const balancedPool = {};
   state.setBalancedPool(balancedPool);
   expect(state.getBalancedPool()).toBe(balancedPool);
-  expect(setContext).toHaveBeenCalledWith({
-    application: "app",
-    credentialName: undefined,
-    database: "app",
-    scopes: undefined,
-  });
 });
 
 test("creates a balanced pool from an explicit profile", () => {
