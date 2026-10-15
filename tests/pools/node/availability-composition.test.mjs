@@ -1,5 +1,5 @@
 import { expect, jest, test } from "@jest/globals";
-import { createNodeAvailability } from "../../../src/pools/node/availability.mjs";
+import { createNodeAvailability } from "../../../src/pools/node/availability-composition.mjs";
 
 function makeAvailability(initialState = "ready", closed = false) {
   const data = { state: initialState, closed };

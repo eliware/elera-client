@@ -1,5 +1,5 @@
 import { createDrainController } from "./drain-controller.mjs";
-import { createNodeAvailability } from "./availability.mjs";
+import { createNodeAvailability } from "./availability-composition.mjs";
 import { createNodeActivity } from "./activity.mjs";
 import { createNodeCloseState } from "./close-state.mjs";
 
