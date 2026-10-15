@@ -1,6 +1,7 @@
-import { compareBundleVersions } from "../bundle-version.mjs";
 import { parseRoutingEvent } from "./events.mjs";
 import { handleShutdownEvent } from "./shutdown-event.mjs";
+import { orderRoutingEvent } from "./event-ordering.mjs";
+import { dispatchRoutingEvent } from "./event-dispatch.mjs";
 
 export function createRoutingMessageHandler({ state, fallback, reconnect, now, onError }) {
   return async ({ data }) => {
@@ -11,28 +12,14 @@ export function createRoutingMessageHandler({ state, fallback, reconnect, now, o
         await shutdown;
         return;
       }
-      const version = event.version;
-      if (
-        version !== undefined &&
-        state.expectedVersion !== 0 &&
-        compareBundleVersions(version, state.expectedVersion) <= 0
-      )
-        return;
-      const numericVersion = Number(version);
-      const numericExpected = Number(state.expectedVersion);
-      if (
-        Number.isInteger(numericVersion) &&
-        Number.isInteger(numericExpected) &&
-        numericExpected > 0 &&
-        numericVersion > numericExpected + 1
-      )
-        await fallback();
-      state.expectedVersion = version;
-      if (event.type === "routing.topology") {
-        await fallback();
-        return;
+      const ordering = orderRoutingEvent(event, { state, fallback });
+      if (!ordering.accepted) return;
+      if (ordering.recovery) {
+        await ordering.recovery;
+        ordering.complete();
       }
-      state.updateHandler?.(event);
+      const dispatched = dispatchRoutingEvent(event, { state, fallback });
+      if (dispatched) await dispatched;
     } catch (error) {
       onError?.(error);
     }

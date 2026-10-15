@@ -89,3 +89,71 @@ test("rolls back application transaction failures through the client", async () 
   expect(conn.rollback).toHaveBeenCalled();
   await client.close();
 });
+
+test("keeps refresh updates isolated between client instances", async () => {
+  const clientA = await createDb({
+    primary: profile,
+    bundle: {
+      ...bundle,
+      writer: { host: "app-a-writer", port: 3306 },
+      failover: [{ host: "a-backup", port: 3306 }],
+    },
+    mysqlLib: driver(),
+  });
+  const clientB = await createDb({
+    primary: profile,
+    bundle: {
+      ...bundle,
+      writer: { host: "app-b-writer", port: 3306 },
+      failover: [{ host: "b-backup", port: 3306 }],
+    },
+    mysqlLib: driver(),
+  });
+  let update;
+  await clientA.attachRoutingStream({
+    connect: async () => {},
+    setOnUpdate: (handler) => {
+      update = handler;
+    },
+  });
+  await update({
+    ...bundle,
+    type: "routing.update",
+    writer: { host: "app-a-next", port: 3306 },
+    failover: [{ host: "a-backup", port: 3306 }],
+    bundleVersion: 2,
+    routes: { ...bundle.routes, primary: [{ host: "app-a-next", port: 3306 }] },
+  });
+  expect(clientA.bundle().writer.host).toBe("app-a-next");
+  expect(clientB.bundle().writer.host).toBe("app-b-writer");
+  expect(
+    clientA
+      .nodeStates()
+      .filter((node) => node.route === "primary")
+      .map((node) => node.host),
+  ).toEqual(["app-a-next", "a-backup"]);
+  expect(
+    clientB
+      .nodeStates()
+      .filter((node) => node.route === "primary")
+      .map((node) => node.host),
+  ).toEqual(["app-b-writer", "b-backup"]);
+  await update({
+    ...bundle,
+    type: "routing.update",
+    writer: { host: "app-a-final", port: 3306 },
+    failover: [],
+    bundleVersion: 3,
+    routes: { ...bundle.routes, primary: [{ host: "app-a-final", port: 3306 }] },
+  });
+  expect(clientA.nodeStates().find((node) => node.route === "primary").host).toBe("app-a-final");
+  expect(
+    clientA
+      .nodeStates()
+      .filter((node) => node.route === "balanced")
+      .map((node) => node.host),
+  ).toEqual(bundle.routes.balanced.map((node) => node.host));
+  expect(clientB.bundle().writer.host).toBe("app-b-writer");
+  await clientA.close();
+  await clientB.close();
+});

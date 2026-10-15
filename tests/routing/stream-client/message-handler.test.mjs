@@ -48,3 +48,44 @@ test("sets a shutdown endpoint and reconnect deadline", async () => {
   expect(fallback).toHaveBeenCalled();
   expect(reconnect.reset).toHaveBeenCalled();
 });
+
+test("awaits gap recovery and topology resynchronization", async () => {
+  const updateHandler = jest.fn();
+  const fallback = jest.fn(async () => {});
+  const state = { expectedVersion: 1, updateHandler };
+  const onError = jest.fn();
+  const handler = createRoutingMessageHandler({
+    state,
+    fallback,
+    reconnect: { cancel: jest.fn(), reset: jest.fn() },
+    now: Date.now,
+    onError,
+  });
+  await handler({
+    data: JSON.stringify({
+      ...streamBundle,
+      type: "routing.update",
+      version: 3,
+      generatedAt: "2099-01-01T00:00:00Z",
+    }),
+  });
+  expect(fallback).toHaveBeenCalledTimes(1);
+  expect(updateHandler).toHaveBeenCalledTimes(1);
+  await handler({
+    data: JSON.stringify({
+      type: "routing.topology",
+      version: 4,
+      generatedAt: "2099-01-01T00:00:00Z",
+      node: "writer",
+      context: {
+        nodeIdentity: { name: "writer" },
+        ports: { sql: 3306, http: 8080 },
+        clusterCondition: "Primary",
+      },
+      topology: { nodes: [] },
+    }),
+  });
+  expect(fallback).toHaveBeenCalledTimes(2);
+  expect(updateHandler).toHaveBeenCalledTimes(1);
+  expect(onError).not.toHaveBeenCalled();
+});

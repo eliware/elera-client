@@ -1,3 +1,7 @@
+import { retireObsoletePools } from "./pool-retirement.mjs";
+import { createRefreshedProfiles } from "./refreshed-profiles.mjs";
+import { createRefreshedPools } from "./refreshed-pools.mjs";
+
 export function createBundleRefresh({
   validateBundle,
   getBundle,
@@ -37,36 +41,21 @@ export function createBundleRefresh({
         refreshRequired: bundleNeedsRefresh(active, now()),
       };
     const previous = [primary, balanced];
-    const credentials = candidate.credentials;
-    const writer = candidate.writer;
-    const reader = candidate.readers?.[0] ?? candidate.routes?.balanced?.[0];
     setBundle(candidate);
-    const primaryConfig = validateProfile(
-      {
-        ...getPrimaryConfig(),
-        host: writer.host,
-        port: writer.port,
-        user: credentials.username,
-        password: credentials.password,
-        database: candidate.physicalDatabase,
-      },
-      "primary",
-    );
+    const profiles = createRefreshedProfiles({
+      candidate,
+      primaryConfig: getPrimaryConfig(),
+      validateProfile,
+    });
+    const primaryConfig = profiles.primary;
     setPrimaryConfig(primaryConfig);
-    const nextPrimary = makeRoute("primary", primaryConfig);
-    setPrimaryPool(nextPrimary);
-    let nextBalanced = balanced;
-    if (reader) {
-      const balancedConfig = validateProfile(
-        { ...primaryConfig, host: reader.host, port: reader.port },
-        "balanced",
-      );
-      nextBalanced = makeRoute("balanced", balancedConfig);
-      setBalancedPool(nextBalanced);
-    } else if (balanced) {
-      nextBalanced = null;
-      setBalancedPool(null);
-    }
+    const { primary: nextPrimary, balanced: nextBalanced } = createRefreshedPools({
+      primaryConfig,
+      balancedConfig: profiles.balanced,
+      makeRoute,
+      setPrimaryPool,
+      setBalancedPool,
+    });
     retireObsoletePools({
       previous,
       retained: [nextPrimary, nextBalanced],
@@ -78,4 +67,3 @@ export function createBundleRefresh({
     };
   };
 }
-import { retireObsoletePools } from "./pool-retirement.mjs";
