@@ -3,15 +3,15 @@ import { validateBundle } from "@eliware/elera-lib";
 export function profilesFromBundle(bundle) {
   const valid = validateBundle(bundle);
   const credentials = valid.credentials;
+  const writer = valid.writer;
   const base = {
-    host: valid.routes.primary[0]?.host,
-    port: valid.routes.primary[0]?.port,
+    host: writer.host,
+    port: writer.port,
     user: credentials.username,
     password: credentials.password,
     database: valid.physicalDatabase,
   };
-  const balancedRoutes = valid.routes.balanced;
-  const balancedNode = balancedRoutes[0];
+  const balancedNode = valid.readers[0] ?? valid.routes.balanced[0];
   return {
     primary: base,
     balanced: balancedNode

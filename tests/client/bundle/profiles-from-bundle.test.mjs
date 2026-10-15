@@ -9,6 +9,23 @@ test("derives generic SQL profiles from a routing bundle", () => {
   });
 });
 
+test("uses the elected writer and first reader when route assignments differ", () => {
+  const profiles = profilesFromBundle({
+    ...bundle,
+    writer: { host: "elected-writer", port: 3307 },
+    readers: [{ host: "elected-reader", port: 3308 }],
+    routes: {
+      primary: [{ host: "stale-primary", port: 3309 }],
+      balanced: [{ host: "stale-reader", port: 3310 }],
+    },
+  });
+
+  expect(profiles).toMatchObject({
+    primary: { host: "elected-writer", port: 3307 },
+    balanced: { host: "elected-reader", port: 3308 },
+  });
+});
+
 test("allows bundles without a balanced route", () => {
   expect(
     profilesFromBundle({
