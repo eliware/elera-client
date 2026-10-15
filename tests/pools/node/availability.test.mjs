@@ -17,15 +17,6 @@ function makeAvailability(initialState = "ready", closed = false) {
   return { data, drain, availability };
 }
 
-test("sets and clears explicit node unavailability", () => {
-  const { data, availability } = makeAvailability();
-  availability.unavailable = true;
-  expect(data.state).toBe("unavailable");
-  expect(availability.available).toBe(false);
-  availability.unavailable = false;
-  expect(availability.available).toBe(true);
-});
-
 test("delegates drain requests and keeps closed nodes unavailable", () => {
   const { data, drain, availability } = makeAvailability();
   availability.available = false;

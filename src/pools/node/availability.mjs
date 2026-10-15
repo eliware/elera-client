@@ -1,17 +1,19 @@
+import { createManualExclusion } from "./manual-exclusion.mjs";
+
 export function createNodeAvailability({ now, getState, setState, isClosed, cancelDrain, drain }) {
-  let forcedUnavailable = false;
+  const manualExclusion = createManualExclusion(setState);
 
   const recover = () => {
     if (isClosed()) return getState();
     cancelDrain();
     setState("ready");
-    forcedUnavailable = false;
+    manualExclusion.clear();
     return getState();
   };
 
   return {
     get available() {
-      return !isClosed() && getState() === "ready" && !forcedUnavailable && now() >= 0;
+      return !isClosed() && getState() === "ready" && !manualExclusion.active && now() >= 0;
     },
     set available(value) {
       if (value) recover();
@@ -19,16 +21,13 @@ export function createNodeAvailability({ now, getState, setState, isClosed, canc
     },
     set unavailable(value) {
       if (value) {
-        setState("unavailable");
-        forcedUnavailable = true;
+        manualExclusion.exclude();
       } else recover();
     },
     markDraining() {
-      forcedUnavailable = true;
       setState("draining");
     },
     markClosed() {
-      forcedUnavailable = true;
       setState("unavailable");
     },
     recover,

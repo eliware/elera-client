@@ -1,6 +1,7 @@
 import { createConnectionRecovery } from "./connection-recovery.mjs";
 import { createConnectionFailure } from "./connection-failure.mjs";
 import { bindSocketHandlers } from "./socket-handlers.mjs";
+import { canStartConnection } from "./connection-eligibility.mjs";
 
 export async function connectRoutingSocket({
   state,
@@ -18,13 +19,7 @@ export async function connectRoutingSocket({
 }) {
   const recovery = createConnectionRecovery({ state, now, fallback, schedule });
   const failConnection = createConnectionFailure({ state, fallback, schedule });
-  if (
-    state.closed ||
-    state.connecting ||
-    state.socket?.readyState === 1 ||
-    (state.reconnectDeadlineAt !== undefined && now() >= state.reconnectDeadlineAt)
-  )
-    return;
+  if (!canStartConnection({ state, now })) return;
   if (typeof WebSocketImpl !== "function") {
     await fallback();
     schedule();
