@@ -1,27 +1,10 @@
 import { createDbFromBundle, profilesFromBundle } from "../../src/client/from-bundle.mjs";
 import { expect, test } from "@jest/globals";
-import { validateBundle, validateRoutingEvent } from "@eliware/elera-lib";
-
-const bundle = {
-  apiVersion: "v1",
-  application: "app",
-  database: "app",
-  physicalDatabase: "physical_app",
-  identity: "runtime",
-  credentials: { username: "u", password: "p" },
-  writer: { host: "writer", port: 3306 },
-  readers: [{ host: "reader", port: 3306 }],
-  failover: [],
-  bundleVersion: 1,
-  nodeIdentity: "writer",
-  ports: { sql: 3306, http: 8080 },
-  routes: { primary: [{ host: "writer", port: 3306 }], balanced: [{ host: "reader", port: 3306 }] },
-  expiresAt: "2099-01-01T00:00:00Z",
-};
+import { bundle } from "../../test-fixtures/client/create-db.mjs";
 test("derives generic SQL profiles from a routing bundle", () => {
   expect(profilesFromBundle(bundle)).toMatchObject({
-    primary: { host: "writer", user: "u", database: "physical_app" },
-    balanced: { host: "reader", database: "physical_app" },
+    primary: { host: "db", user: "u", database: "physical_app" },
+    balanced: { host: "read", database: "physical_app" },
   });
 });
 test("creates a client from only a validated bundle", async () => {
@@ -77,55 +60,4 @@ test("can construct the default SQL client factory", async () => {
 });
 test("rejects an omitted bundle before selecting a client factory", async () => {
   await expect(createDbFromBundle()).rejects.toThrow();
-});
-
-test("validates shared routing bundles and events from the published package", () => {
-  expect(
-    validateBundle({
-      apiVersion: "v1",
-      application: "app",
-      database: "app",
-      physicalDatabase: "physical_app",
-      identity: "id",
-      credentials: { username: "u", password: "p" },
-      writer: { host: "writer", port: 3306 },
-      readers: [],
-      failover: [],
-      bundleVersion: 1,
-      nodeIdentity: "writer",
-      ports: { sql: 3306, http: 8080 },
-      routes: { primary: [{ host: "writer", port: 3306 }], balanced: [] },
-      expiresAt: "2099-01-01T00:00:00Z",
-    }),
-  ).toBeTruthy();
-  expect(
-    validateRoutingEvent({
-      type: "routing.recovery",
-      version: 1,
-      generatedAt: "2099-01-01T00:00:00Z",
-      node: "writer",
-      context: {},
-    }),
-  ).toMatchObject({ type: "routing.recovery" });
-});
-
-test("shared bundle validation rejects invalid ports and missing route arrays", () => {
-  const value = {
-    apiVersion: "v1",
-    application: "app",
-    database: "app",
-    physicalDatabase: "physical_app",
-    identity: "id",
-    credentials: { username: "u", password: "p" },
-    writer: { host: "writer", port: 3306 },
-    readers: [],
-    failover: [],
-    bundleVersion: 1,
-    nodeIdentity: "writer",
-    ports: { sql: 3306, http: 8080 },
-    routes: { primary: [{ host: "writer", port: 3306 }], balanced: [] },
-    expiresAt: "2099-01-01T00:00:00Z",
-  };
-  expect(() => validateBundle({ ...value, ports: { sql: "3306", http: 8080 } })).toThrow();
-  expect(() => validateBundle({ ...value, routes: { primary: value.routes.primary } })).toThrow();
 });

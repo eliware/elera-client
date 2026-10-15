@@ -58,6 +58,14 @@ test("rejects incomplete stream updates and accepts a complete update", async ()
     routes: { ...bundle.routes, primary: [{ host: "versioned-writer", port: 3306 }] },
   });
   expect(client.bundle()).toMatchObject({ bundleVersion: 2, writer: bundle.writer });
+  await update({
+    ...bundle,
+    type: "routing.update",
+    bundleVersion: 3,
+    routes: { ...bundle.routes, primary: [{ host: "top-level-writer", port: 3306 }] },
+  });
+  expect(client.bundle()).toMatchObject({ bundleVersion: 3, writer: bundle.writer });
+  expect(client.bundle()).not.toHaveProperty("credentials");
   await client.close();
 });
 
@@ -115,24 +123,4 @@ test("updates one application client without changing another client assignment"
   ).toEqual(["app-b-writer", "b-backup"]);
   await clientA.close();
   await clientB.close();
-});
-
-test("applies top-level updates without active-bundle defaults", async () => {
-  const client = await createDb({ primary: profile, bundle, mysqlLib: driver() });
-  let update;
-  await client.attachRoutingStream({
-    connect: async () => {},
-    setOnUpdate: (handler) => {
-      update = handler;
-    },
-  });
-  await update({
-    ...bundle,
-    type: "routing.update",
-    bundleVersion: 2,
-    routes: { ...bundle.routes, primary: [{ host: "versioned-writer", port: 3306 }] },
-  });
-  expect(client.bundle()).toMatchObject({ bundleVersion: 2, writer: bundle.writer });
-  expect(client.bundle()).not.toHaveProperty("credentials");
-  await client.close();
 });

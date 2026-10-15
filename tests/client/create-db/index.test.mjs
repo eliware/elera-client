@@ -30,15 +30,35 @@ test("supports an unbundled client view and the end alias", async () => {
   await client.end();
 });
 
-test("refreshes a primary-only client without creating a balanced pool", async () => {
-  const client = await createDb({ primary: profile, mysqlLib: driver() });
-  await client.refresh({
-    ...bundle,
-    routes: { primary: [{ host: "new", port: 3306 }], balanced: [] },
-    readers: [],
+test("validates bundle updates and applies a primary-only refresh", async () => {
+  const client = await createDb({ primary: profile, bundle, mysqlLib: driver() });
+  await expect(
+    client.refresh({
+      ...bundle,
+      writer: undefined,
+      routes: { primary: [], balanced: bundle.routes.balanced },
+      bundleVersion: 2,
+    }),
+  ).rejects.toThrow("writer");
+  await expect(
+    client.refresh({
+      ...bundle,
+      writer: { host: "new", port: 3306 },
+      routes: { primary: [{ host: "new", port: 3306 }], balanced: [] },
+      readers: [],
+      bundleVersion: 2,
+    }),
+  ).resolves.toMatchObject({ bundleVersion: 2 });
+  expect(client.nodeStates().filter((node) => node.route === "balanced")).toHaveLength(0);
+  await expect(client.refresh({ ...bundle, bundleVersion: 1 })).resolves.toMatchObject({
     bundleVersion: 2,
   });
-  expect(client.nodeStates().filter((node) => node.route === "balanced")).toHaveLength(0);
+  await expect(client.refresh({ ...bundle, bundleVersion: 0 })).resolves.toMatchObject({
+    bundleVersion: 2,
+  });
+  await expect(client.refresh({ ...bundle, bundleVersion: undefined })).rejects.toThrow(
+    "bundleVersion",
+  );
   await client.close();
 });
 

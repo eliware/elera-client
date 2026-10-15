@@ -1,7 +1,7 @@
 import { log as defaultLog } from "@eliware/common";
-import { clientDrainTimeout } from "../drain-policy.mjs";
 import { routeFor } from "../../routing.mjs";
-import { createRoutingEventHandler } from "./routing-events.mjs";
+import { attachRoutingStream } from "./stream-attachment.mjs";
+import { createClientDrain } from "./drain.mjs";
 import { createClientApi } from "./public-api.mjs";
 import { createDbSetup } from "./setup.mjs";
 import { createDbServices } from "./services.mjs";
@@ -38,6 +38,7 @@ export async function createDb(options = {}) {
     telemetry,
   });
   const services = createDbServices({ setup, drainTimeoutMs });
+  const drain = createClientDrain({ getPools: setup.getPools, defaultTimeout: drainTimeoutMs });
   const client = createClientApi({
     ...services,
     routeFor,
@@ -47,31 +48,15 @@ export async function createDb(options = {}) {
       const pool = route === "balanced" ? setup.getBalancedPool() : setup.getPrimaryPool();
       pool?.setAvailability(host, available);
     },
-    attachRoutingStream: async (stream, api) => {
-      if (!stream?.connect) throw new TypeError("routing stream is required");
-      setup.metrics?.start?.(stream);
-      stream.setTelemetry?.(setup.metrics);
-      stream.setOnUpdate?.(
-        createRoutingEventHandler({
-          refresh: (event) => api.refresh(event),
-          getPools: setup.getPools,
-          drainTimeoutMs,
-        }),
-      );
-      await stream.connect();
-      return () => stream.close?.();
-    },
-    drain: (host, timeoutMs = drainTimeoutMs) => {
-      const effectiveTimeout = clientDrainTimeout(timeoutMs);
-      const pools = setup.getPools();
-      pools.forEach((pool) => pool.drain(host, effectiveTimeout));
-      return {
-        host,
-        timeoutMs: effectiveTimeout,
-        wait: () => Promise.all(pools.map((pool) => pool.waitForIdle(effectiveTimeout))),
-        forceClose: () => Promise.all(pools.map((pool) => pool.forceClose(host))),
-      };
-    },
+    attachRoutingStream: (stream, api) =>
+      attachRoutingStream({
+        stream,
+        api,
+        metrics: setup.metrics,
+        getPools: setup.getPools,
+        drainTimeoutMs,
+      }),
+    drain,
     telemetry: setup.metrics,
   });
   log.debug?.("SQL client created", {

@@ -1,5 +1,7 @@
-import { jest } from "@jest/globals";
+import { expect, jest, test } from "@jest/globals";
+import { validateBundle, validateRoutingEvent } from "@eliware/elera-lib";
 import { fetchRoutingBundle } from "../../src/routing/bundle-fetcher.mjs";
+import { bundle } from "../../test-fixtures/client/create-db.mjs";
 
 test("uses the default bundle path and rejects a missing endpoint", async () => {
   await expect(
@@ -12,23 +14,6 @@ test("uses the default bundle path and rejects a missing endpoint", async () => 
 test("rejects a completely omitted request", async () => {
   await expect(fetchRoutingBundle()).rejects.toThrow("token");
 });
-
-const bundle = {
-  apiVersion: "v1",
-  application: "app",
-  database: "app",
-  physicalDatabase: "physical_app",
-  identity: "id",
-  credentials: { username: "u", password: "p" },
-  writer: { host: "db", port: 3306 },
-  readers: [],
-  failover: [],
-  bundleVersion: 1,
-  nodeIdentity: "db",
-  ports: { sql: 3306, http: 8080 },
-  routes: { primary: [{ host: "db", port: 3306 }], balanced: [] },
-  expiresAt: "2099-01-01T00:00:00Z",
-};
 
 test("fetches and validates an authenticated routing bundle", async () => {
   const envelope = (data) => ({ ok: true, operation: "routing.bundle", data });
@@ -156,4 +141,22 @@ test("uses the default fetch implementation and bundle path", async () => {
   } finally {
     globalThis.fetch = previousFetch;
   }
+});
+
+test("validates shared bundles and routing events from the published library", () => {
+  expect(validateBundle(bundle)).toBeTruthy();
+  expect(
+    validateRoutingEvent({
+      type: "routing.recovery",
+      version: 1,
+      generatedAt: "2099-01-01T00:00:00Z",
+      node: "writer",
+      context: {},
+    }),
+  ).toMatchObject({ type: "routing.recovery" });
+});
+
+test("shared bundle validation rejects invalid ports and missing route arrays", () => {
+  expect(() => validateBundle({ ...bundle, ports: { sql: "3306", http: 8080 } })).toThrow();
+  expect(() => validateBundle({ ...bundle, routes: { primary: bundle.routes.primary } })).toThrow();
 });

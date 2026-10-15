@@ -5,6 +5,7 @@ import { createRestFallback } from "./fallback.mjs";
 import { connectRoutingSocket } from "./connection.mjs";
 import { createRoutingMessageHandler } from "./message-handler.mjs";
 import { stopHeartbeat } from "./heartbeat.mjs";
+import { createRoutingStreamApi } from "./public-api.mjs";
 
 export function createRoutingStream(options = {}) {
   const {
@@ -75,26 +76,5 @@ export function createRoutingStream(options = {}) {
       onError,
     });
   }
-  return {
-    connect,
-    sendTelemetry: (payload) => {
-      if (state.socket?.readyState === 1) state.socket.send(JSON.stringify(payload));
-    },
-    setOnUpdate: (handler) => (state.updateHandler = handler),
-    setTelemetry: (value) => (state.telemetry = value),
-    close: () => {
-      state.closed = true;
-      state.mode = "disconnected";
-      reconnect.cancel();
-      stopHeartbeat(state.heartbeat);
-      state.socket?.close?.();
-    },
-    state: () => ({
-      connected: state.socket?.readyState === 1,
-      mode: state.mode,
-      expectedVersion: state.expectedVersion,
-      endpoint: state.activeEndpoint,
-      reconnectDeadlineAt: state.reconnectDeadlineAt,
-    }),
-  };
+  return { connect, ...createRoutingStreamApi({ state, reconnect, stopHeartbeat }) };
 }
