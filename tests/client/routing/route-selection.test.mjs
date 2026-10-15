@@ -1,7 +1,7 @@
 import { expect, test } from "@jest/globals";
 import { createRouteSelection } from "../../../src/client/routing/route-selection.mjs";
 import { createDb } from "../../../src/client/runtime/index.mjs";
-import { bundle, driver, profile } from "../../../test-fixtures/client/create-db.mjs";
+import { bundle, driver, profile } from "../../../test-fixtures/client/runtime.mjs";
 
 const primary = { name: "primary" };
 const balanced = { name: "balanced" };

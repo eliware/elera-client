@@ -1,6 +1,6 @@
 import { expect, test, jest } from "@jest/globals";
 import { createDb } from "../../../src/client/runtime/index.mjs";
-import { bundle, connection, driver, profile } from "../../../test-fixtures/client/create-db.mjs";
+import { bundle, connection, driver, profile } from "../../../test-fixtures/client/runtime.mjs";
 
 test("creates a client and routes reads, writes, transactions, health, and close", async () => {
   const log = { debug: jest.fn() };

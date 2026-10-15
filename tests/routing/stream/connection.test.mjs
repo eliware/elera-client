@@ -1,7 +1,7 @@
 import { expect, test, jest } from "@jest/globals";
 import { connectRoutingSocket } from "../../../src/routing/stream/connection.mjs";
 import { createRoutingStream } from "../../../src/routing/stream/index.mjs";
-import { FakeWebSocket, sockets } from "../../../test-fixtures/routing/stream-client.mjs";
+import { FakeWebSocket, sockets } from "../../../test-fixtures/routing/stream.mjs";
 
 test("opens a socket and runs the connection callbacks", async () => {
   const state = { closed: false, mode: "disconnected" };

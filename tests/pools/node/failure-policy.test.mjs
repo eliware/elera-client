@@ -1,5 +1,5 @@
 import { expect, test } from "@jest/globals";
-import { createNodeFailurePolicy } from "../../../src/pools/node-pool/failure-policy.mjs";
+import { createNodeFailurePolicy } from "../../../src/pools/node/failure-policy.mjs";
 
 test("classifies connection failures and sets the quarantine deadline", () => {
   const state = { unavailableUntil: 0 };

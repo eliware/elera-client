@@ -1,7 +1,7 @@
 import { expect, test, jest } from "@jest/globals";
 import { createPoolShutdown } from "../../../src/client/lifecycle/shutdown.mjs";
 import { createDb } from "../../../src/client/runtime/index.mjs";
-import { bundle, driver, profile } from "../../../test-fixtures/client/create-db.mjs";
+import { bundle, driver, profile } from "../../../test-fixtures/client/runtime.mjs";
 
 test("drains, waits for idle, and closes pools once", async () => {
   const pool = {

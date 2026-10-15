@@ -1,7 +1,7 @@
 import { expect, jest, test } from "@jest/globals";
 import { createDb } from "../../../src/client/runtime/index.mjs";
 import { createDbSetup } from "../../../src/client/runtime/setup.mjs";
-import { driver, profile, bundle } from "../../../test-fixtures/client/create-db.mjs";
+import { driver, profile, bundle } from "../../../test-fixtures/client/runtime.mjs";
 
 test("rejects invalid setup and expired bundles", async () => {
   await expect(createDbSetup()).rejects.toThrow("primary connection profile");

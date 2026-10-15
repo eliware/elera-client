@@ -1,7 +1,7 @@
 import { expect, test, jest } from "@jest/globals";
-import { createNodeMethods } from "../../../src/pools/node-pool/methods.mjs";
-import { createNodeFailurePolicy } from "../../../src/pools/node-pool/failure-policy.mjs";
-import { profile } from "../../../test-fixtures/node-pool.mjs";
+import { createNodeMethods } from "../../../src/pools/node/methods.mjs";
+import { createNodeFailurePolicy } from "../../../src/pools/node/failure-policy.mjs";
+import { profile } from "../../../test-fixtures/pools/node.mjs";
 
 test("delegates node query and execute operations", async () => {
   const operations = { query: async () => ["rows"], execute: async () => ["result"] };

@@ -1,5 +1,5 @@
 import { expect, test } from "@jest/globals";
-import { createNodeSelector } from "../../../src/pools/route-pool/selection.mjs";
+import { createNodeSelector } from "../../../src/pools/route/selection.mjs";
 
 test("selects preferred and weighted nodes and rejects empty pools", () => {
   const first = { available: true, weight: 0 };

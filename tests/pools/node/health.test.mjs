@@ -1,7 +1,7 @@
 import { expect, jest, test } from "@jest/globals";
-import { createNodeHealth } from "../../../src/pools/node-pool/health.mjs";
-import { createNodePool } from "../../../src/pools/node-pool.mjs";
-import { driver, profile } from "../../../test-fixtures/node-pool.mjs";
+import { createNodeHealth } from "../../../src/pools/node/health.mjs";
+import { createNodePool } from "../../../src/pools/node/index.mjs";
+import { driver, profile } from "../../../test-fixtures/pools/node.mjs";
 
 test("health clears node failures after a successful query", async () => {
   const state = { failures: 2, unavailableUntil: 10 };

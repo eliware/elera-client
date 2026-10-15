@@ -1,7 +1,7 @@
 import { afterEach, expect, jest, test } from "@jest/globals";
 import { createReconnectPolicy } from "../../../src/routing/stream/reconnect.mjs";
 import { createRoutingStream } from "../../../src/routing/stream/index.mjs";
-import { FakeWebSocket, sockets } from "../../../test-fixtures/routing/stream-client.mjs";
+import { FakeWebSocket, sockets } from "../../../test-fixtures/routing/stream.mjs";
 
 afterEach(() => {
   jest.useRealTimers();

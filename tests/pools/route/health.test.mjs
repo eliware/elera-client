@@ -1,5 +1,5 @@
 import { expect, test } from "@jest/globals";
-import { createPoolHealth } from "../../../src/pools/route-pool/health.mjs";
+import { createPoolHealth } from "../../../src/pools/route/health.mjs";
 
 test("returns each node health result and records failures", async () => {
   const health = createPoolHealth([

@@ -1,5 +1,5 @@
 import { expect, jest, test } from "@jest/globals";
-import { createNodeConnections } from "../../../src/pools/node-pool/connections.mjs";
+import { createNodeConnections } from "../../../src/pools/node/connections.mjs";
 
 test("counts active work until an acquired connection releases once", async () => {
   const release = jest.fn();

@@ -1,6 +1,6 @@
 import { expect, test, jest } from "@jest/globals";
-import { createNodePool } from "../../src/pools/node-pool.mjs";
-import { driver, profile } from "../../test-fixtures/node-pool.mjs";
+import { createNodePool } from "../../../src/pools/node/index.mjs";
+import { driver, profile } from "../../../test-fixtures/pools/node.mjs";
 
 test("node pool delegates queries, execution, health, connections, and close", async () => {
   const node = createNodePool({ profile, mysqlLib: driver(), log: { warn: jest.fn() } });

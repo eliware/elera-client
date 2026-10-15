@@ -1,7 +1,7 @@
 import { expect, jest, test } from "@jest/globals";
 import { handleShutdownEvent } from "../../../src/routing/stream/shutdown-event.mjs";
 import { createRoutingStream } from "../../../src/routing/stream/index.mjs";
-import { FakeWebSocket, sockets } from "../../../test-fixtures/routing/stream-client.mjs";
+import { FakeWebSocket, sockets } from "../../../test-fixtures/routing/stream.mjs";
 
 afterEach(() => sockets.splice(0).forEach((socket) => socket.close()));
 

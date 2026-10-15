@@ -1,5 +1,5 @@
 import { expect, jest, test } from "@jest/globals";
-import { createDrainController } from "../../../src/pools/node-pool/drain-controller.mjs";
+import { createDrainController } from "../../../src/pools/node/drain-controller.mjs";
 
 test("replaces drain timers and supports unref", () => {
   const first = { unref: jest.fn() };

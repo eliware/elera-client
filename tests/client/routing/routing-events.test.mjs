@@ -1,7 +1,7 @@
 import { expect, test, jest } from "@jest/globals";
 import { createRoutingEventHandler } from "../../../src/client/routing/routing-events.mjs";
 import { createDb } from "../../../src/client/runtime/index.mjs";
-import { bundle, driver, profile } from "../../../test-fixtures/client/create-db.mjs";
+import { bundle, driver, profile } from "../../../test-fixtures/client/runtime.mjs";
 
 test("handles routing updates and lifecycle events across pools", async () => {
   const refresh = jest.fn();

@@ -1,6 +1,6 @@
 import { afterEach, expect, test, jest } from "@jest/globals";
 import { createRoutingStream } from "../../../src/routing/stream/index.mjs";
-import { sockets, FakeWebSocket } from "../../../test-fixtures/routing/stream-client.mjs";
+import { sockets, FakeWebSocket } from "../../../test-fixtures/routing/stream.mjs";
 
 test("waits for an asynchronous REST update handler before connect resolves", async () => {
   let release;

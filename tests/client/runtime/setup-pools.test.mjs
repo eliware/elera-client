@@ -1,6 +1,6 @@
 import { expect, jest, test } from "@jest/globals";
 import { createDbPoolState } from "../../../src/client/runtime/setup-pools.mjs";
-import { bundle, driver, profile } from "../../../test-fixtures/client/create-db.mjs";
+import { bundle, driver, profile } from "../../../test-fixtures/client/runtime.mjs";
 
 test("creates and updates primary pool state without a balanced pool", () => {
   const state = createDbPoolState({

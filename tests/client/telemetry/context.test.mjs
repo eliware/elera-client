@@ -1,7 +1,7 @@
 import { expect, jest, test } from "@jest/globals";
 import { createDb } from "../../../src/client/runtime/index.mjs";
 import { createClientTelemetry } from "../../../src/client/telemetry/context.mjs";
-import { driver, profile } from "../../../test-fixtures/client/create-db.mjs";
+import { driver, profile } from "../../../test-fixtures/client/runtime.mjs";
 
 test("collects telemetry and starts it with the routing stream", async () => {
   expect(createClientTelemetry({ telemetry: undefined })).toBeUndefined();

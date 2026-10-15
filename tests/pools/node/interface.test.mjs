@@ -1,5 +1,5 @@
 import { expect, jest, test } from "@jest/globals";
-import { createNodeInterface } from "../../../src/pools/node-pool/interface.mjs";
+import { createNodeInterface } from "../../../src/pools/node/interface.mjs";
 
 test("exposes node state and delegates lifecycle methods", async () => {
   const state = { failures: 2, unavailableUntil: 0 };

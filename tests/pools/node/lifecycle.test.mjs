@@ -1,7 +1,7 @@
 import { expect, jest, test } from "@jest/globals";
-import { createNodeLifecycle } from "../../../src/pools/node-pool/lifecycle.mjs";
-import { createNodePool } from "../../../src/pools/node-pool.mjs";
-import { connection, driver, profile } from "../../../test-fixtures/node-pool.mjs";
+import { createNodeLifecycle } from "../../../src/pools/node/lifecycle.mjs";
+import { createNodePool } from "../../../src/pools/node/index.mjs";
+import { connection, driver, profile } from "../../../test-fixtures/pools/node.mjs";
 
 test("tracks availability, drain, recovery, and forced closure", async () => {
   const forceClose = jest.fn();

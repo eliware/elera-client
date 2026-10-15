@@ -1,6 +1,6 @@
 import { expect, test } from "@jest/globals";
 import { prepareDbProfiles } from "../../../src/client/auth/profiles.mjs";
-import { profile } from "../../../test-fixtures/client/create-db.mjs";
+import { profile } from "../../../test-fixtures/client/runtime.mjs";
 
 test("validates primary profile defaults when no credential provider is set", async () => {
   const result = await prepareDbProfiles({ primary: profile });

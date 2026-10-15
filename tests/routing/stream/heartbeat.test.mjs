@@ -1,6 +1,6 @@
 import { afterEach, expect, jest, test } from "@jest/globals";
 import { createRoutingStream } from "../../../src/routing/stream/index.mjs";
-import { FakeWebSocket, sockets } from "../../../test-fixtures/routing/stream-client.mjs";
+import { FakeWebSocket, sockets } from "../../../test-fixtures/routing/stream.mjs";
 import { startHeartbeat, stopHeartbeat } from "../../../src/routing/stream/heartbeat.mjs";
 
 afterEach(() => jest.useRealTimers());

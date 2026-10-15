@@ -1,5 +1,5 @@
 import { expect, jest, test } from "@jest/globals";
-import { createNodeOperations } from "../../../src/pools/node-pool/operations.mjs";
+import { createNodeOperations } from "../../../src/pools/node/operations.mjs";
 
 test("runs direct and session-scoped requests with lifecycle accounting", async () => {
   const connection = {

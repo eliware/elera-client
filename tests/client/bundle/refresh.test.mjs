@@ -1,8 +1,8 @@
 import { expect, test, jest } from "@jest/globals";
 import { createBundleRefresh } from "../../../src/client/bundle/refresh.mjs";
 import { createDb } from "../../../src/client/runtime/index.mjs";
-import { bundle, driver, profile } from "../../../test-fixtures/client/create-db.mjs";
-import { refreshForState } from "../../../test-fixtures/client/create-db/refresh.mjs";
+import { bundle, driver, profile } from "../../../test-fixtures/client/runtime.mjs";
+import { refreshForState } from "../../../test-fixtures/client/bundle/refresh.mjs";
 
 test("keeps equivalent usable pools and rejects an older candidate", async () => {
   const active = { bundleVersion: 3 };

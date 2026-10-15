@@ -1,7 +1,7 @@
 import { expect, jest, test } from "@jest/globals";
 import { validateBundle, validateRoutingEvent } from "@eliware/elera-lib";
 import { fetchRoutingBundle } from "../../../src/routing/bundle/fetch.mjs";
-import { bundle } from "../../../test-fixtures/client/create-db.mjs";
+import { bundle } from "../../../test-fixtures/client/runtime.mjs";
 
 test("uses the default bundle path and rejects a missing endpoint", async () => {
   await expect(

@@ -1,5 +1,5 @@
 import { expect, test, jest } from "@jest/globals";
-import { createPoolDelegation } from "../../../src/pools/route-pool/delegation.mjs";
+import { createPoolDelegation } from "../../../src/pools/route/delegation.mjs";
 
 test("delegates query and execute to the selected node", async () => {
   const node = {

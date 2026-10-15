@@ -1,6 +1,6 @@
 import { expect, test, jest } from "@jest/globals";
 import { createRoutingMessageHandler } from "../../../src/routing/stream/message-handler.mjs";
-import { streamBundle } from "../../../test-fixtures/routing/stream-client.mjs";
+import { streamBundle } from "../../../test-fixtures/routing/stream.mjs";
 
 test("routes an update and ignores an older version", async () => {
   const state = { expectedVersion: 2, updateHandler: jest.fn() };

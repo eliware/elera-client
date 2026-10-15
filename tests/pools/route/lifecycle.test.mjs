@@ -1,5 +1,5 @@
 import { expect, jest, test } from "@jest/globals";
-import { createPoolLifecycle } from "../../../src/pools/route-pool/lifecycle.mjs";
+import { createPoolLifecycle } from "../../../src/pools/route/lifecycle.mjs";
 
 test("applies route state and closes the selected nodes", async () => {
   const first = {

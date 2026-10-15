@@ -1,7 +1,7 @@
 import { expect, jest, test } from "@jest/globals";
 import { createQuery } from "../../../src/client/routing/query.mjs";
 import { createDb } from "../../../src/client/runtime/index.mjs";
-import { bundle, driver, profile } from "../../../test-fixtures/client/create-db.mjs";
+import { bundle, driver, profile } from "../../../test-fixtures/client/runtime.mjs";
 
 function queryRunner(selection) {
   return (sql, options, operation) => operation(selection(), sql, options);

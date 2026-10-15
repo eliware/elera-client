@@ -4,7 +4,7 @@ import {
   createRestFallback,
   createRuntimeFallback,
 } from "../../../src/routing/stream/fallback.mjs";
-import { FakeWebSocket, sockets } from "../../../test-fixtures/routing/stream-client.mjs";
+import { FakeWebSocket, sockets } from "../../../test-fixtures/routing/stream.mjs";
 
 test("returns REST resync data to the update handler", async () => {
   const update = jest.fn();
