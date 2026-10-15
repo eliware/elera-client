@@ -5,6 +5,7 @@ import { createRoutingEventHandler } from "./routing-events.mjs";
 import { createClientApi } from "./public-api.mjs";
 import { createDbSetup } from "./setup.mjs";
 import { createDbServices } from "./services.mjs";
+import { redactBundle } from "./bundle-state.mjs";
 
 export async function createDb(options = {}) {
   const {
@@ -41,12 +42,7 @@ export async function createDb(options = {}) {
     ...services,
     routeFor,
     getPrimaryPool: setup.getPrimaryPool,
-    getBundle: () => {
-      const value = setup.getBundle();
-      if (!value) return value;
-      const { credentials: _credentials, ...redacted } = value;
-      return redacted;
-    },
+    getBundle: () => redactBundle(setup.getBundle()),
     setNodeAvailability: (route, host, available) => {
       const pool = route === "balanced" ? setup.getBalancedPool() : setup.getPrimaryPool();
       pool?.setAvailability(host, available);
