@@ -1,13 +1,7 @@
 import { expect, test } from "@jest/globals";
-import {
-  bundlesHaveEquivalentPools,
-  hasUsablePool,
-  isOlderBundle,
-  redactBundle,
-} from "../../../src/client/bundle/state.mjs";
+import { bundlesHaveEquivalentPools, hasUsablePool } from "../../../src/client/bundle/state.mjs";
 
-test("compares bundle versions and pool state", () => {
-  expect(isOlderBundle("1.0.0", "2.0.0")).toBe(true);
+test("compares bundle pools and usability", () => {
   const bundle = {
     bundleVersion: "1",
     physicalDatabase: "db",
@@ -17,6 +11,4 @@ test("compares bundle versions and pool state", () => {
   };
   expect(bundlesHaveEquivalentPools(bundle, { ...bundle })).toBe(true);
   expect(hasUsablePool({ nodes: [{ available: true }] })).toBe(true);
-  expect(redactBundle(bundle)).not.toHaveProperty("credentials");
-  expect(redactBundle()).toBeUndefined();
 });

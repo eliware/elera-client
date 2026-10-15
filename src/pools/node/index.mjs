@@ -50,5 +50,6 @@ export function createNodePool({
     methods: { ...methods, ...connections },
     health,
     now,
+    clearQuarantine: failurePolicy.clearQuarantine,
   });
 }

@@ -5,7 +5,7 @@ import { createClientDrain } from "../lifecycle/drain.mjs";
 import { createClientApi } from "./public-api.mjs";
 import { createDbSetup } from "./setup.mjs";
 import { createDbServices } from "./services.mjs";
-import { redactBundle } from "../bundle/state.mjs";
+import { redactBundle } from "../bundle/redaction.mjs";
 import { createProbeApi } from "../diagnostics/probe-api.mjs";
 import { logClientCreated } from "./setup-log.mjs";
 

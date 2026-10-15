@@ -6,5 +6,8 @@ export function createNodeFailurePolicy({ state, now, quarantineMs }) {
     quarantine: () => {
       state.unavailableUntil = now() + quarantineMs;
     },
+    clearQuarantine: () => {
+      state.unavailableUntil = 0;
+    },
   };
 }

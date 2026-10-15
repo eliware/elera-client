@@ -15,6 +15,7 @@ test("exposes node state and delegates lifecycle methods", async () => {
     close: jest.fn(async () => {}),
   };
   const methods = { query: jest.fn() };
+  const clearQuarantine = jest.fn();
   const node = createNodeInterface({
     profile: { host: "db", port: 3306, weight: "25" },
     state,
@@ -22,13 +23,14 @@ test("exposes node state and delegates lifecycle methods", async () => {
     methods,
     health: jest.fn(),
     now: () => 5,
+    clearQuarantine,
   });
   expect(node).toMatchObject({ host: "db", port: 3306, weight: 25, state: "ready", active: 1 });
   expect(node.query).toBe(methods.query);
   node.available = false;
   expect(lifecycle.available).toBe(false);
   node.available = true;
-  expect(state.unavailableUntil).toBe(0);
+  expect(clearQuarantine).toHaveBeenCalledTimes(1);
   expect(node.recover()).toBe("ready");
   await node.close();
   expect(lifecycle.close).toHaveBeenCalledTimes(1);
@@ -36,6 +38,7 @@ test("exposes node state and delegates lifecycle methods", async () => {
 
 test("keeps explicit unavailability while closed", () => {
   const state = { failures: 0, unavailableUntil: 0 };
+  const clearQuarantine = jest.fn();
   let available = false;
   const lifecycle = {
     get available() {
@@ -60,7 +63,9 @@ test("keeps explicit unavailability while closed", () => {
     methods: {},
     health: jest.fn(),
     now: () => 0,
+    clearQuarantine,
   });
   node.available = true;
   expect(node.available).toBe(false);
+  expect(clearQuarantine).not.toHaveBeenCalled();
 });

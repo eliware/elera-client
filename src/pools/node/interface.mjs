@@ -1,4 +1,12 @@
-export function createNodeInterface({ profile, state, lifecycle, methods, health, now }) {
+export function createNodeInterface({
+  profile,
+  state,
+  lifecycle,
+  methods,
+  health,
+  now,
+  clearQuarantine,
+}) {
   return {
     host: profile.host,
     port: profile.port,
@@ -8,7 +16,7 @@ export function createNodeInterface({ profile, state, lifecycle, methods, health
     },
     set available(value) {
       lifecycle.available = value;
-      if (value && !lifecycle.closed) state.unavailableUntil = 0;
+      if (value && !lifecycle.closed) clearQuarantine();
     },
     get failures() {
       return state.failures;

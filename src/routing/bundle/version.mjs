@@ -9,3 +9,5 @@ export function compareBundleVersions(left, right) {
   }
   return 0;
 }
+
+export const isOlderBundle = (candidate, current) => compareBundleVersions(candidate, current) < 0;

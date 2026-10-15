@@ -12,6 +12,8 @@ test("classifies connection failures and sets the quarantine deadline", () => {
   );
   policy.quarantine();
   expect(state.unavailableUntil).toBe(15);
+  policy.clearQuarantine();
+  expect(state.unavailableUntil).toBe(0);
 });
 
 test("applies retryable health failures to node availability", async () => {
