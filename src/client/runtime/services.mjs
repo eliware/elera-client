@@ -1,14 +1,11 @@
 import { createTimedOperation } from "../telemetry/operation.mjs";
 import { bundleNeedsRefresh } from "../../routing/bundle/expiry.mjs";
-import { routeFor } from "../../routing/index.mjs";
 import { createDiagnostics } from "../diagnostics/diagnostics.mjs";
-import { createQueryExecution } from "../routing/query-execution.mjs";
-import { createQuery } from "../routing/query.mjs";
-import { createExecute } from "../routing/execute.mjs";
 import { createTransactionOperation } from "../routing/transaction.mjs";
 import { createBundleRefresh } from "../bundle/refresh.mjs";
 import { bundlesHaveEquivalentPools, hasUsablePool, isOlderBundle } from "../bundle/state.mjs";
 import { createPoolShutdown } from "../lifecycle/shutdown.mjs";
+import { createDbExecution } from "./execution.mjs";
 
 export function createDbServices({ setup, drainTimeoutMs }) {
   const { metrics, now, selection, routing } = setup;
@@ -20,16 +17,13 @@ export function createDbServices({ setup, drainTimeoutMs }) {
     getBalancedPool: setup.getBalancedPool,
     now,
   });
-  const runQuery = createQueryExecution({
+  const execution = createDbExecution({
     selection,
     timed,
-    routeFor,
     routing,
+    metrics,
+    getBalancedPool: setup.getBalancedPool,
   });
-  const execution = {
-    query: createQuery({ run: runQuery, metrics, getBalancedPool: setup.getBalancedPool }),
-    execute: createExecute({ run: runQuery }),
-  };
   const transaction = createTransactionOperation({ primaryPool: setup.getPrimaryPool(), timed });
   const refreshBundle = createBundleRefresh({
     validateBundle: setup.validateBundle,
