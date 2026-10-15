@@ -6,6 +6,7 @@ import { createClientApi } from "./public-api.mjs";
 import { createDbSetup } from "./setup.mjs";
 import { createDbServices } from "./services.mjs";
 import { redactBundle } from "./bundle-state.mjs";
+import { createProbeApi } from "./probe.mjs";
 
 export async function createDb(options = {}) {
   const {
@@ -39,9 +40,14 @@ export async function createDb(options = {}) {
   });
   const services = createDbServices({ setup, drainTimeoutMs });
   const drain = createClientDrain({ getPools: setup.getPools, defaultTimeout: drainTimeoutMs });
+  const probe = createProbeApi({
+    routeFor,
+    query: (sql) => services.execution.query(sql),
+    getConnection: () => setup.getPrimaryPool().choose().getConnection(),
+  });
   const client = createClientApi({
     ...services,
-    routeFor,
+    probe,
     getPrimaryPool: setup.getPrimaryPool,
     getBundle: () => redactBundle(setup.getBundle()),
     setNodeAvailability: (route, host, available) => {

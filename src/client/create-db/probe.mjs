@@ -17,3 +17,7 @@ export async function probeClient({ sql = "SELECT 1", routeFor, query, getConnec
     released: Boolean(connection),
   };
 }
+
+export function createProbeApi({ routeFor, query, getConnection }) {
+  return (sql = "SELECT 1") => probeClient({ sql, routeFor, query, getConnection });
+}

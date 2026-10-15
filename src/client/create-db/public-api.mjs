@@ -1,12 +1,10 @@
-import { probeClient } from "./probe.mjs";
-
 export function createClientApi({
   execution,
   transaction,
   diagnostics,
   refreshBundle,
   shutdown,
-  routeFor,
+  probe,
   getPrimaryPool,
   getBundle,
   setNodeAvailability,
@@ -21,14 +19,7 @@ export function createClientApi({
     async execute(sql, values, options) {
       return execution.execute(sql, values, options);
     },
-    async probe(sql = "SELECT 1") {
-      return probeClient({
-        sql,
-        routeFor,
-        query: (statement) => client.query(statement),
-        getConnection: () => client.getConnection(),
-      });
-    },
+    probe,
     async transaction(callback) {
       return transaction(callback);
     },

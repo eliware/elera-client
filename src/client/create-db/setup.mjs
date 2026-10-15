@@ -1,12 +1,10 @@
 import { log as defaultLog } from "@eliware/common";
 import * as mysql from "mysql2/promise";
-import { validateBundle as validateBundleShape } from "@eliware/elera-lib";
 import { validateProfile } from "../../config.mjs";
-import { createRouteFactory } from "../route-factory.mjs";
-import { validateTokenContext } from "../authorization-context.mjs";
-import { createRouteSelection } from "./route-selection.mjs";
 import { createClientTelemetry } from "./telemetry.mjs";
 import { prepareDbProfiles } from "./setup-profiles.mjs";
+import { createSetupBundleValidator } from "./setup-bundle.mjs";
+import { createDbPoolState } from "./setup-pools.mjs";
 
 export async function createDbSetup({
   primary,
@@ -28,46 +26,24 @@ export async function createDbSetup({
     credentialProvider,
     identity,
   });
-  const validateBundle = (candidate) =>
-    validateTokenContext(validateBundleShape(candidate), tokenContext);
-  let activeBundle = bundle ? validateBundle(bundle) : undefined;
-  const makeRoute = (route, fallback) =>
-    createRouteFactory({ bundle: activeBundle, now, mysqlLib, log, quarantineMs })(route, fallback);
-  let primaryPool = makeRoute("primary", primaryConfig);
-  let balancedPool =
-    balancedConfig || activeBundle?.routes?.balanced?.length
-      ? makeRoute("balanced", balancedConfig ?? primaryConfig)
-      : null;
-  const selection = () => createRouteSelection({ primaryPool, balancedPool, routing });
+  const validateBundle = createSetupBundleValidator(tokenContext);
+  const activeBundle = bundle ? validateBundle(bundle) : undefined;
   const metrics = createClientTelemetry({ telemetry, bundle: activeBundle, now });
+  const poolState = createDbPoolState({
+    primaryConfig,
+    balancedConfig,
+    bundle: activeBundle,
+    now,
+    mysqlLib,
+    log,
+    quarantineMs,
+    routing,
+    metrics,
+  });
   return {
-    getPools: () => [primaryPool, balancedPool].filter(Boolean),
-    getPrimaryPool: () => primaryPool,
-    getBalancedPool: () => balancedPool,
-    setPrimaryPool: (value) => {
-      primaryPool = value;
-    },
-    setBalancedPool: (value) => {
-      balancedPool = value;
-    },
-    getPrimaryConfig: () => primaryConfig,
-    setPrimaryConfig: (value) => {
-      primaryConfig = value;
-    },
-    getBundle: () => activeBundle,
-    setBundle: (value) => {
-      activeBundle = value;
-      metrics?.setContext?.({
-        application: value.application,
-        credentialName: value.credentialName,
-        database: value.database,
-        scopes: value.scopes,
-      });
-    },
-    makeRoute,
+    ...poolState,
     validateBundle,
     validateProfile,
-    selection,
     metrics,
     now,
     routing,

@@ -20,6 +20,24 @@ test("wraps errors without double wrapping", () => {
   const wrapped = asSqlError(original);
   expect(wrapped).toBeInstanceOf(SqlClientError);
   expect(asSqlError(wrapped)).toBe(wrapped);
+  const driverError = Object.assign(new Error("syntax error"), {
+    code: "ER_PARSE_ERROR",
+    errno: 1064,
+    sqlState: "42000",
+    sqlMessage: "bad SQL",
+    fatal: false,
+    password: "secret",
+  });
+  const sqlError = asSqlError(driverError);
+  expect(sqlError).toMatchObject({
+    message: "syntax error",
+    code: "ER_PARSE_ERROR",
+    errno: 1064,
+    sqlState: "42000",
+    sqlMessage: "bad SQL",
+    fatal: false,
+  });
+  expect(sqlError).not.toHaveProperty("password");
 });
 
 test("uses the fallback message when an error has no message", () => {

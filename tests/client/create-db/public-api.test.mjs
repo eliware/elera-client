@@ -17,13 +17,14 @@ test("exposes client operations through the supplied services", async () => {
     nodeStates: jest.fn(() => []),
   };
   const shutdown = { close: jest.fn(async () => {}) };
+  const probe = jest.fn(async () => ({ ok: true }));
   const client = createClientApi({
     execution: { query: async () => ["rows"], execute: async () => ["result"] },
     transaction: async (callback) => callback("transaction"),
     diagnostics,
     refreshBundle: async (bundle) => bundle,
     shutdown,
-    routeFor: () => "primary",
+    probe,
     getPrimaryPool: () => pool,
     getBundle: () => ({ bundleVersion: 1 }),
     setNodeAvailability: jest.fn(),
@@ -41,6 +42,7 @@ test("exposes client operations through the supplied services", async () => {
   await expect(client.drain("db").forceClose()).resolves.toBe(true);
   expect(client.availability()).toEqual({ state: "available" });
   expect(client.nodeStates()).toEqual([]);
+  expect(client.probe).toBe(probe);
   expect(client.bundle()).toEqual({ bundleVersion: 1 });
   await client.close();
   await client.end();

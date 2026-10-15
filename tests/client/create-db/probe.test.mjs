@@ -1,5 +1,5 @@
 import { expect, jest, test } from "@jest/globals";
-import { probeClient } from "../../../src/client/create-db/probe.mjs";
+import { createProbeApi, probeClient } from "../../../src/client/create-db/probe.mjs";
 
 test("reports query and transaction checks and releases the connection", async () => {
   const connection = {
@@ -40,4 +40,20 @@ test("releases the connection when the transaction check fails", async () => {
     }),
   ).rejects.toThrow("transaction failed");
   expect(connection.release).toHaveBeenCalledTimes(1);
+});
+
+test("adapts client query and connection operations to the default probe request", async () => {
+  const query = jest.fn(async () => ["rows"]);
+  const connection = {
+    beginTransaction: jest.fn(),
+    rollback: jest.fn(),
+    release: jest.fn(),
+  };
+  const probe = createProbeApi({
+    routeFor: jest.fn(() => "primary"),
+    query,
+    getConnection: async () => connection,
+  });
+  await expect(probe()).resolves.toMatchObject({ ok: true, result: ["rows"] });
+  expect(query).toHaveBeenCalledWith("SELECT 1");
 });

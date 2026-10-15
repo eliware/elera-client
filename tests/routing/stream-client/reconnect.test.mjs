@@ -143,3 +143,31 @@ test("does not reconnect after the shutdown deadline expires", async () => {
   expect(sockets).toHaveLength(1);
   client.close();
 });
+
+test("records an intentional reconnect separately from ordinary socket loss", async () => {
+  const recordReconnect = jest.fn();
+  const client = createRoutingStream({
+    endpoint: "http://vip",
+    fetchBundle: async () => ({}),
+    WebSocketImpl: FakeWebSocket,
+    telemetry: { recordReconnect },
+    reconnectMs: 1,
+    maxReconnectMs: 1,
+  });
+  await client.connect();
+  const socket = sockets.at(-1);
+  socket.open();
+  socket.message({
+    type: "routing.shutdown",
+    node: "elera-0",
+    reason: "maintenance",
+    reconnectDeadlineMs: 60000,
+    generatedAt: "2099-01-01T00:00:00Z",
+    version: 1,
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  sockets.at(-1).open();
+  expect(recordReconnect).toHaveBeenCalledWith({ delayMs: expect.any(Number), failover: true });
+  client.close();
+});
