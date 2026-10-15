@@ -1,8 +1,7 @@
 import { expect, test, jest } from "@jest/globals";
 import { createBundleRefresh } from "../../../src/client/bundle/refresh.mjs";
-import { createDb } from "../../../src/client/runtime/index.mjs";
-import { bundle, driver, profile } from "../../../test-fixtures/client/runtime.mjs";
-import { refreshForState } from "../../../test-fixtures/client/bundle/refresh.mjs";
+import { bundle } from "../../../test-fixtures/client/runtime.mjs";
+import { emptyPool, refreshForState } from "../../../test-fixtures/client/bundle/refresh.mjs";
 
 test("keeps equivalent usable pools and rejects an older candidate", async () => {
   const active = { bundleVersion: 3 };
@@ -42,8 +41,8 @@ test("refreshes equivalent bundles when a pool is not usable", async () => {
   };
   const refresh = refreshForState(createBundleRefresh, {
     active: { bundleVersion: 1 },
-    primary: { nodes: [], waitForIdle: async () => {}, close: async () => {} },
-    balanced: { nodes: [], waitForIdle: async () => {}, close: async () => {} },
+    primary: emptyPool(),
+    balanced: emptyPool(),
     equivalent: () => true,
     usable: (pool) => pool.nodes.length > 0,
   });
@@ -99,6 +98,33 @@ test("replaces writer and reader pools and drains obsolete pools", async () => {
   expect(drained).toHaveBeenCalled();
 });
 
+test("keeps the active bundle and pools when refreshed pool creation fails", async () => {
+  const active = { bundleVersion: 1 };
+  const primary = { id: "old-primary", nodes: [] };
+  const balanced = { id: "old-balanced", nodes: [] };
+  const state = refreshForState(createBundleRefresh, {
+    active,
+    primary,
+    balanced,
+    makeRoute: (route) => {
+      if (route === "balanced") throw new Error("balanced route failed");
+      return { id: "new-primary", nodes: [] };
+    },
+  });
+  const candidate = {
+    ...bundle,
+    bundleVersion: 2,
+    writer: { host: "writer", port: 3306 },
+    readers: [{ host: "reader", port: 3306 }],
+    routes: { ...bundle.routes, balanced: [{ host: "reader", port: 3306 }] },
+  };
+
+  await expect(state.refresh(candidate)).rejects.toThrow("balanced route failed");
+  expect(state.state.active).toBe(active);
+  expect(state.state.primary).toBe(primary);
+  expect(state.state.balanced).toBe(balanced);
+});
+
 test("removes and drains a balanced pool when the new bundle has no reader", async () => {
   const drain = jest.fn();
   const balanced = {
@@ -126,7 +152,7 @@ test("removes and drains a balanced pool when the new bundle has no reader", asy
 
   const primaryOnly = refreshForState(createBundleRefresh, {
     active: { bundleVersion: 1 },
-    primary: { nodes: [], waitForIdle: async () => {}, close: async () => {} },
+    primary: emptyPool(),
     balanced: null,
   });
   await primaryOnly.refresh({
@@ -138,41 +164,4 @@ test("removes and drains a balanced pool when the new bundle has no reader", asy
     routes: { balanced: [] },
   });
   expect(primaryOnly.state.balanced).toBeNull();
-});
-
-test("rejects invalid refreshes and applies a primary-only client refresh", async () => {
-  const client = await createDb({
-    primary: profile,
-    balanced: { host: "read", port: 3306 },
-    bundle,
-    mysqlLib: driver(),
-  });
-  await expect(
-    client.refresh({
-      ...bundle,
-      writer: undefined,
-      routes: { primary: [], balanced: bundle.routes.balanced },
-      bundleVersion: 2,
-    }),
-  ).rejects.toThrow("writer");
-  await expect(
-    client.refresh({
-      ...bundle,
-      writer: { host: "new", port: 3306 },
-      routes: { primary: [{ host: "new", port: 3306 }], balanced: [] },
-      readers: [],
-      bundleVersion: 2,
-    }),
-  ).resolves.toMatchObject({ bundleVersion: 2 });
-  expect(client.nodeStates().filter((node) => node.route === "balanced")).toEqual([]);
-  await expect(client.refresh({ ...bundle, bundleVersion: 1 })).resolves.toMatchObject({
-    bundleVersion: 2,
-  });
-  await expect(client.refresh({ ...bundle, bundleVersion: 0 })).resolves.toMatchObject({
-    bundleVersion: 2,
-  });
-  await expect(client.refresh({ ...bundle, bundleVersion: undefined })).rejects.toThrow(
-    "bundleVersion",
-  );
-  await client.close();
 });

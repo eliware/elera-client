@@ -13,8 +13,8 @@ export function createDbPoolState({
   let activeBundle = bundle;
   let activePrimaryConfig = primaryConfig;
   let activeBalancedConfig = balancedConfig;
-  const makeRoute = (route, fallback) =>
-    createRouteFactory({ bundle: activeBundle, now, mysqlLib, log, quarantineMs })(route, fallback);
+  const makeRoute = (route, fallback, bundle = activeBundle) =>
+    createRouteFactory({ bundle, now, mysqlLib, log, quarantineMs })(route, fallback);
   let primaryPool = makeRoute("primary", activePrimaryConfig);
   let balancedPool =
     activeBalancedConfig || activeBundle?.routes?.balanced?.length

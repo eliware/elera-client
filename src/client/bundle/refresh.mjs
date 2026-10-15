@@ -41,21 +41,21 @@ export function createBundleRefresh({
         refreshRequired: bundleNeedsRefresh(active, now()),
       };
     const previous = [primary, balanced];
-    setBundle(candidate);
     const profiles = createRefreshedProfiles({
       candidate,
       primaryConfig: getPrimaryConfig(),
       validateProfile,
     });
     const primaryConfig = profiles.primary;
-    setPrimaryConfig(primaryConfig);
     const { primary: nextPrimary, balanced: nextBalanced } = createRefreshedPools({
       primaryConfig,
       balancedConfig: profiles.balanced,
-      makeRoute,
-      setPrimaryPool,
-      setBalancedPool,
+      makeRoute: (route, fallback) => makeRoute(route, fallback, candidate),
     });
+    setBundle(candidate);
+    setPrimaryConfig(primaryConfig);
+    setPrimaryPool(nextPrimary);
+    setBalancedPool(nextBalanced);
     retireObsoletePools({
       previous,
       retained: [nextPrimary, nextBalanced],

@@ -24,3 +24,16 @@ test("does nothing when all previous pools remain active", () => {
   retireObsoletePools({ previous: [pool], retained: [pool], drainTimeoutMs: 5 });
   expect(pool.nodes[0].drain).not.toHaveBeenCalled();
 });
+
+test("keeps an obsolete pool open when active work misses the idle deadline", async () => {
+  const pool = {
+    nodes: [{ drain: jest.fn() }],
+    waitForIdle: jest.fn(async () => [true, false]),
+    close: jest.fn(),
+  };
+
+  retireObsoletePools({ previous: [pool], retained: [], drainTimeoutMs: 5 });
+  await new Promise((resolve) => setImmediate(resolve));
+
+  expect(pool.close).not.toHaveBeenCalled();
+});

@@ -1,9 +1,9 @@
 import { asSqlError } from "../../errors/index.mjs";
 
-export function createTransactionOperation({ primaryPool, timed }) {
+export function createTransactionOperation({ getPrimaryPool, timed }) {
   return async function transaction(callback) {
     return timed(async () => {
-      const node = primaryPool.choose();
+      const node = getPrimaryPool().choose();
       const connection = await node.getConnection();
       try {
         await connection.beginTransaction();

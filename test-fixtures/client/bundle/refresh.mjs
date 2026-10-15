@@ -1,6 +1,6 @@
 export const refreshForState = (
   createBundleRefresh,
-  { active, primary, balanced, equivalent, usable, older },
+  { active, primary, balanced, equivalent, usable, older, makeRoute, validateProfile },
 ) => {
   const state = { active, primary, balanced };
   const refresh = createBundleRefresh({
@@ -13,8 +13,8 @@ export const refreshForState = (
     setPrimaryPool: (value) => (state.primary = value),
     getBalancedPool: () => state.balanced,
     setBalancedPool: (value) => (state.balanced = value),
-    makeRoute: () => ({ nodes: [] }),
-    validateProfile: (value) => value,
+    makeRoute: makeRoute ?? (() => ({ nodes: [] })),
+    validateProfile: validateProfile ?? ((value) => value),
     bundleNeedsRefresh: () => false,
     isOlderBundle: older ?? (() => false),
     equivalentPools: equivalent ?? (() => false),
@@ -24,3 +24,9 @@ export const refreshForState = (
   });
   return { refresh, state };
 };
+
+export const emptyPool = () => ({
+  nodes: [],
+  waitForIdle: async () => {},
+  close: async () => {},
+});

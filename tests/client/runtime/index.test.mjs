@@ -47,6 +47,8 @@ test("retries safe client queries and honors explicit connections", async () => 
   };
   await client.query("SELECT 1", [], { connection: explicit });
   await client.execute("SELECT 1", [], { connection: explicit });
+  expect(explicit.query).toHaveBeenCalledWith("SELECT 1", []);
+  expect(explicit.execute).toHaveBeenCalledWith("SELECT 1", []);
   await client.close();
 });
 
@@ -156,4 +158,41 @@ test("keeps refresh updates isolated between client instances", async () => {
   expect(clientB.bundle().writer.host).toBe("app-b-writer");
   await clientA.close();
   await clientB.close();
+});
+
+test("rejects invalid refreshes and applies a primary-only client refresh", async () => {
+  const client = await createDb({
+    primary: profile,
+    balanced: { host: "read", port: 3306 },
+    bundle,
+    mysqlLib: driver(),
+  });
+  await expect(
+    client.refresh({
+      ...bundle,
+      writer: undefined,
+      routes: { primary: [], balanced: bundle.routes.balanced },
+      bundleVersion: 2,
+    }),
+  ).rejects.toThrow("writer");
+  await expect(
+    client.refresh({
+      ...bundle,
+      writer: { host: "new", port: 3306 },
+      routes: { primary: [{ host: "new", port: 3306 }], balanced: [] },
+      readers: [],
+      bundleVersion: 2,
+    }),
+  ).resolves.toMatchObject({ bundleVersion: 2 });
+  expect(client.nodeStates().filter((node) => node.route === "balanced")).toEqual([]);
+  await expect(client.refresh({ ...bundle, bundleVersion: 1 })).resolves.toMatchObject({
+    bundleVersion: 2,
+  });
+  await expect(client.refresh({ ...bundle, bundleVersion: 0 })).resolves.toMatchObject({
+    bundleVersion: 2,
+  });
+  await expect(client.refresh({ ...bundle, bundleVersion: undefined })).rejects.toThrow(
+    "bundleVersion",
+  );
+  await client.close();
 });

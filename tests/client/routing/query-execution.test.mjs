@@ -17,3 +17,15 @@ test("selects a route and times the operation with its metadata", async () => {
   expect(timed).toHaveBeenCalledWith(expect.any(Function), { route: "balanced" });
   expect(selection).toHaveBeenCalledTimes(1);
 });
+
+test("does not report a pool route for an explicit connection", async () => {
+  const connection = { query: jest.fn() };
+  const selection = jest.fn(() => ({ choose: () => connection }));
+  const routeFor = jest.fn(() => "balanced");
+  const timed = jest.fn(async (operation, metadata) => operation(metadata));
+  const run = createQueryExecution({ selection, timed, routeFor, routing: "auto" });
+
+  await run("SELECT 1", { connection }, async () => "ok");
+
+  expect(timed).toHaveBeenCalledWith(expect.any(Function), {});
+});

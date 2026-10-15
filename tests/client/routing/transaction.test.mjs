@@ -3,7 +3,7 @@ import { createTransactionOperation } from "../../../src/client/routing/transact
 
 const run = (connection) =>
   createTransactionOperation({
-    primaryPool: { choose: () => ({ getConnection: async () => connection }) },
+    getPrimaryPool: () => ({ choose: () => ({ getConnection: async () => connection }) }),
     timed: (callback) => callback(),
   });
 
@@ -64,4 +64,21 @@ test("preserves the original failure when rollback also fails", async () => {
     }),
   ).rejects.toMatchObject({ message: "query failed" });
   expect(connection.release).toHaveBeenCalledTimes(1);
+});
+
+test("uses the current primary pool after a pool refresh", async () => {
+  const first = { beginTransaction: jest.fn(), commit: jest.fn(), release: jest.fn() };
+  const second = { beginTransaction: jest.fn(), commit: jest.fn(), release: jest.fn() };
+  let active = first;
+  const transaction = createTransactionOperation({
+    getPrimaryPool: () => ({ choose: () => ({ getConnection: async () => active }) }),
+    timed: (callback) => callback(),
+  });
+
+  await transaction(async () => {});
+  active = second;
+  await transaction(async () => {});
+
+  expect(first.release).toHaveBeenCalledTimes(1);
+  expect(second.release).toHaveBeenCalledTimes(1);
 });

@@ -1,11 +1,16 @@
 export async function probeClient({ sql = "SELECT 1", routeFor, query, getConnection }) {
   const route = routeFor(sql);
-  const result = await query(sql);
+  const result = await query(sql, route);
   let connection;
   try {
     connection = await getConnection();
     await connection.beginTransaction();
     await connection.rollback();
+  } catch (error) {
+    try {
+      await connection?.rollback?.();
+    } catch {}
+    throw error;
   } finally {
     connection?.release?.();
   }
@@ -14,16 +19,16 @@ export async function probeClient({ sql = "SELECT 1", routeFor, query, getConnec
     route,
     result,
     transaction: "started",
-    released: Boolean(connection),
+    released: true,
   };
 }
 
-export function createProbeApi({ routeFor, execution, getPrimaryPool }) {
+export function createProbeApi({ routeFor, execution, getPrimaryPool, routing = "auto" }) {
   return (sql = "SELECT 1") =>
     probeClient({
       sql,
-      routeFor,
-      query: (statement) => execution.query(statement),
+      routeFor: (statement) => routeFor(statement, routing),
+      query: (statement, route) => execution.query(statement, undefined, { route }),
       getConnection: () => getPrimaryPool().choose().getConnection(),
     });
 }

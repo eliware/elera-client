@@ -24,7 +24,7 @@ export function createDbServices({ setup, drainTimeoutMs }) {
     metrics,
     getBalancedPool: setup.getBalancedPool,
   });
-  const transaction = createTransactionOperation({ primaryPool: setup.getPrimaryPool(), timed });
+  const transaction = createTransactionOperation({ getPrimaryPool: setup.getPrimaryPool, timed });
   const refreshBundle = createBundleRefresh({
     validateBundle: setup.validateBundle,
     getBundle: setup.getBundle,

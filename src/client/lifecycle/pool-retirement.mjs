@@ -5,8 +5,8 @@ export function retireObsoletePools({ previous, retained, drainTimeoutMs }) {
     .forEach((pool) => {
       pool.nodes.forEach((node) => node.drain(drainTimeoutMs));
       void (async () => {
-        await pool.waitForIdle(drainTimeoutMs);
-        await pool.close();
+        const idle = await pool.waitForIdle(drainTimeoutMs);
+        if (idle !== false && (!Array.isArray(idle) || idle.every(Boolean))) await pool.close();
       })();
     });
 }

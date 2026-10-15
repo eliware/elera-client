@@ -44,6 +44,7 @@ export async function createDb(options = {}) {
     routeFor,
     execution: services.execution,
     getPrimaryPool: setup.getPrimaryPool,
+    routing,
   });
   const client = createClientApi({
     ...services,
