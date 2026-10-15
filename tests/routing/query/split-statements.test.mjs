@@ -1,5 +1,5 @@
 import { expect, test } from "@jest/globals";
-import { splitStatements } from "../../src/routing/split-statements.mjs";
+import { splitStatements } from "../../../src/routing/query/split-statements.mjs";
 
 test("removes leading comments before it splits statements", () => {
   expect(splitStatements("/* note */ SELECT 1")).toEqual(["SELECT 1"]);

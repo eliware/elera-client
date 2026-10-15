@@ -2,7 +2,7 @@ import { expect, jest, test } from "@jest/globals";
 import {
   dispatchRoutingEvent,
   isShutdownEvent,
-} from "../../../src/routing/stream-client/event-dispatch.mjs";
+} from "../../../src/routing/stream/event-dispatch.mjs";
 
 test("recognizes shutdown event types", () => {
   expect(isShutdownEvent({ type: "routing.shutdown" })).toBe(true);

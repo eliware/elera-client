@@ -1,5 +1,5 @@
 import { expect, test } from "@jest/globals";
-import { classifyEventVersion } from "../../../src/routing/stream-client/version-classification.mjs";
+import { classifyEventVersion } from "../../../src/routing/stream/version-classification.mjs";
 
 test("classifies stale, adjacent, and unversioned events", () => {
   expect(classifyEventVersion(2, 3)).toBe("stale");

@@ -1,5 +1,5 @@
 import { expect, jest, test } from "@jest/globals";
-import { bindSocketHandlers } from "../../../src/routing/stream-client/socket-handlers.mjs";
+import { bindSocketHandlers } from "../../../src/routing/stream/socket-handlers.mjs";
 
 test("binds message, error, and close handlers", () => {
   const socket = {};

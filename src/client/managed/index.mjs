@@ -1,4 +1,4 @@
-import { createRoutingStream } from "../../routing/stream-client/index.mjs";
+import { createRoutingStream } from "../../routing/stream/index.mjs";
 import { resolveManagedConfig, createBundleFetcher } from "./configuration.mjs";
 import { exposeManagedClient } from "./public-api.mjs";
 import { createManagedShutdown } from "./shutdown.mjs";

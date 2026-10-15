@@ -1,5 +1,5 @@
 import { expect, jest, test } from "@jest/globals";
-import { clearSocketState } from "../../../src/routing/stream-client/socket-cleanup.mjs";
+import { clearSocketState } from "../../../src/routing/stream/socket-cleanup.mjs";
 
 test("clears socket state and stops its heartbeat", () => {
   jest.useFakeTimers();

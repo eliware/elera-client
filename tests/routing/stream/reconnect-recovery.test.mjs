@@ -1,5 +1,5 @@
 import { expect, jest, test } from "@jest/globals";
-import { recoverConnectionClose } from "../../../src/routing/stream-client/reconnect-recovery.mjs";
+import { recoverConnectionClose } from "../../../src/routing/stream/reconnect-recovery.mjs";
 
 test("records ordinary closure, falls back, and schedules reconnect", () => {
   const state = { closed: false, plannedReconnect: false };

@@ -1,6 +1,6 @@
 import { afterEach, expect, jest, test } from "@jest/globals";
-import { createRoutingStream } from "../../../src/routing/stream-client/index.mjs";
-import { parseRoutingEvent } from "../../../src/routing/stream-client/events.mjs";
+import { createRoutingStream } from "../../../src/routing/stream/index.mjs";
+import { parseRoutingEvent } from "../../../src/routing/stream/events.mjs";
 import { FakeWebSocket, sockets } from "../../../test-fixtures/routing/stream-client.mjs";
 
 afterEach(() => sockets.splice(0).forEach((socket) => socket.close()));

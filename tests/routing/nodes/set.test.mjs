@@ -1,4 +1,4 @@
-import { selectRouteNodes } from "../../src/routing/node-set.mjs";
+import { selectRouteNodes } from "../../../src/routing/nodes/set.mjs";
 
 test("rejects an omitted route selection request", () => {
   expect(() => selectRouteNodes()).toThrow();

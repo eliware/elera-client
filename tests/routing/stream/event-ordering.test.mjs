@@ -1,5 +1,5 @@
 import { expect, jest, test } from "@jest/globals";
-import { orderRoutingEvent } from "../../../src/routing/stream-client/event-ordering.mjs";
+import { orderRoutingEvent } from "../../../src/routing/stream/event-ordering.mjs";
 
 test("waits for recovery before it records a gap version", async () => {
   const state = { expectedVersion: 3 };

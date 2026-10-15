@@ -1,5 +1,5 @@
 import { expect, test } from "@jest/globals";
-import { classifyQuery } from "../../src/routing/classify-query.mjs";
+import { classifyQuery } from "../../../src/routing/query/classify.mjs";
 
 test("classifies safe single statement reads as balanced", () => {
   expect(classifyQuery("SELECT 1")).toBe("balanced");

@@ -1,5 +1,5 @@
 import { expect, jest, test } from "@jest/globals";
-import { createConnectionFailure } from "../../../src/routing/stream-client/connection-failure.mjs";
+import { createConnectionFailure } from "../../../src/routing/stream/connection-failure.mjs";
 
 test("resets connection state and schedules after a constructor error", async () => {
   const state = { connecting: true, socket: {}, mode: "connecting" };

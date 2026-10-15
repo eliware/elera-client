@@ -1,9 +1,9 @@
 import { expect, jest, test } from "@jest/globals";
-import { createRoutingStream } from "../../../src/routing/stream-client/index.mjs";
+import { createRoutingStream } from "../../../src/routing/stream/index.mjs";
 import {
   createRestFallback,
   createRuntimeFallback,
-} from "../../../src/routing/stream-client/fallback.mjs";
+} from "../../../src/routing/stream/fallback.mjs";
 import { FakeWebSocket, sockets } from "../../../test-fixtures/routing/stream-client.mjs";
 
 test("returns REST resync data to the update handler", async () => {

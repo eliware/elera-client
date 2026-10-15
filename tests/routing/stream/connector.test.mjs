@@ -1,5 +1,5 @@
 import { expect, jest, test } from "@jest/globals";
-import { createRoutingConnector } from "../../../src/routing/stream-client/connector.mjs";
+import { createRoutingConnector } from "../../../src/routing/stream/connector.mjs";
 
 test("connects runtime dependencies through the socket helper", async () => {
   const fallback = jest.fn(async () => {});

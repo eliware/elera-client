@@ -1,4 +1,4 @@
-import { validateRoutingNode } from "../../routing/node-validation.mjs";
+import { validateRoutingNode } from "../../routing/nodes/validation.mjs";
 
 export function bundleProfiles(bundle, route, base) {
   if (route === "primary" && bundle.writer?.host)

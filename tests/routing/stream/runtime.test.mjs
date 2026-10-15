@@ -1,5 +1,5 @@
 import { expect, test, jest } from "@jest/globals";
-import { createRoutingRuntime } from "../../../src/routing/stream-client/runtime.mjs";
+import { createRoutingRuntime } from "../../../src/routing/stream/runtime.mjs";
 
 test("builds a disconnected runtime with its public stream API", () => {
   const runtime = createRoutingRuntime({

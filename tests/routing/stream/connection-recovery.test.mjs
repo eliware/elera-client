@@ -1,5 +1,5 @@
 import { expect, jest, test } from "@jest/globals";
-import { createConnectionRecovery } from "../../../src/routing/stream-client/connection-recovery.mjs";
+import { createConnectionRecovery } from "../../../src/routing/stream/connection-recovery.mjs";
 
 test("cleans up a socket and schedules recovery after ordinary closure", () => {
   const state = {

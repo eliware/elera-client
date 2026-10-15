@@ -1,5 +1,5 @@
 import { expect, test } from "@jest/globals";
-import { validateRoutingNode } from "../../src/routing/node-validation.mjs";
+import { validateRoutingNode } from "../../../src/routing/nodes/validation.mjs";
 test("normalizes valid routing nodes", () => {
   expect(validateRoutingNode({ host: " node ", port: "3307", weight: 2 })).toEqual({
     host: "node",
