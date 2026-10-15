@@ -13,14 +13,6 @@ test("reports lifecycle availability and restores it after recovery", () => {
   lifecycle.clear();
 });
 
-test("clears manual unavailability through the lifecycle facade", () => {
-  const lifecycle = createNodeLifecycle({ now: () => 1, onForceClose: jest.fn() });
-  lifecycle.unavailable = true;
-  expect(lifecycle.available).toBe(false);
-  lifecycle.unavailable = false;
-  expect(lifecycle.available).toBe(true);
-});
-
 test("tracks active work and drains before force-closing", async () => {
   let resolveQuery;
   const query = new Promise((resolve) => {

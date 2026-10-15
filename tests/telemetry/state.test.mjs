@@ -21,21 +21,20 @@ test("aggregates request and reconnect telemetry", () => {
   });
 });
 
-test("normalizes reconnect delays and updates context", () => {
-  const metrics = createTelemetryState();
-  metrics.recordReconnect({ delayMs: "bad" });
-  metrics.recordReconnect({ delayMs: -4 });
-  metrics.setContext({ database: "db" });
-  expect(metrics.snapshot()).toMatchObject({ reconnects: 2, reconnectDelayMs: 0, database: "db" });
-});
-
-test("uses default values for sparse records and counts routes", () => {
+test("applies defaults and context to sparse telemetry records", () => {
   const metrics = createTelemetryState();
   metrics.record();
   metrics.record({ route: "primary" });
+  metrics.recordReconnect({ delayMs: "bad" });
+  metrics.recordReconnect({ delayMs: -4 });
+  metrics.setContext({ database: "db" });
   expect(metrics.snapshot()).toMatchObject({
+    application: "default",
+    database: "db",
     queries: 2,
     routes: { primary: 1, balanced: 0 },
     failures: 0,
+    reconnects: 2,
+    reconnectDelayMs: 0,
   });
 });
