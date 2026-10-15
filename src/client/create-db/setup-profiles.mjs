@@ -1,5 +1,6 @@
 import { validateProfile } from "../../config.mjs";
-import { resolveCredentials, credentialContext } from "../internal/credential-provider.mjs";
+import { credentialContext } from "../auth/context.mjs";
+import { resolveCredentials } from "../auth/resolve.mjs";
 
 export async function prepareDbProfiles({ primary, balanced, credentialProvider, identity } = {}) {
   if (!primary || typeof primary !== "object")
@@ -14,7 +15,7 @@ export async function prepareDbProfiles({ primary, balanced, credentialProvider,
   let balancedConfig = balanced
     ? validateProfile({ ...primaryConfig, ...balanced, ...credentials }, "balanced")
     : undefined;
-  if (credentials.user || credentials.password) {
+  if (credentialProvider !== undefined) {
     primaryConfig = validateProfile({ ...primaryConfig, ...credentials }, "primary");
     if (balancedConfig)
       balancedConfig = validateProfile({ ...balancedConfig, ...credentials }, "balanced");

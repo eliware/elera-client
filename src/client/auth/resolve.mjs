@@ -8,11 +8,3 @@ export async function resolveCredentials(provider, context) {
     throw new TypeError("credentialProvider must return user and password");
   return result;
 }
-
-export function credentialContext(primary, options) {
-  return {
-    database: primary.database,
-    identity: options.identity ?? null,
-    route: options.route ?? "primary",
-  };
-}

@@ -11,4 +11,5 @@ test("removes passwords and private SSL options from a copied profile", () => {
   expect(safe).not.toHaveProperty("password");
   expect(safe.options.ssl).toEqual({ ca: "public-ca" });
   expect(profile.options.ssl.key).toBe("private-key");
+  expect(redactedProfile({ host: "db" })).toEqual({ host: "db", options: {} });
 });

@@ -1,5 +1,5 @@
 import { expect, test } from "@jest/globals";
-import { validateTokenContext } from "../../src/client/authorization-context.mjs";
+import { validateTokenContext } from "../../../src/client/bundle/authorization.mjs";
 
 const bundle = {
   application: "billing",
