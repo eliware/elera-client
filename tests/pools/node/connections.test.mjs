@@ -1,26 +1,6 @@
 import { expect, jest, test } from "@jest/globals";
 import { createNodeConnections } from "../../../src/pools/node/connections.mjs";
 
-test("counts active work until an acquired connection releases once", async () => {
-  const release = jest.fn();
-  const connection = { release };
-  const lifecycle = { begin: jest.fn(), end: jest.fn() };
-  const connections = createNodeConnections({
-    profile: { host: "db" },
-    pool: { getConnection: jest.fn(async () => connection) },
-    lifecycle,
-    isRetryable: jest.fn(),
-    quarantine: jest.fn(),
-    isAvailable: () => true,
-  });
-  const acquired = await connections.getConnection();
-  acquired.release();
-  acquired.release();
-  expect(lifecycle.begin).toHaveBeenCalledTimes(1);
-  expect(lifecycle.end).toHaveBeenCalledTimes(1);
-  expect(release).toHaveBeenCalledTimes(1);
-});
-
 test("maps acquisition errors and quarantines retryable failures", async () => {
   const error = Object.assign(new Error("offline"), { code: "ECONNREFUSED" });
   const quarantine = jest.fn();

@@ -1,4 +1,5 @@
 import { asSqlError } from "../../errors/index.mjs";
+import { trackNodeConnection } from "./tracked-connection.mjs";
 
 export function createNodeConnections({
   profile,
@@ -13,16 +14,7 @@ export function createNodeConnections({
       if (!isAvailable()) throw new Error(`SQL node ${profile.host} is unavailable`);
       try {
         const connection = await pool.getConnection();
-        lifecycle.begin();
-        const release = connection.release.bind(connection);
-        let released = false;
-        connection.release = () => {
-          if (released) return;
-          released = true;
-          lifecycle.end();
-          release();
-        };
-        return connection;
+        return trackNodeConnection(connection, lifecycle);
       } catch (error) {
         if (isRetryable(error)) quarantine();
         throw asSqlError(error);
