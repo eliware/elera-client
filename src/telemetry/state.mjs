@@ -1,6 +1,7 @@
 import { createOperationStats } from "./operation-stats.mjs";
 import { createReconnectStats } from "./reconnect-stats.mjs";
 import { createTelemetryContext } from "./context.mjs";
+import { createTelemetrySnapshot } from "./snapshot.mjs";
 
 export function createTelemetryState({
   application = "default",
@@ -21,17 +22,12 @@ export function createTelemetryState({
     record,
     recordReconnect: reconnects.recordReconnect,
     snapshot: () => {
-      const operationStats = operations.snapshot();
-      return {
-        type: "client.telemetry",
-        ...context.snapshot(),
-        ...operationStats,
-        ...reconnects.snapshot(),
-        avgLatencyMs: operationStats.queries
-          ? operationStats.totalLatencyMs / operationStats.queries
-          : 0,
-        sentAt: new Date(now()).toISOString(),
-      };
+      return createTelemetrySnapshot({
+        context: context.snapshot(),
+        operationStats: operations.snapshot(),
+        reconnectStats: reconnects.snapshot(),
+        now,
+      });
     },
     setContext: context.set,
   };

@@ -6,7 +6,7 @@ import { createClientApi } from "./public-api.mjs";
 import { createDbSetup } from "./setup.mjs";
 import { createDbServices } from "./services.mjs";
 import { redactBundle } from "../bundle/state.mjs";
-import { createProbeApi } from "../diagnostics/probe.mjs";
+import { createProbeApi } from "../diagnostics/probe-api.mjs";
 
 export async function createDb(options = {}) {
   const {

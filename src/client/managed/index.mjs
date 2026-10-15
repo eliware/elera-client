@@ -3,6 +3,7 @@ import { resolveManagedConfig, createBundleFetcher } from "./configuration.mjs";
 import { exposeManagedClient } from "./public-api.mjs";
 import { createManagedShutdown } from "./shutdown.mjs";
 import { createManagedClient, createManagedSetup } from "./setup.mjs";
+import { createManagedDependencies } from "./options.mjs";
 
 export async function createDb({
   endpoint,
@@ -35,7 +36,7 @@ export async function createDb({
     bundle,
     tokenContext,
     stream,
-    options: {
+    options: createManagedDependencies({
       mysqlLib,
       log,
       routing,
@@ -43,7 +44,7 @@ export async function createDb({
       drainTimeoutMs,
       now,
       telemetry,
-    },
+    }),
   });
   const end = createManagedShutdown(detach, client.close.bind(client));
   return exposeManagedClient(client, end);

@@ -1,6 +1,7 @@
 import { retireObsoletePools } from "../lifecycle/pool-retirement.mjs";
 import { createRefreshedProfiles } from "./refreshed-profiles.mjs";
 import { createRefreshedPools } from "./pools.mjs";
+import { getRefreshSkipResult } from "./refresh-policy.mjs";
 
 export function createBundleRefresh({
   validateBundle,
@@ -26,20 +27,18 @@ export function createBundleRefresh({
     const active = getBundle();
     const primary = getPrimaryPool();
     const balanced = getBalancedPool();
-    if (
-      equivalentPools(candidate, active) &&
-      usablePool(primary) &&
-      (!balanced || usablePool(balanced))
-    )
-      return {
-        bundleVersion: active.bundleVersion,
-        refreshRequired: bundleNeedsRefresh(active, now()),
-      };
-    if (isOlderBundle(candidate.bundleVersion, active?.bundleVersion))
-      return {
-        bundleVersion: active?.bundleVersion,
-        refreshRequired: bundleNeedsRefresh(active, now()),
-      };
+    const skipped = getRefreshSkipResult({
+      candidate,
+      active,
+      primary,
+      balanced,
+      equivalentPools,
+      usablePool,
+      isOlderBundle,
+      bundleNeedsRefresh,
+      now,
+    });
+    if (skipped) return skipped;
     const previous = [primary, balanced];
     const profiles = createRefreshedProfiles({
       candidate,

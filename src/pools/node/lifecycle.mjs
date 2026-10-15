@@ -1,10 +1,10 @@
 import { createDrainController } from "./drain-controller.mjs";
 import { createNodeAvailability } from "./availability.mjs";
+import { createNodeActivity } from "./activity.mjs";
 
 export function createNodeLifecycle({ now, timeoutMs = 45000, onForceClose }) {
   let state = "ready";
-  let active = 0;
-  const idleWaiters = new Set();
+  const activity = createNodeActivity();
   let closed = false;
   const forceClose = async () => {
     if (closed) return;
@@ -12,35 +12,14 @@ export function createNodeLifecycle({ now, timeoutMs = 45000, onForceClose }) {
     availability.markClosed();
     await onForceClose();
   };
-  const begin = () => {
-    active += 1;
-  };
-  const end = () => {
-    active = Math.max(0, active - 1);
-    if (!active) {
-      for (const resolve of idleWaiters) resolve();
-      idleWaiters.clear();
-    }
-  };
   const drainController = createDrainController({ forceClose });
   const drain = (timeout = timeoutMs) => {
     state = "draining";
     availability.markDraining();
     drainController.drain(timeout);
-    return { state, active };
+    return { state, active: activity.active };
   };
-  const waitForIdle = async (timeout = timeoutMs) => {
-    if (!active) return true;
-    let timer;
-    await Promise.race([
-      new Promise((resolve) => idleWaiters.add(resolve)),
-      new Promise((resolve) => {
-        timer = setTimeout(resolve, timeout);
-      }),
-    ]);
-    clearTimeout(timer);
-    return active === 0;
-  };
+  const waitForIdle = (timeout = timeoutMs) => activity.waitForIdle(timeout);
   const availability = createNodeAvailability({
     now,
     getState: () => state,
@@ -50,8 +29,8 @@ export function createNodeLifecycle({ now, timeoutMs = 45000, onForceClose }) {
     drain,
   });
   return {
-    begin,
-    end,
+    begin: activity.begin,
+    end: activity.end,
     drain,
     waitForIdle,
     recover: availability.recover,
@@ -68,7 +47,7 @@ export function createNodeLifecycle({ now, timeoutMs = 45000, onForceClose }) {
     },
     clear: drainController.cancel,
     get active() {
-      return active;
+      return activity.active;
     },
     get state() {
       return state;

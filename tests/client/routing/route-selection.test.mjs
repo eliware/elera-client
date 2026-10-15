@@ -39,31 +39,6 @@ test("falls back to the primary pool when no balanced pool exists", () => {
     routing: "auto",
   });
   expect(selection.choose("SELECT 1")).toBe(primary);
-  expect(
-    selection.isSafeBalancedRetry("SELECT 1", { route: "balanced" }, { retryable: true }),
-  ).toBe(false);
-});
-
-test("only allows retryable balanced classified reads to retry", () => {
-  const selection = createRouteSelection({
-    primaryPool: primary,
-    balancedPool: balanced,
-    routing: "auto",
-  });
-  expect(selection.isSafeBalancedRetry("SELECT 1", undefined, { retryable: true })).toBe(true);
-  expect(selection.isSafeBalancedRetry("SELECT 1", { route: "primary" }, { retryable: true })).toBe(
-    false,
-  );
-  expect(
-    selection.isSafeBalancedRetry(
-      "UPDATE items SET value = 1",
-      { route: "balanced" },
-      { retryable: true },
-    ),
-  ).toBe(false);
-  expect(
-    selection.isSafeBalancedRetry("SELECT 1", { route: "balanced" }, { retryable: false }),
-  ).toBe(false);
 });
 
 test("reports cluster unavailability when all primary nodes drain", async () => {

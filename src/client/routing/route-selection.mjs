@@ -1,4 +1,5 @@
-import { classifyQuery, routeFor } from "../../routing/index.mjs";
+import { routeFor } from "../../routing/index.mjs";
+import { isSafeBalancedRetry as checkBalancedRetry } from "./retry-policy.mjs";
 
 export function createRouteSelection({ primaryPool, balancedPool, routing }) {
   const choose = (sql, options = {}) =>
@@ -8,11 +9,6 @@ export function createRouteSelection({ primaryPool, balancedPool, routing }) {
       : primaryPool);
   const requestedRoute = (sql, options = {}) => routeFor(sql, options.route ?? routing);
   const isSafeBalancedRetry = (sql, options, error) =>
-    Boolean(
-      error?.retryable &&
-      balancedPool &&
-      requestedRoute(sql, options) === "balanced" &&
-      classifyQuery(sql) === "balanced",
-    );
+    checkBalancedRetry(sql, options, error, balancedPool, routing);
   return { choose, requestedRoute, isSafeBalancedRetry };
 }

@@ -22,13 +22,3 @@ export async function probeClient({ sql = "SELECT 1", routeFor, query, getConnec
     released: true,
   };
 }
-
-export function createProbeApi({ routeFor, execution, getPrimaryPool, routing = "auto" }) {
-  return (sql = "SELECT 1") =>
-    probeClient({
-      sql,
-      routeFor: (statement) => routeFor(statement, routing),
-      query: (statement, route) => execution.query(statement, undefined, { route }),
-      getConnection: () => getPrimaryPool().choose().getConnection(),
-    });
-}

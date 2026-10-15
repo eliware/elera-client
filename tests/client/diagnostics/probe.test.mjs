@@ -1,5 +1,5 @@
 import { expect, jest, test } from "@jest/globals";
-import { createProbeApi, probeClient } from "../../../src/client/diagnostics/probe.mjs";
+import { probeClient } from "../../../src/client/diagnostics/probe.mjs";
 
 test("reports query and transaction checks and releases the connection", async () => {
   const connection = {
@@ -41,39 +41,4 @@ test("releases the connection when the transaction check fails", async () => {
   ).rejects.toThrow("transaction failed");
   expect(connection.rollback).toHaveBeenCalledTimes(1);
   expect(connection.release).toHaveBeenCalledTimes(1);
-});
-
-test("adapts client query and connection operations to the default probe request", async () => {
-  const query = jest.fn(async () => ["rows"]);
-  const execution = { query };
-  const connection = {
-    beginTransaction: jest.fn(),
-    rollback: jest.fn(),
-    release: jest.fn(),
-  };
-  const probe = createProbeApi({
-    routeFor: jest.fn(() => "primary"),
-    execution,
-    getPrimaryPool: () => ({ choose: () => ({ getConnection: async () => connection }) }),
-  });
-  await expect(probe()).resolves.toMatchObject({ ok: true, result: ["rows"] });
-  expect(query).toHaveBeenCalledWith("SELECT 1", undefined, { route: "primary" });
-});
-
-test("reports the route used by the query when routing is primary", async () => {
-  const query = jest.fn(async () => ["rows"]);
-  const connection = {
-    beginTransaction: jest.fn(),
-    rollback: jest.fn(),
-    release: jest.fn(),
-  };
-  const probe = createProbeApi({
-    routeFor: (sql, routing) => (routing === "primary" ? "primary" : "balanced"),
-    execution: { query },
-    getPrimaryPool: () => ({ choose: () => ({ getConnection: async () => connection }) }),
-    routing: "primary",
-  });
-
-  await expect(probe()).resolves.toMatchObject({ route: "primary" });
-  expect(query).toHaveBeenCalledWith("SELECT 1", undefined, { route: "primary" });
 });

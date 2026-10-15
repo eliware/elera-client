@@ -25,8 +25,10 @@ test("sends periodic heartbeats and clears them on close", async () => {
   });
   await client.connect();
   const socket = sockets.at(-1);
+  socket.sent = [];
+  socket.send = (value) => socket.sent.push(value);
   socket.open();
   await new Promise((resolve) => setTimeout(resolve, 5));
-  expect(socket.sent?.length ?? 0).toBeGreaterThanOrEqual(0);
+  expect(socket.sent?.length ?? 0).toBeGreaterThan(0);
   client.close();
 });
