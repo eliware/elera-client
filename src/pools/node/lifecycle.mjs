@@ -1,17 +1,17 @@
 import { createDrainController } from "./drain-controller.mjs";
 import { createNodeAvailability } from "./availability.mjs";
 import { createNodeActivity } from "./activity.mjs";
+import { createNodeCloseState } from "./close-state.mjs";
 
 export function createNodeLifecycle({ timeoutMs = 45000, onForceClose }) {
   let state = "ready";
   const activity = createNodeActivity();
-  let closed = false;
-  const forceClose = async () => {
-    if (closed) return;
-    closed = true;
-    availability.markClosed();
-    await onForceClose();
-  };
+  let availability;
+  const closeState = createNodeCloseState({
+    markClosed: () => availability.markClosed(),
+    onForceClose,
+  });
+  const forceClose = closeState.close;
   const drainController = createDrainController({ forceClose });
   const drain = (timeout = timeoutMs) => {
     state = "draining";
@@ -20,10 +20,10 @@ export function createNodeLifecycle({ timeoutMs = 45000, onForceClose }) {
     return { state, active: activity.active };
   };
   const waitForIdle = (timeout = timeoutMs) => activity.waitForIdle(timeout);
-  const availability = createNodeAvailability({
+  availability = createNodeAvailability({
     getState: () => state,
     setState: (value) => (state = value),
-    isClosed: () => closed,
+    isClosed: () => closeState.closed,
     cancelDrain: drainController.cancel,
     drain,
   });
@@ -42,7 +42,7 @@ export function createNodeLifecycle({ timeoutMs = 45000, onForceClose }) {
       availability.available = value;
     },
     get closed() {
-      return closed;
+      return closeState.closed;
     },
     clear: drainController.cancel,
     get active() {

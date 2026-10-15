@@ -1,5 +1,5 @@
 import { log as defaultLog } from "@eliware/common";
-import { websocketUrl } from "./address.mjs";
+import { activeStreamUrl } from "./address.mjs";
 import { createReconnectPolicy } from "./reconnect.mjs";
 import { createRuntimeFallback } from "./fallback.mjs";
 import { createRoutingConnector } from "./connector.mjs";
@@ -45,7 +45,7 @@ export function createRoutingRuntime(options) {
   connect = createRoutingConnector({
     state,
     WebSocketImpl,
-    getStreamUrl: () => websocketUrl(state.activeEndpoint),
+    getStreamUrl: () => activeStreamUrl(state),
     token,
     heartbeatMs,
     now,

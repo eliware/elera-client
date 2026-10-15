@@ -1,5 +1,9 @@
 import { expect, test } from "@jest/globals";
-import { activeEndpointFromShutdown, websocketUrl } from "../../../src/routing/stream/address.mjs";
+import {
+  activeEndpointFromShutdown,
+  activeStreamUrl,
+  websocketUrl,
+} from "../../../src/routing/stream/address.mjs";
 
 test("maps API endpoints to streams and accepts shutdown endpoints", () => {
   expect(websocketUrl("https://api.example/")).toBe("wss://api.example/api/v1/routing/stream");
@@ -7,4 +11,7 @@ test("maps API endpoints to streams and accepts shutdown endpoints", () => {
     "https://new",
   );
   expect(activeEndpointFromShutdown("http://old", {})).toBe("http://old");
+  expect(activeStreamUrl({ activeEndpoint: "https://api.example" })).toBe(
+    "wss://api.example/api/v1/routing/stream",
+  );
 });
