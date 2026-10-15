@@ -21,6 +21,26 @@ test("node pool defaults options and toggles availability", async () => {
   node.available = true;
   expect(node.available).toBe(true);
 });
+test("node factory applies retryable health failures to node availability", async () => {
+  const failure = Object.assign(new Error("down"), { code: "ECONNREFUSED" });
+  const node = createNodePool({
+    profile,
+    mysqlLib: driver({ query: jest.fn().mockRejectedValue(failure) }),
+  });
+  await expect(node.health()).rejects.toThrow("down");
+  expect(node.failures).toBe(1);
+  expect(node.available).toBe(false);
+});
+test("node factory keeps availability after a non-retryable health failure", async () => {
+  const failure = Object.assign(new Error("invalid"), { code: "ER_PARSE_ERROR" });
+  const node = createNodePool({
+    profile,
+    mysqlLib: driver({ query: jest.fn().mockRejectedValue(failure) }),
+  });
+  await expect(node.health()).rejects.toThrow("invalid");
+  expect(node.failures).toBe(0);
+  expect(node.available).toBe(true);
+});
 test("manual exclusion remains effective past the failure quarantine interval", async () => {
   let now = 0;
   const node = createNodePool({ profile, mysqlLib: driver(), now: () => now, quarantineMs: 10 });

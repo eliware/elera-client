@@ -29,10 +29,17 @@ test("rejects an expired bundle refresh", async () => {
   await client.close();
 });
 
-test("uses the default setup clock and creates routes through its factory", async () => {
+test("creates routes and uses the default clock for node availability", async () => {
   const setup = await createDbSetup({ primary: profile, mysqlLib: driver() });
-  expect(setup.now()).toEqual(expect.any(Number));
   expect(setup.makeRoute("primary", profile).nodes).toHaveLength(1);
+  expect(setup.getPrimaryPool().nodes[0].available).toBe(true);
+});
+
+test("passes the configured clock to setup", async () => {
+  const now = jest.fn(() => 123);
+  const setup = await createDbSetup({ primary: profile, mysqlLib: driver(), now });
+  expect(setup.now()).toBe(123);
+  expect(now).toHaveBeenCalledTimes(1);
 });
 
 test("enforces the single-token database context on refresh", async () => {

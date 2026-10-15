@@ -1,35 +1,36 @@
 import { createManualExclusion } from "./manual-exclusion.mjs";
+import { createLifecycleAvailability } from "./lifecycle-availability.mjs";
 
 export function createNodeAvailability({ now, getState, setState, isClosed, cancelDrain, drain }) {
   const manualExclusion = createManualExclusion(setState);
-
+  const lifecycle = createLifecycleAvailability({
+    now,
+    getState,
+    setState,
+    isClosed,
+    cancelDrain,
+    drain,
+  });
   const recover = () => {
-    if (isClosed()) return getState();
-    cancelDrain();
-    setState("ready");
+    const state = lifecycle.recover();
     manualExclusion.clear();
-    return getState();
+    return state;
   };
-
   return {
     get available() {
-      return !isClosed() && getState() === "ready" && !manualExclusion.active && now() >= 0;
+      return lifecycle.available && !manualExclusion.active;
     },
     set available(value) {
       if (value) recover();
-      else drain();
+      else lifecycle.available = false;
     },
     set unavailable(value) {
       if (value) {
         manualExclusion.exclude();
       } else recover();
     },
-    markDraining() {
-      setState("draining");
-    },
-    markClosed() {
-      setState("unavailable");
-    },
+    markDraining: lifecycle.markDraining,
+    markClosed: lifecycle.markClosed,
     recover,
   };
 }
