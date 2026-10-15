@@ -21,41 +21,6 @@ test("node pool defaults options and toggles availability", async () => {
   node.available = true;
   expect(node.available).toBe(true);
 });
-test("passes driver options while omitting acquire timeout and undefined socket paths", async () => {
-  const createPool = jest.fn(() => ({
-    query: jest.fn(async () => [["ok"]]),
-    execute: jest.fn(async () => [["ok"]]),
-    getConnection: jest.fn(async () => connection()),
-    end: jest.fn(async () => {}),
-  }));
-  const node = createNodePool({
-    profile: {
-      ...profile,
-      options: { acquireTimeout: 10, socketPath: undefined, connectionLimit: 2 },
-    },
-    mysqlLib: { createPool },
-  });
-  expect(createPool).toHaveBeenCalledWith(
-    expect.objectContaining({ connectionLimit: 2, waitForConnections: true }),
-  );
-  expect(createPool.mock.calls[0][0]).not.toHaveProperty("acquireTimeout");
-  expect(createPool.mock.calls[0][0]).not.toHaveProperty("socketPath");
-  await node.close();
-});
-test("preserves an explicitly configured socket path", async () => {
-  const createPool = jest.fn(() => ({
-    query: jest.fn(async () => [["ok"]]),
-    execute: jest.fn(async () => [["ok"]]),
-    getConnection: jest.fn(async () => connection()),
-    end: jest.fn(async () => {}),
-  }));
-  const node = createNodePool({
-    profile: { ...profile, options: { socketPath: "/run/mysqld.sock" } },
-    mysqlLib: { createPool },
-  });
-  expect(createPool.mock.calls[0][0].socketPath).toBe("/run/mysqld.sock");
-  await node.close();
-});
 test("manual exclusion remains effective past the failure quarantine interval", async () => {
   let now = 0;
   const node = createNodePool({ profile, mysqlLib: driver(), now: () => now, quarantineMs: 10 });

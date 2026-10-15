@@ -1,0 +1,23 @@
+import { validateProfile } from "../../config.mjs";
+import { resolveCredentials, credentialContext } from "../internal/credential-provider.mjs";
+
+export async function prepareDbProfiles({ primary, balanced, credentialProvider, identity } = {}) {
+  if (!primary || typeof primary !== "object")
+    throw new TypeError("primary connection profile is required");
+  const credentials = await resolveCredentials(
+    credentialProvider,
+    credentialContext(primary, { identity }),
+  );
+  let primaryConfig = validateProfile({ ...primary, ...credentials }, "primary");
+  if (!primaryConfig.user || typeof primaryConfig.password !== "string")
+    throw new TypeError("primary.user and primary.password are required");
+  let balancedConfig = balanced
+    ? validateProfile({ ...primaryConfig, ...balanced, ...credentials }, "balanced")
+    : undefined;
+  if (credentials.user || credentials.password) {
+    primaryConfig = validateProfile({ ...primaryConfig, ...credentials }, "primary");
+    if (balancedConfig)
+      balancedConfig = validateProfile({ ...balancedConfig, ...credentials }, "balanced");
+  }
+  return { credentials, primaryConfig, balancedConfig };
+}

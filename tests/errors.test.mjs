@@ -10,6 +10,9 @@ import {
 test("classifies retryable and non-retryable SQL failures", () => {
   expect(classifyError({ code: "ECONNRESET" }).retryable).toBe(true);
   expect(classifyError({ code: "ER_ACCESS_DENIED_ERROR" }).retryable).toBe(false);
+  expect(classifyError({ code: "ER_ACCESS_DENIED_ERROR" }).code).toBe("AUTHENTICATION_ERROR");
+  expect(classifyError({ code: "OTHER" }).code).toBe("OTHER");
+  expect(classifyError({}).code).toBe("SQL_ERROR");
 });
 
 test("wraps errors without double wrapping", () => {

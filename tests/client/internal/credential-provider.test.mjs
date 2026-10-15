@@ -4,10 +4,8 @@ import {
   resolveCredentials,
   credentialContext,
 } from "../../../src/client/internal/credential-provider.mjs";
-import { SqlClientError, classifyError, asSqlError } from "../../../src/errors.mjs";
-
-test("applies default profile options and redacts profiles without optional values", async () => {
-  const { validateProfile, redactedProfile } = await import("../../../src/config.mjs");
+const valid = { host: "db", user: "u", password: "p", database: "app" };
+test("validates profile defaults and values and redacts secret connection fields", () => {
   expect(validateProfile({ host: "db", database: "app" })).toMatchObject({
     port: 3306,
     options: { connectionLimit: 10 },
@@ -17,10 +15,6 @@ test("applies default profile options and redacts profiles without optional valu
     database: "app",
     options: {},
   });
-});
-
-const valid = { host: "db", user: "u", password: "p", database: "app" };
-test("validates profiles and redacts secret connection fields", () => {
   const profile = validateProfile({ ...valid, options: { ssl: { key: "private", ca: "ca" } } });
   expect(profile.port).toBe(3306);
   expect(redactedProfile(profile)).toMatchObject({ host: "db", options: { ssl: { ca: "ca" } } });
@@ -50,14 +44,4 @@ test("resolves credential providers and creates request context", async () => {
     identity: null,
     route: "primary",
   });
-});
-test("classifies and wraps SQL failures", () => {
-  expect(classifyError({ code: "ECONNRESET" }).retryable).toBe(true);
-  expect(classifyError({ code: "ER_ACCESS_DENIED_ERROR" }).code).toBe("AUTHENTICATION_ERROR");
-  expect(classifyError({ code: "OTHER" }).code).toBe("OTHER");
-  expect(classifyError({}).code).toBe("SQL_ERROR");
-  const original = new Error("x");
-  const wrapped = asSqlError(original);
-  expect(wrapped).toBeInstanceOf(SqlClientError);
-  expect(asSqlError(wrapped)).toBe(wrapped);
 });

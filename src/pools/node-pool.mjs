@@ -1,6 +1,7 @@
 import { createNodeOperations } from "./node-pool/operations.mjs";
 import { createNodeLifecycle } from "./node-pool/lifecycle.mjs";
 import { createNodeMethods } from "./node-pool/methods.mjs";
+import { createDriverPool } from "./node-pool/driver-pool.mjs";
 export function createNodePool({
   profile,
   mysqlLib,
@@ -8,17 +9,7 @@ export function createNodePool({
   now = () => Date.now(),
   quarantineMs = 5000,
 }) {
-  const { acquireTimeout: _acquireTimeout, ...driverOptions } = profile.options ?? {};
-  if (driverOptions.socketPath === undefined) delete driverOptions.socketPath;
-  const pool = mysqlLib.createPool({
-    host: profile.host,
-    port: profile.port,
-    user: profile.user,
-    password: profile.password,
-    database: profile.database,
-    waitForConnections: true,
-    ...driverOptions,
-  });
+  const pool = createDriverPool(profile, mysqlLib);
   const sessionStatements = profile.options?.sessionStatements ?? [];
   const state = { failures: 0, unavailableUntil: 0 };
   let lifecycle;
