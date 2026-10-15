@@ -2,7 +2,7 @@ import { createDrainController } from "./drain-controller.mjs";
 import { createNodeAvailability } from "./availability.mjs";
 import { createNodeActivity } from "./activity.mjs";
 
-export function createNodeLifecycle({ now, timeoutMs = 45000, onForceClose }) {
+export function createNodeLifecycle({ timeoutMs = 45000, onForceClose }) {
   let state = "ready";
   const activity = createNodeActivity();
   let closed = false;
@@ -21,7 +21,6 @@ export function createNodeLifecycle({ now, timeoutMs = 45000, onForceClose }) {
   };
   const waitForIdle = (timeout = timeoutMs) => activity.waitForIdle(timeout);
   const availability = createNodeAvailability({
-    now,
     getState: () => state,
     setState: (value) => (state = value),
     isClosed: () => closed,

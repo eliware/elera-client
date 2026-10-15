@@ -12,3 +12,7 @@ export function createDriverPool(profile, mysqlLib) {
     ...driverOptions,
   });
 }
+
+export function createDriverPoolCloser(pool) {
+  return () => pool.end();
+}

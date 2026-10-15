@@ -4,7 +4,7 @@ import { createNodePool } from "../../../src/pools/node/index.mjs";
 import { connection, driver, profile } from "../../../test-fixtures/pools/node.mjs";
 
 test("reports lifecycle availability and restores it after recovery", () => {
-  const lifecycle = createNodeLifecycle({ now: () => 1, onForceClose: jest.fn() });
+  const lifecycle = createNodeLifecycle({ onForceClose: jest.fn() });
   expect(lifecycle.available).toBe(true);
   lifecycle.drain(10000);
   expect(lifecycle.available).toBe(false);

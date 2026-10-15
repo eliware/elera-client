@@ -1,10 +1,9 @@
 import { createManualExclusion } from "./manual-exclusion.mjs";
 import { createLifecycleAvailability } from "./lifecycle-availability.mjs";
 
-export function createNodeAvailability({ now, getState, setState, isClosed, cancelDrain, drain }) {
+export function createNodeAvailability({ getState, setState, isClosed, cancelDrain, drain }) {
   const manualExclusion = createManualExclusion(setState);
   const lifecycle = createLifecycleAvailability({
-    now,
     getState,
     setState,
     isClosed,

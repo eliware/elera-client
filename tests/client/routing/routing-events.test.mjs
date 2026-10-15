@@ -13,7 +13,7 @@ test("refreshes pools after a routing update", async () => {
   expect(pool.recover).not.toHaveBeenCalled();
 });
 
-test("rejects incomplete stream updates and accepts a complete update", async () => {
+test("rejects an incomplete stream update", async () => {
   const client = await createDb({ primary: profile, bundle, mysqlLib: driver() });
   let update;
   await client.attachRoutingStream({
@@ -25,6 +25,18 @@ test("rejects incomplete stream updates and accepts a complete update", async ()
   await expect(
     update({ type: "routing.update", routes: { primary: [{ host: "next", port: 3306 }] } }),
   ).rejects.toThrow();
+  await client.close();
+});
+
+test("applies consecutive complete stream updates", async () => {
+  const client = await createDb({ primary: profile, bundle, mysqlLib: driver() });
+  let update;
+  await client.attachRoutingStream({
+    connect: async () => {},
+    setOnUpdate: (handler) => {
+      update = handler;
+    },
+  });
   await update({
     ...bundle,
     type: "routing.update",

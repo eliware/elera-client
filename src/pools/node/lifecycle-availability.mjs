@@ -1,11 +1,4 @@
-export function createLifecycleAvailability({
-  now,
-  getState,
-  setState,
-  isClosed,
-  cancelDrain,
-  drain,
-}) {
+export function createLifecycleAvailability({ getState, setState, isClosed, cancelDrain, drain }) {
   const recover = () => {
     if (isClosed()) return getState();
     cancelDrain();
@@ -14,7 +7,7 @@ export function createLifecycleAvailability({
   };
   return {
     get available() {
-      return !isClosed() && getState() === "ready" && now() >= 0;
+      return !isClosed() && getState() === "ready";
     },
     set available(value) {
       if (value) recover();

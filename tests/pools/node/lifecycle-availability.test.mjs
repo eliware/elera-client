@@ -5,7 +5,6 @@ test("tracks lifecycle state and cancels drain on recovery", () => {
   const state = { value: "draining", closed: false };
   const cancelDrain = jest.fn();
   const lifecycle = createLifecycleAvailability({
-    now: () => 1,
     getState: () => state.value,
     setState: (value) => (state.value = value),
     isClosed: () => state.closed,
@@ -20,7 +19,6 @@ test("tracks lifecycle state and cancels drain on recovery", () => {
 
 test("does not recover a closed lifecycle", () => {
   const lifecycle = createLifecycleAvailability({
-    now: () => 1,
     getState: () => "unavailable",
     setState: jest.fn(),
     isClosed: () => true,

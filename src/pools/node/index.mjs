@@ -2,7 +2,7 @@ import { createNodeOperations } from "./operations.mjs";
 import { createNodeLifecycle } from "./lifecycle.mjs";
 import { createNodeMethods } from "./methods.mjs";
 import { createNodeConnections } from "./connections.mjs";
-import { createDriverPool } from "./driver-pool.mjs";
+import { createDriverPool, createDriverPoolCloser } from "./driver-pool.mjs";
 import { createNodeHealth } from "./health.mjs";
 import { createNodeFailurePolicy } from "./failure-policy.mjs";
 import { createNodeInterface } from "./interface.mjs";
@@ -18,8 +18,7 @@ export function createNodePool({
   const state = { failures: 0, unavailableUntil: 0 };
   const failurePolicy = createNodeFailurePolicy({ state, now, quarantineMs });
   let lifecycle;
-  const forceClosePool = () => pool.end();
-  lifecycle = createNodeLifecycle({ pool, now, onForceClose: forceClosePool });
+  lifecycle = createNodeLifecycle({ onForceClose: createDriverPoolCloser(pool) });
   const operations = createNodeOperations({
     pool,
     sessionStatements,
