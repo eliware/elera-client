@@ -5,7 +5,7 @@ export function normalizeRoutingUpdate(event) {
     event.type === "routing.update"
       ? { ...event }
       : event.type === ROUTING_RESYNC
-        ? event.bundle
+        ? { ...event.bundle }
         : undefined;
   if (update?.type) delete update.type;
   if (update?.version !== undefined) delete update.version;

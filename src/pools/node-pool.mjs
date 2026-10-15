@@ -1,6 +1,7 @@
 import { createNodeOperations } from "./node-pool/operations.mjs";
 import { createNodeLifecycle } from "./node-pool/lifecycle.mjs";
 import { createNodeMethods } from "./node-pool/methods.mjs";
+import { createNodeConnections } from "./node-pool/connections.mjs";
 import { createDriverPool } from "./node-pool/driver-pool.mjs";
 import { createNodeHealth } from "./node-pool/health.mjs";
 import { createNodeFailurePolicy } from "./node-pool/failure-policy.mjs";
@@ -35,6 +36,20 @@ export function createNodePool({
     ...failurePolicy,
     isAvailable: () => lifecycle.available && now() >= state.unavailableUntil,
   });
+  const connections = createNodeConnections({
+    profile,
+    pool,
+    lifecycle,
+    ...failurePolicy,
+    isAvailable: () => lifecycle.available && now() >= state.unavailableUntil,
+  });
   const health = createNodeHealth({ profile, pool, state, ...failurePolicy });
-  return createNodeInterface({ profile, state, lifecycle, methods, health, now });
+  return createNodeInterface({
+    profile,
+    state,
+    lifecycle,
+    methods: { ...methods, ...connections },
+    health,
+    now,
+  });
 }

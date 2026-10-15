@@ -5,7 +5,7 @@ export function createTelemetryContext({ application, credentialName, database, 
       Object.assign(context, value);
     },
     snapshot() {
-      return context;
+      return { ...context };
     },
   };
 }

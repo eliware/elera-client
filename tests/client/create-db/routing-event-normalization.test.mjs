@@ -14,13 +14,11 @@ test("removes stream metadata from routing updates", () => {
 });
 
 test("uses the bundle from a REST resync event", () => {
-  expect(
-    normalizeRoutingUpdate({
-      type: ROUTING_RESYNC,
-      version: 4,
-      bundle: { bundleVersion: 4, version: 4, generatedAt: "time" },
-    }),
-  ).toEqual({ bundleVersion: 4 });
+  const bundle = { bundleVersion: 4, version: 4, generatedAt: "time" };
+  expect(normalizeRoutingUpdate({ type: ROUTING_RESYNC, version: 4, bundle })).toEqual({
+    bundleVersion: 4,
+  });
+  expect(bundle).toEqual({ bundleVersion: 4, version: 4, generatedAt: "time" });
 });
 
 test("ignores unrelated events", () => {

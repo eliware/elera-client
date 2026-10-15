@@ -12,3 +12,10 @@ test("updates and returns application context", () => {
     scopes: undefined,
   });
 });
+
+test("returns an isolated context snapshot", () => {
+  const context = createTelemetryContext({ application: "app" });
+  const snapshot = context.snapshot();
+  snapshot.application = "changed";
+  expect(context.snapshot().application).toBe("app");
+});

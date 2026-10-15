@@ -30,3 +30,26 @@ test("manual exclusion remains effective past the failure quarantine interval", 
   node.available = true;
   expect(node.available).toBe(true);
 });
+
+test("quarantines failed operations and recovers after the deadline", async () => {
+  let now = 0;
+  const failure = Object.assign(new Error("down"), { code: "ECONNREFUSED" });
+  const mysqlLib = driver({
+    query: jest.fn().mockRejectedValue(failure),
+    execute: jest.fn().mockRejectedValue(failure),
+    getConnection: jest.fn().mockRejectedValue(failure),
+  });
+  const node = createNodePool({
+    profile,
+    mysqlLib,
+    now: () => now,
+    quarantineMs: 10,
+  });
+  await expect(node.query("SELECT 1")).rejects.toThrow();
+  expect(node.available).toBe(false);
+  await expect(node.execute("SELECT 1")).rejects.toThrow();
+  await expect(node.getConnection()).rejects.toThrow();
+  await expect(node.health()).rejects.toThrow();
+  now = 11;
+  expect(node.available).toBe(true);
+});

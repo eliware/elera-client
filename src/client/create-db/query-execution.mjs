@@ -1,9 +1,6 @@
 export function createQueryExecution({ selection, timed, routeFor, routing }) {
-  const execute = async (sql, values, options) => {
+  return (sql, options, operation) => {
     const selectedRoute = routeFor(sql, options?.route ?? routing);
-    return timed(() => selection().choose(sql, options).execute(sql, values), {
-      route: selectedRoute,
-    });
+    return timed(() => operation(selection(), sql, options), { route: selectedRoute });
   };
-  return { execute };
 }

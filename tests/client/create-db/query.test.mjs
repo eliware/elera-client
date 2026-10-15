@@ -3,20 +3,20 @@ import { createQuery } from "../../../src/client/create-db/query.mjs";
 import { createDb } from "../../../src/client/create-db/index.mjs";
 import { bundle, driver, profile } from "../../../test-fixtures/client/create-db.mjs";
 
-const timed = async (operation, metadata) => operation(metadata);
+function queryRunner(selection) {
+  return (sql, options, operation) => operation(selection(), sql, options);
+}
 
 test("retries only when selection marks a failed query safe", async () => {
   const failure = new Error("temporary");
   const primary = { query: jest.fn().mockRejectedValue(failure) };
   const balanced = { query: jest.fn(async () => ["retried"]) };
   const record = jest.fn();
+  const selection = () => ({ choose: () => primary, isSafeBalancedRetry: () => true });
   const query = createQuery({
-    selection: () => ({ choose: () => primary, isSafeBalancedRetry: () => true }),
-    timed,
+    run: queryRunner(selection),
     metrics: { record },
     getBalancedPool: () => balanced,
-    routeFor: () => "balanced",
-    routing: "auto",
   });
   await expect(query("SELECT 1")).resolves.toEqual(["retried"]);
   expect(record).toHaveBeenCalledWith({ retry: true, route: "balanced" });
@@ -25,13 +25,11 @@ test("retries only when selection marks a failed query safe", async () => {
 test("propagates failures when retry is unsafe", async () => {
   const failure = new Error("unsafe");
   const pool = { query: jest.fn().mockRejectedValue(failure) };
+  const selection = () => ({ choose: () => pool, isSafeBalancedRetry: () => false });
   const query = createQuery({
-    selection: () => ({ choose: () => pool, isSafeBalancedRetry: () => false }),
-    timed,
+    run: queryRunner(selection),
     metrics: {},
     getBalancedPool: () => pool,
-    routeFor: () => "primary",
-    routing: "auto",
   });
   await expect(query("UPDATE t SET x=1")).rejects.toBe(failure);
 });
