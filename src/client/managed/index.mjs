@@ -3,6 +3,7 @@ import { createRoutingStream } from "../../routing/stream-client/index.mjs";
 import { resolveManagedConfig, createBundleFetcher } from "./configuration.mjs";
 import { exposeManagedClient } from "./public-api.mjs";
 import { createManagedShutdown } from "./shutdown.mjs";
+import { createManagedSetup } from "./setup.mjs";
 
 export async function createDb({
   endpoint,
@@ -21,7 +22,7 @@ export async function createDb({
 } = {}) {
   ({ endpoint, token } = resolveManagedConfig({ endpoint, token, env }));
   const fetchBundle = createBundleFetcher({ endpoint, token, fetchImpl, fetchPath });
-  const bundle = await fetchBundle();
+  const { bundle, tokenContext } = await createManagedSetup(fetchBundle);
   const stream = createRoutingStream({
     endpoint,
     token,
@@ -31,13 +32,6 @@ export async function createDb({
     now,
     telemetry,
   });
-  const tokenContext = {
-    application: bundle.application,
-    database: bundle.database,
-    credentialName: bundle.credentialName,
-    identity: bundle.identity,
-    scopes: bundle.scopes,
-  };
   const client = await createDbFromBundle({
     bundle,
     tokenContext,

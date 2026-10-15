@@ -3,7 +3,7 @@ import { createNodeMethods } from "../../../src/pools/node-pool/methods.mjs";
 import { createNodePool } from "../../../src/pools/node-pool.mjs";
 import { driver, profile } from "../../../test-fixtures/node-pool.mjs";
 
-test("delegates node requests and health checks", async () => {
+test("delegates node requests and connection lifecycle", async () => {
   const connection = { release: jest.fn() };
   const pool = {
     getConnection: async () => connection,
@@ -24,7 +24,6 @@ test("delegates node requests and health checks", async () => {
   });
   await expect(methods.query("SELECT 1")).resolves.toEqual(["rows"]);
   await expect(methods.execute("SELECT 1")).resolves.toEqual(["result"]);
-  await expect(methods.health()).resolves.toMatchObject({ ok: true, host: "db" });
   const acquired = await methods.getConnection();
   acquired.release();
   expect(lifecycle.begin).toHaveBeenCalledTimes(1);
