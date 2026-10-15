@@ -1,13 +1,11 @@
 import { createNodeOperations } from "./operations.mjs";
-import { createNodeLifecycle } from "./lifecycle.mjs";
 import { createNodeMethods } from "./methods.mjs";
 import { createNodeConnections } from "./connections.mjs";
-import { createDriverPool, createDriverPoolCloser } from "./driver-pool.mjs";
+import { createDriverPool } from "./driver-pool.mjs";
 import { createNodeHealth } from "./health.mjs";
-import { createNodeFailurePolicy } from "./failure-policy.mjs";
 import { createNodeInterface } from "./interface.mjs";
-import { createNodeEligibility } from "./eligibility.mjs";
 import { createNodeSetup } from "./setup.mjs";
+import { createNodeRuntime } from "./runtime.mjs";
 export function createNodePool({
   profile,
   mysqlLib,
@@ -17,12 +15,11 @@ export function createNodePool({
 }) {
   const pool = createDriverPool(profile, mysqlLib);
   const { state, sessionStatements } = createNodeSetup(profile);
-  const failurePolicy = createNodeFailurePolicy({ state, now, quarantineMs });
-  let lifecycle;
-  lifecycle = createNodeLifecycle({ onForceClose: createDriverPoolCloser(pool) });
-  const isAvailable = createNodeEligibility({
-    lifecycle,
-    isQuarantined: failurePolicy.isQuarantined,
+  const { failurePolicy, lifecycle, isAvailable } = createNodeRuntime({
+    pool,
+    state,
+    now,
+    quarantineMs,
   });
   const operations = createNodeOperations({
     pool,
