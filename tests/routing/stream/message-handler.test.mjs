@@ -1,9 +1,13 @@
-import { afterEach, expect, test, jest } from "@jest/globals";
+import { afterEach, beforeEach, expect, test, jest } from "@jest/globals";
 import { createRoutingMessageHandler } from "../../../src/routing/stream/message-handler.mjs";
 import { createRoutingStream } from "../../../src/routing/stream/index.mjs";
 import { FakeWebSocket, sockets, streamBundle } from "../../../test-fixtures/routing/stream.mjs";
 
-afterEach(() => sockets.splice(0).forEach((socket) => socket.close()));
+beforeEach(() => jest.useFakeTimers({ doNotFake: ["setImmediate"] }));
+afterEach(() => {
+  jest.useRealTimers();
+  sockets.splice(0).forEach((socket) => socket.close());
+});
 
 test("routes an update and ignores an older version", async () => {
   const state = { expectedVersion: 2, updateHandler: jest.fn() };
@@ -13,7 +17,7 @@ test("routes an update and ignores an older version", async () => {
     state,
     fallback,
     reconnect: { cancel: jest.fn(), reset: jest.fn() },
-    now: Date.now,
+    now: () => 10,
     onError,
   });
   await handler({
@@ -61,7 +65,7 @@ test("awaits gap recovery and topology resynchronization", async () => {
     state,
     fallback,
     reconnect: { cancel: jest.fn(), reset: jest.fn() },
-    now: Date.now,
+    now: () => 10,
     onError,
   });
   await handler({

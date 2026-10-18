@@ -24,7 +24,7 @@ Pass endpoint and token as options or environment values. The function rejects a
 
 `query` and `execute` accept mysql2-compatible SQL parameters. Both return the driver's result tuple. `getConnection` returns a writer-pinned connection. Release each connection after use.
 
-`probe` runs `SELECT 1` when you omit `sql`. It runs the query, starts and rolls back a transaction, then releases the connection. Its result has `ok`, `route`, `result`, `transaction`, and `released` fields.
+`probe` runs `SELECT 1` when you omit `sql`. It runs the query and a transaction, then calls `connection.rollback()` and releases the connection. Its result has `ok`, `route`, `result`, `transaction`, and `released` fields.
 
 ## Errors
 
@@ -32,8 +32,8 @@ The client rejects a call when the API request fails, the bundle is invalid, or 
 
 ## Route behavior
 
-The client gets SQL routes and credentials from the Elera API. It does not accept SQL hosts or passwords as public options. It does not place the API token in a URL.
+The client gets SQL routes and credentials from the Elera API. It does not accept SQL hosts or passwords as public options. Keep the API token out of URLs.
 
-The client can retry a query when the query is safe for another route. It does not replay an uncertain write. `end` closes the stream and SQL pools.
+The client can retry a query when the query is safe for a different route. It does not replay an uncertain write. `end` closes the stream and SQL pools.
 
 See [Usage](usage.md) for setup and code examples. See [Troubleshooting](troubleshooting.md) for failure steps.

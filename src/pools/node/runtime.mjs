@@ -1,7 +1,7 @@
 import { createNodeEligibility } from "./eligibility.mjs";
 import { createNodeFailurePolicy } from "./failure-policy.mjs";
 import { createNodeLifecycle } from "./lifecycle.mjs";
-import { createDriverPoolCloser } from "./driver-pool.mjs";
+import { createDriverPoolCloser } from "./driver/pool.mjs";
 
 export function createNodeRuntime({ pool, state, now, quarantineMs }) {
   const failurePolicy = createNodeFailurePolicy({ state, now, quarantineMs });

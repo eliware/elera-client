@@ -21,7 +21,7 @@ export function createRestFallback({
       if (isClosed()) return;
       setMode("disconnected");
       onError?.(error);
-      log.warn?.("Routing REST fallback failed", { error });
+      log.warn?.("Routing HTTP fallback failed", { error });
     }
   };
 }

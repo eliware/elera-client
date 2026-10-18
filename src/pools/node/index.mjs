@@ -1,7 +1,7 @@
 import { createNodeOperations } from "./operations.mjs";
 import { createNodeMethods } from "./methods.mjs";
 import { createNodeConnections } from "./connections.mjs";
-import { createDriverPool } from "./driver-pool.mjs";
+import { createDriverPool } from "./driver/pool.mjs";
 import { createNodeHealth } from "./health.mjs";
 import { createNodeInterface } from "./interface.mjs";
 import { createNodeSetup } from "./setup.mjs";

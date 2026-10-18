@@ -1,9 +1,13 @@
-import { afterEach, expect, test, jest } from "@jest/globals";
+import { afterEach, beforeEach, expect, test, jest } from "@jest/globals";
 import { createRoutingRuntime } from "../../../src/routing/stream/runtime.mjs";
 import { createRoutingStream } from "../../../src/routing/stream/index.mjs";
 import { FakeWebSocket, sockets } from "../../../test-fixtures/routing/stream.mjs";
 
-afterEach(() => sockets.splice(0).forEach((socket) => socket.close()));
+beforeEach(() => jest.useFakeTimers({ doNotFake: ["setImmediate"] }));
+afterEach(() => {
+  jest.useRealTimers();
+  sockets.splice(0).forEach((socket) => socket.close());
+});
 
 test("builds a disconnected runtime with its public stream API", () => {
   const runtime = createRoutingRuntime({

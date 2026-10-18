@@ -12,13 +12,13 @@ Check that the API returns a valid routing bundle. The client rejects an invalid
 
 ## A query fails
 
-Check the SQL text, parameter values, database access, and service health. Read the error fields `code`, `errno`, and `sqlState` when present.
+Check the SQL text, parameter values, database access, and database server. Read the error fields `code`, `errno`, and `sqlState` when available.
 
 The client can retry a safe query. It does not retry an uncertain write. Run a write again only after you confirm its result.
 
 ## A connection fails
 
-Check the Elera API and SQL service. Confirm that the application token remains valid. The client reconnects to the routing stream and requests current route data.
+Check the Elera API and SQL server. Confirm that the application token remains valid. The client reconnects to the routing stream and requests current route data.
 
 Use `db.end()` during shutdown. Release each connection from `db.getConnection()` after use.
 

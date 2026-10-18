@@ -1,9 +1,9 @@
-version: "12.0"
+version: "13.0"
 description: Defines requirements for @eliware/elera-client.
 directives:
   - id: E-1323.0
     dos:
-      - Keep public behavior consistent with the package README.
+      - Keep public behavior in agreement with the package README.
       - Validate the package with npm test before commit.
     donts:
       - Do not expose secrets, tokens, or private data.

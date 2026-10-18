@@ -1,4 +1,4 @@
-import { createRoutingEventHandler } from "./routing-events.mjs";
+import { createRoutingEventHandler } from "./routing/events.mjs";
 
 export async function attachRoutingStream({ stream, api, metrics, getPools, drainTimeoutMs }) {
   if (!stream?.connect) throw new TypeError("routing stream is required");

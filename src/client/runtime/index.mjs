@@ -7,7 +7,7 @@ import { createDbSetup } from "./setup.mjs";
 import { createDbServices } from "./services.mjs";
 import { redactBundle } from "../bundle/redaction.mjs";
 import { createProbeApi } from "../diagnostics/probe-api.mjs";
-import { logClientCreated } from "./setup-log.mjs";
+import { logClientCreated } from "./setup/log.mjs";
 
 export async function createDb(options = {}) {
   const {

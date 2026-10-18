@@ -1,6 +1,6 @@
 {
   "name": "@eliware/elera-client",
-  "version": "12.0.0",
+  "version": "13.0.0",
   "type": "module",
   "description": "Application-facing Elera client for managed MySQL/MariaDB routing, failover, lifecycle, and telemetry",
   "keywords": [
@@ -37,7 +37,6 @@
     "test": "eliware-test",
     "lint": "eliware-test --lint",
     "check": "node --check src/index.mjs",
-    "contracts": "node test-fixtures/verify-contracts.mjs",
     "typecheck": "tsc --project tsconfig.json",
     "pack": "eliware-test --pack",
     "audit": "eliware-test --audit",

@@ -1,7 +1,7 @@
-import { createConnectionRecovery } from "./connection-recovery.mjs";
-import { createConnectionFailure, handleMissingWebSocketSupport } from "./connection-failure.mjs";
-import { bindSocketHandlers } from "./socket-handlers.mjs";
-import { canStartConnection } from "./connection-eligibility.mjs";
+import { createConnectionRecovery } from "./connection/recovery.mjs";
+import { createConnectionFailure, handleMissingWebSocketSupport } from "./connection/failure.mjs";
+import { bindSocketHandlers } from "./socket/handlers.mjs";
+import { canStartConnection } from "./connection/eligibility.mjs";
 
 export async function connectRoutingSocket({
   state,

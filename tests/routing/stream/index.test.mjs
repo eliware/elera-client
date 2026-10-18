@@ -1,6 +1,9 @@
-import { afterEach, expect, test, jest } from "@jest/globals";
+import { afterEach, beforeEach, expect, test, jest } from "@jest/globals";
 import { createRoutingStream } from "../../../src/routing/stream/index.mjs";
 import { sockets, FakeWebSocket } from "../../../test-fixtures/routing/stream.mjs";
+
+beforeEach(() => jest.useFakeTimers({ doNotFake: ["setImmediate"] }));
+afterEach(() => jest.useRealTimers());
 
 test("waits for an asynchronous REST update handler before connect resolves", async () => {
   let release;

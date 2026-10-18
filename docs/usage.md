@@ -67,14 +67,14 @@ The connection uses the primary route. It does not move between SQL nodes during
 
 ## Check the client
 
-Call `probe` to run a query and test a transaction connection. The method rolls back its test transaction and releases its connection:
+Call `probe` to run a query and test a transaction connection. The method calls `connection.rollback()` and releases its connection:
 
 ```js
 const status = await db.probe();
 console.log(status);
 ```
 
-The default probe query is `SELECT 1`. Pass a query string to use another query. The result has `ok`, `route`, `result`, `transaction`, and `released` fields.
+The default query for `probe` is `SELECT 1`. Pass a query string to use a different query. The result has `ok`, `route`, `result`, `transaction`, and `released` fields.
 
 ## Close the client
 
@@ -88,8 +88,8 @@ This call closes the routing stream and SQL pools. It can run more than once.
 
 ## Runtime behavior
 
-The client gets SQL credentials and route data from the Elera API. It keeps bearer tokens out of WebSocket URLs. It reconnects after a stream failure and requests fresh route data after a version gap.
+The client gets SQL credentials and route data from the Elera API. It keeps bearer tokens out of WebSocket URLs. It reconnects after a stream failure and requests new route data after missed events.
 
-The client retries a query only when it can route that query safely. It does not replay an uncertain write on another SQL node.
+The client retries a query only when it can route that query safely. It does not replay an uncertain write on a different SQL node.
 
 See [Public API](public-api.md) for method details. See [Troubleshooting](troubleshooting.md) for common failures.

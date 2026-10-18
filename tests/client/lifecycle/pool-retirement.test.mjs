@@ -1,5 +1,8 @@
-import { expect, jest, test } from "@jest/globals";
+import { afterEach, beforeEach, expect, jest, test } from "@jest/globals";
 import { retireObsoletePools } from "../../../src/client/lifecycle/pool-retirement.mjs";
+
+beforeEach(() => jest.useFakeTimers({ doNotFake: ["setImmediate"] }));
+afterEach(() => jest.useRealTimers());
 
 test("drains and closes obsolete pools after they become idle", async () => {
   const events = [];

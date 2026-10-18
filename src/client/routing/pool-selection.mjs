@@ -1,4 +1,4 @@
-import { createRouteSelection } from "./route-selection.mjs";
+import { createRouteSelection } from "./route/selection.mjs";
 
 export function createPoolSelection({ getPrimaryPool, getBalancedPool, routing }) {
   return () =>

@@ -1,7 +1,7 @@
 import { parseRoutingEvent } from "./events.mjs";
-import { handleShutdownEvent } from "./shutdown-event.mjs";
-import { orderRoutingEvent } from "./event-ordering.mjs";
-import { dispatchRoutingEvent, isShutdownEvent } from "./event-dispatch.mjs";
+import { handleShutdownEvent } from "./shutdown/event.mjs";
+import { orderRoutingEvent } from "./event/ordering.mjs";
+import { dispatchRoutingEvent, isShutdownEvent } from "./event/dispatch.mjs";
 
 export function createRoutingMessageHandler({ state, fallback, reconnect, now, onError }) {
   return async ({ data }) => {

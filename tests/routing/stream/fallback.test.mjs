@@ -1,10 +1,13 @@
-import { expect, jest, test } from "@jest/globals";
+import { afterEach, beforeEach, expect, jest, test } from "@jest/globals";
 import { createRoutingStream } from "../../../src/routing/stream/index.mjs";
 import {
   createRestFallback,
   createRuntimeFallback,
 } from "../../../src/routing/stream/fallback.mjs";
 import { FakeWebSocket, sockets } from "../../../test-fixtures/routing/stream.mjs";
+
+beforeEach(() => jest.useFakeTimers({ doNotFake: ["setImmediate"] }));
+afterEach(() => jest.useRealTimers());
 
 test("returns REST resync data to the update handler", async () => {
   const update = jest.fn();
@@ -51,6 +54,31 @@ test("connects fallback state and update callbacks", async () => {
 test("requires endpoint and REST fallback", () => {
   expect(() => createRoutingStream()).toThrow("endpoint and fetchBundle");
 });
+
+test("ignores a fallback error after stream close", async () => {
+  const setMode = jest.fn();
+  const onError = jest.fn();
+  const warn = jest.fn();
+  const fallback = createRestFallback({
+    fetchBundle: async () => {
+      throw new Error("offline");
+    },
+    getEndpoint: () => "http://vip",
+    isClosed: () => true,
+    getVersion: () => 1,
+    setMode,
+    update: jest.fn(),
+    onError,
+    log: { warn },
+    now: () => 10,
+  });
+
+  await fallback();
+
+  expect(setMode).not.toHaveBeenCalled();
+  expect(onError).not.toHaveBeenCalled();
+  expect(warn).not.toHaveBeenCalled();
+});
 test("falls back to REST when WebSocket is unavailable or fails", async () => {
   const fetchBundle = jest.fn(async () => {
     throw new Error("offline");
@@ -65,7 +93,7 @@ test("falls back to REST when WebSocket is unavailable or fails", async () => {
     log: { warn },
   });
   await client.connect();
-  await new Promise((resolve) => setTimeout(resolve, 5));
+  await jest.advanceTimersByTimeAsync(5);
   client.close();
   expect(fetchBundle).toHaveBeenCalled();
   expect(warn).toHaveBeenCalled();

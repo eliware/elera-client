@@ -1,7 +1,10 @@
-import { expect, test, jest } from "@jest/globals";
+import { afterEach, beforeEach, expect, test, jest } from "@jest/globals";
 import { createBundleRefresh } from "../../../src/client/bundle/refresh.mjs";
 import { bundle } from "../../../test-fixtures/client/runtime.mjs";
 import { emptyPool, refreshForState } from "../../../test-fixtures/client/bundle/refresh.mjs";
+
+beforeEach(() => jest.useFakeTimers({ doNotFake: ["setImmediate"] }));
+afterEach(() => jest.useRealTimers());
 
 test("keeps equivalent usable pools and rejects an older candidate", async () => {
   const active = { bundleVersion: 3 };

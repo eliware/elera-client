@@ -1,7 +1,10 @@
-import { expect, jest, test } from "@jest/globals";
+import { afterEach, beforeEach, expect, jest, test } from "@jest/globals";
 import { createNodeLifecycle } from "../../../src/pools/node/lifecycle.mjs";
 import { createNodePool } from "../../../src/pools/node/index.mjs";
 import { connection, driver, profile } from "../../../test-fixtures/pools/node.mjs";
+
+beforeEach(() => jest.useFakeTimers({ doNotFake: ["setImmediate"] }));
+afterEach(() => jest.useRealTimers());
 
 test("reports lifecycle availability and restores it after recovery", () => {
   const lifecycle = createNodeLifecycle({ onForceClose: jest.fn() });
@@ -70,7 +73,7 @@ test("force-closes after the drain deadline and protects release accounting", as
   acquired.release();
   expect(node.active).toBe(0);
   node.drain(0);
-  await new Promise((resolve) => setTimeout(resolve, 5));
+  await jest.advanceTimersByTimeAsync(5);
   expect(end).toHaveBeenCalled();
   await expect(node.waitForIdle()).resolves.toBe(true);
 });

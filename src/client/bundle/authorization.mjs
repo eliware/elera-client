@@ -11,6 +11,6 @@ export function validateTokenContext(bundle, tokenContext = {}) {
     (!Array.isArray(bundle.scopes) ||
       tokenContext.scopes.some((scope) => !bundle.scopes.includes(scope)))
   )
-    throw new Error("routing bundle scopes exceed token context");
+    throw new Error("routing bundle scopes are not allowed by token context");
   return bundle;
 }
