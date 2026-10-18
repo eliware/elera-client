@@ -8,6 +8,10 @@ const primaryHosts = (client) =>
     .filter((node) => node.route === "primary")
     .map((node) => node.host);
 
+test("requires options with a primary connection profile", async () => {
+  await expect(createDb()).rejects.toThrow("primary connection profile");
+});
+
 test("routes reads to balanced pools and writes to the primary pool", async () => {
   const mysqlLib = driver();
   const client = await createDb({
@@ -33,6 +37,13 @@ test("runs application transactions through the client", async () => {
       return tx.execute("UPDATE app SET x=1");
     }),
   ).resolves.toBeTruthy();
+  await client.close();
+});
+
+test("sets availability through the runtime client", async () => {
+  const client = await createDb({ primary: profile, mysqlLib: driver() });
+  client.setNodeAvailability("primary", "db", false);
+  client.setNodeAvailability("balanced", "read", false);
   await client.close();
 });
 
