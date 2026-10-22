@@ -25,3 +25,28 @@ test("uses explicit and default drain timeouts and recovers the addressed node",
   expect(defaultPool.drain).toHaveBeenCalledWith("db", 20);
   expect(defaultPool.recover).toHaveBeenCalledWith("db", 20);
 });
+
+test("reconciles node availability from a routing topology snapshot", () => {
+  const pool = { drain: jest.fn(), recover: jest.fn() };
+  handleLifecycleRoutingEvent(
+    {
+      type: "routing.topology",
+      topology: {
+        nodes: [
+          { nodeId: "ready-db", state: "ready", draining: false },
+          { nodeId: "draining-db", state: "ready", draining: true },
+          { nodeId: "unready-db", state: "unready", draining: false },
+        ],
+      },
+    },
+    [pool],
+    20,
+  );
+  expect(pool.recover).toHaveBeenCalledTimes(1);
+  expect(pool.recover).toHaveBeenCalledWith("ready-db", 20);
+  expect(pool.drain).toHaveBeenCalledTimes(1);
+  expect(pool.drain).toHaveBeenCalledWith("draining-db", 20);
+  handleLifecycleRoutingEvent({ type: "routing.topology" }, [pool], 20);
+  expect(pool.recover).toHaveBeenCalledTimes(1);
+  expect(pool.drain).toHaveBeenCalledTimes(1);
+});

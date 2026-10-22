@@ -84,3 +84,30 @@ test("drains the addressed node after a shutdown event", async () => {
   });
   await client.close();
 });
+
+test("recovers a shutdown node from a current topology snapshot", async () => {
+  const eventBundle = {
+    ...bundle,
+    writer: { host: "writer", port: 3306 },
+    routes: { primary: [{ host: "writer", port: 3306 }], balanced: [] },
+  };
+  const client = await createDb({ primary: profile, bundle: eventBundle, mysqlLib: driver() });
+  let update;
+  await client.attachRoutingStream({
+    connect: async () => {},
+    setOnUpdate: (handler) => {
+      update = handler;
+    },
+  });
+  await update({ type: "routing.shutdown", node: "writer", reconnectDeadlineMs: 60000 });
+  expect(client.nodeStates()[0]).toMatchObject({ state: "draining", available: false });
+  await update({
+    type: "routing.topology",
+    version: 2,
+    topology: {
+      nodes: [{ nodeId: "writer", address: "writer", state: "ready", draining: false }],
+    },
+  });
+  expect(client.nodeStates()[0]).toMatchObject({ state: "ready", available: true });
+  await client.close();
+});
