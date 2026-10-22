@@ -4,7 +4,7 @@ export function isShutdownEvent(event) {
 
 export function dispatchRoutingEvent(event, { state, fallback }) {
   if (event.type === "routing.topology") {
-    return fallback();
+    return Promise.resolve(state.updateHandler?.(event)).then(fallback);
   }
   state.updateHandler?.(event);
 }

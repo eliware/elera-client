@@ -93,7 +93,10 @@ test("awaits gap recovery and topology resynchronization", async () => {
     }),
   });
   expect(fallback).toHaveBeenCalledTimes(2);
-  expect(updateHandler).toHaveBeenCalledTimes(1);
+  expect(updateHandler).toHaveBeenCalledTimes(2);
+  expect(updateHandler).toHaveBeenLastCalledWith(
+    expect.objectContaining({ type: "routing.topology" }),
+  );
   expect(onError).not.toHaveBeenCalled();
 });
 

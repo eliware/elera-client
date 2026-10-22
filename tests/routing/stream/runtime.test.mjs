@@ -82,6 +82,7 @@ test("refreshes credentials through REST for credential-free topology events", a
   await new Promise((resolve) => setImmediate(resolve));
   expect(fetchBundle).toHaveBeenCalledWith("http://vip");
   expect(updates).toEqual([
+    expect.objectContaining({ type: "routing.topology" }),
     expect.objectContaining({ type: "routing.resync", bundle: { bundleVersion: 5 } }),
   ]);
   client.close();

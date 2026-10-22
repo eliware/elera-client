@@ -18,10 +18,13 @@ test("sends ordinary events to the current update handler", async () => {
   expect(fallback).not.toHaveBeenCalled();
 });
 
-test("resynchronizes topology events", async () => {
-  const updateHandler = jest.fn();
-  const fallback = jest.fn();
-  await dispatchRoutingEvent({ type: "routing.topology" }, { state: { updateHandler }, fallback });
+test("delivers topology events before resynchronizing", async () => {
+  const calls = [];
+  const updateHandler = jest.fn(async () => calls.push("update"));
+  const fallback = jest.fn(async () => calls.push("fallback"));
+  const event = { type: "routing.topology" };
+  await dispatchRoutingEvent(event, { state: { updateHandler }, fallback });
   expect(fallback).toHaveBeenCalledTimes(1);
-  expect(updateHandler).not.toHaveBeenCalled();
+  expect(updateHandler).toHaveBeenCalledWith(event);
+  expect(calls).toEqual(["update", "fallback"]);
 });
