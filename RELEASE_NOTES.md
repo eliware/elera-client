@@ -43,6 +43,22 @@
 - Require Node.js 26 or later and the Elera 15 shared bundle contract.
 - Use `ELERA_API_URL` for the API endpoint and `ELERA_API_TOKEN` for the application token. Remove legacy managed-client options.
 
+### Migration
+
+The v15 package root exports `createDb` at runtime. It exports `CreateDbOptions`, `DbPool`, `ProbeResult`, `QueryOptions`, `QueryValues`, `QueryResultTuple`, `PoolConnection`, `QueryResult`, `LoggerWithConfiguredLevels`, and `Telemetry` as TypeScript types.
+
+Replace imports of `SqlClientError`, `ClusterUnavailableError`, `ServerUnavailableError`, `classifyError`, and `asSqlError`. The v15 package has no public replacements for these values. Use errors as `Error` objects and inspect supported mysql2 fields such as `code`, `errno`, `sqlState`, `sqlMessage`, and `fatal`. Check `retryable` when an error provides it.
+
+Replace `DbClient` with `DbPool`. Keep using `query` and `execute` with promise result tuples. Replace `close()` with `end()`. Replace `health()` with `probe()` for a query and transaction connectivity check. `probe()` does not accept a route argument.
+
+For transactions, call `getConnection()`, then call `beginTransaction()`, `commit()` or `rollback()`, and `release()` on that connection. Read [Usage](docs/usage.md) for an example.
+
+The `bundle()`, `availability()`, `nodeStates()`, and `drain()` methods are no longer public and have no replacements. Do not depend on those internal state or pool controls. The `telemetry` client property is no longer public. Configure telemetry through the `telemetry` option.
+
+Replace `ManagedClientOptions` with `CreateDbOptions`. Set the API endpoint with the `endpoint` option or `ELERA_API_URL`. Set the token with the `token` option or `ELERA_API_TOKEN`. Let the Elera 15 API bundle provide SQL credentials and routes. Do not pass legacy profile, credential provider, identity, or token context settings.
+
+The named `TelemetrySnapshot` type is no longer exported. `Telemetry` remains the custom telemetry type and lists optional operation, reconnect, context, snapshot, and lifecycle methods. See [Public API](docs/public-api.md) for details.
+
 ## 0.3.1 — 2026-08-29
 
 ### Changed

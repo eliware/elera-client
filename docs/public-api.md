@@ -64,4 +64,28 @@ Pass a logger through the `log` option. Install `@eliware/log` directly when you
 
 The client logs operation names, routes, outcomes, transport types, and error codes. It omits SQL text, SQL values, tokens, endpoints, and error messages.
 
+## Telemetry and data sent to Elera
+
+Telemetry is enabled by default. The built-in sender checks the routing WebSocket every second and sends a snapshot to Elera when the socket is open. Set `telemetry` to `false` to disable collection and transmission.
+
+The snapshot has type `client.telemetry` and includes these values:
+
+- Application name, credential name, database name, and scopes from the routing bundle.
+- Query, failure, retry, reconnect, and failover counts.
+- Reconnect time, in-flight query count, total latency, maximum latency, and average latency in milliseconds.
+- Query counts for primary and balanced routes.
+- The snapshot time in the `sentAt` field.
+
+The bundle can omit the credential name, database name, or scopes. The client does not include SQL text, SQL values, tokens, API endpoints, or SQL credentials in the snapshot.
+
+Pass a custom telemetry object to the `telemetry` option to replace the built-in collector. The `Telemetry` type lists optional methods. A custom object can define these methods:
+
+- `begin()` and `record(value)` to measure operations.
+- `recordReconnect(value)` to receive reconnect data.
+- `setContext(value)` to receive bundle context updates.
+- `snapshot()` to provide a payload.
+- `start(stream)` and `stop()` to control custom collection and transmission.
+
+The client calls `start` when it attaches the routing stream and calls `stop` during shutdown. A custom `start` method receives the stream object. It can call `stream.sendTelemetry(payload)` to send data while connected. The client does not call a custom `snapshot` method for you.
+
 Read [Usage](usage.md) for setup and examples. Read [Client behavior](architecture.md) for routing and recovery details.

@@ -104,6 +104,20 @@ const db = await createDb({
 
 Supported levels are `error`, `warn`, `info`, `http`, `verbose`, `debug`, and `silly`. The default level is `info`. The client logs operation names, selected routes, outcomes, transport types, and error codes. It does not log SQL text, SQL values, tokens, endpoints, or error messages.
 
+## Configure telemetry
+
+The client collects telemetry and sends snapshots to Elera through the routing WebSocket by default. The built-in sender checks the connection every second and sends only while the socket is open. Snapshots include application and database context, scopes, query and failure counts, retries, reconnects, route counts, in-flight work, latency values, and a timestamp. They do not include SQL text, SQL values, tokens, API endpoints, or SQL credentials.
+
+Disable collection and transmission when the application does not want to send this data:
+
+```js
+const db = await createDb({ telemetry: false });
+```
+
+Pass a custom telemetry object to replace the built-in collector. Its optional methods appear in the `Telemetry` type. The client calls `begin` and `record` around operations, calls `recordReconnect` after a routing stream reconnects, and calls `setContext` when bundle details change. The client calls `start` with the routing stream after setup and calls `stop` during shutdown. A custom `start` method can call `stream.sendTelemetry(payload)` to send data. The client does not call a custom `snapshot` method for you.
+
+Read [Public API](public-api.md) for the complete snapshot fields and method details.
+
 ## Close the client
 
 Call `end` when the application no longer needs the client. It closes the routing stream and SQL pools. It is safe to call more than once:
