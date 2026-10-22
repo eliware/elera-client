@@ -6,34 +6,42 @@
 
 - Add the managed `createDb` API for MySQL and MariaDB applications.
 - Add the `query`, `execute`, `getConnection`, `probe`, and `end` methods.
-- Add TypeScript declarations, user guides, runnable examples, and CI and npm publication workflows.
+- Add TypeScript declarations, user guides, troubleshooting guidance, runnable examples, and documentation indexes.
+- Add CI checks for tests, lint, types, package contents, and repository conventions.
+- Add an npm publication workflow that uses trusted publishing and provenance.
+- Add injectable structured operation and routing logs through `@eliware/log`.
+- Add injectable runtime dependencies for HTTP, WebSocket, MySQL, time, and telemetry.
 
 ### Changed
 
-- Read the API URL and application token from options or environment values.
-- Read SQL credentials and route data from the Elera API.
-- Send writes to the writer and reads through reader routes.
-- Reconnect the routing stream after a connection loss.
-- Request current route data after missed events.
+- Read the API URL and application token from options or `ELERA_API_URL` and `ELERA_API_TOKEN`.
+- Read SQL credentials, database names, and route data from validated Elera bundles.
+- Route writes to the elected writer and reads to eligible reader nodes.
+- Reconnect the routing stream after connection loss and request current routes through HTTP after missed events.
 - Retry safe queries. Do not repeat writes when the result is unknown.
-- Keep API tokens out of WebSocket URLs and SQL credentials out of public bundles.
-- Require Node.js 26 or later. Use native ESM.
-- Use the shared `@eliware/elera-lib` contract and `@eliware/test` validation.
-- Drain replaced pools before cleanup. Create new pools when bundle resync finds an unhealthy pool.
-- Keep telemetry on by default. Export only `createDb` from the package root.
-- Align package metadata and development tools with Eliware Test 15 and shared bundle contracts.
-- Add injectable structured operation and routing logs with `@eliware/log`.
-- Document client setup, API behavior, examples, validation, and package release steps.
+- Keep API tokens out of WebSocket URLs and SQL credentials out of public bundles and logs.
+- Drain replaced pools before cleanup. Count active connections during drain and shutdown.
+- Create new pools for unhealthy pools during bundle resync and preserve refresh state and route reports.
+- Keep telemetry enabled by default. Report operation and reconnect metrics.
+- Require Node.js 26 or later and use native ESM.
+- Use `@eliware/elera-lib` 15 bundle contracts, `@eliware/log` structured logging, and `@eliware/test` 15 validation.
+- Align package metadata, license, repository conventions, and development tools with Eliware Test 15.
+- Organize runtime modules and tests by responsibility with one focused test module for each source module.
+- Document setup, configuration, API behavior, routing, troubleshooting, examples, validation, and release steps.
 
 ### Fixed
 
-- Keep refresh state and route reports after bundle updates.
-- Close active pools before client shutdown.
-- Retry routing requests after stream loss or missed events.
+- Preserve refresh state and route reports after bundle updates.
+- Close active pools before client shutdown and wait for tracked connections to complete before the drain limit.
+- Retry routing requests after stream loss or missed events and restore routing after missed events.
+- Do not retire an unchanged startup bundle or refresh pools when no change requires it.
+- Keep replaced pools alive until their active work completes, then close them during cleanup.
 
 ### Breaking changes
 
 - Export only `createDb` from the package root. Remove internal routing, pool, lifecycle, and telemetry exports.
+- Require Node.js 26 or later and the Elera 15 shared bundle contract.
+- Use `ELERA_API_URL` for the API endpoint and `ELERA_API_TOKEN` for the application token. Remove legacy managed-client options.
 
 ## 0.3.1 — 2026-08-29
 
