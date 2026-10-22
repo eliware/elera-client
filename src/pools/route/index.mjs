@@ -2,7 +2,7 @@ import { ClusterUnavailableError, ServerUnavailableError } from "../../errors/in
 import { createNodeSelector } from "./selection.mjs";
 import { createPoolLifecycle } from "./lifecycle.mjs";
 import { createPoolHealth } from "./health.mjs";
-import { createPoolDelegation } from "./delegation.mjs";
+import { createPoolOperations } from "./operations.mjs";
 
 export function createRoutePool(
   nodes,
@@ -13,7 +13,7 @@ export function createRoutePool(
 ) {
   const { choose } = createNodeSelector(nodes, { preferred, unavailableError });
   const lifecycle = createPoolLifecycle(nodes);
-  const delegation = createPoolDelegation(choose);
+  const operations = createPoolOperations(choose);
   const health = createPoolHealth(nodes);
-  return { nodes, choose, ...lifecycle, ...delegation, health };
+  return { nodes, choose, ...lifecycle, ...operations, health };
 }

@@ -1,17 +1,11 @@
 import { validateBundle } from "./validation.mjs";
-
-const DEFAULT_BUNDLE_PATH = "/api/v1/routing/bundle";
-
-function bundleUrl(endpoint, path) {
-  if (!endpoint) throw new TypeError("Elera API endpoint is required");
-  return new URL(path, endpoint.endsWith("/") ? endpoint : `${endpoint}/`).toString();
-}
+import { buildBundleUrl, DEFAULT_BUNDLE_PATH } from "./url.mjs";
 
 export async function fetchRoutingBundle({ endpoint, token, path, fetchImpl, signal } = {}) {
   if (!token) throw new TypeError("Elera API token is required");
   const request = fetchImpl === undefined ? globalThis.fetch : fetchImpl;
   if (typeof request !== "function") throw new TypeError("fetch implementation is required");
-  const response = await request(bundleUrl(endpoint, path ?? DEFAULT_BUNDLE_PATH), {
+  const response = await request(buildBundleUrl(endpoint, path ?? DEFAULT_BUNDLE_PATH), {
     method: "GET",
     headers: { accept: "application/json", authorization: `Bearer ${token}` },
     signal,

@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, expect, test, jest } from "@jest/globals";
+import "../../../test-fixtures/silence-default-logger.mjs";
 import { createBundleRefresh } from "../../../src/client/bundle/refresh.mjs";
-import { bundle } from "../../../test-fixtures/client/runtime.mjs";
+import { createDb } from "../../../src/client/runtime/index.mjs";
+import { bundle, driver, profile } from "../../../test-fixtures/client/runtime.mjs";
 import { emptyPool, refreshForState } from "../../../test-fixtures/client/bundle/refresh.mjs";
 
 beforeEach(() => jest.useFakeTimers({ doNotFake: ["setImmediate"] }));
@@ -167,4 +169,67 @@ test("removes and drains a balanced pool when the new bundle has no reader", asy
     routes: { balanced: [] },
   });
   expect(primaryOnly.state.balanced).toBeNull();
+});
+
+test("integration: keeps refresh updates isolated between client instances", async () => {
+  const clientA = await createDb({
+    primary: profile,
+    bundle: {
+      ...bundle,
+      writer: { host: "app-a-writer", port: 3306 },
+      failover: [{ host: "a-backup", port: 3306 }],
+    },
+    mysqlLib: driver(),
+  });
+  const clientB = await createDb({
+    primary: profile,
+    bundle: {
+      ...bundle,
+      writer: { host: "app-b-writer", port: 3306 },
+      failover: [{ host: "b-backup", port: 3306 }],
+    },
+    mysqlLib: driver(),
+  });
+  let update;
+  await clientA.attachRoutingStream({
+    connect: async () => {},
+    setOnUpdate: (handler) => {
+      update = handler;
+    },
+  });
+  await update({
+    ...bundle,
+    type: "routing.update",
+    writer: { host: "app-a-next", port: 3306 },
+    failover: [{ host: "a-backup", port: 3306 }],
+    bundleVersion: 2,
+    routes: { ...bundle.routes, primary: [{ host: "app-a-next", port: 3306 }] },
+  });
+  expect(clientA.bundle().writer.host).toBe("app-a-next");
+  expect(clientB.bundle().writer.host).toBe("app-b-writer");
+  const primaryHosts = (client) =>
+    client
+      .nodeStates()
+      .filter((node) => node.route === "primary")
+      .map((node) => node.host);
+  expect(primaryHosts(clientA)).toEqual(["app-a-next", "a-backup"]);
+  expect(primaryHosts(clientB)).toEqual(["app-b-writer", "b-backup"]);
+  await update({
+    ...bundle,
+    type: "routing.update",
+    writer: { host: "app-a-final", port: 3306 },
+    failover: [],
+    bundleVersion: 3,
+    routes: { ...bundle.routes, primary: [{ host: "app-a-final", port: 3306 }] },
+  });
+  expect(clientA.nodeStates().find((node) => node.route === "primary").host).toBe("app-a-final");
+  expect(
+    clientA
+      .nodeStates()
+      .filter((node) => node.route === "balanced")
+      .map((node) => node.host),
+  ).toEqual(bundle.routes.balanced.map((node) => node.host));
+  expect(clientB.bundle().writer.host).toBe("app-b-writer");
+  await clientA.close();
+  await clientB.close();
 });
