@@ -39,7 +39,7 @@ export async function createDb(options = {}) {
     now,
     telemetry,
   });
-  const services = createDbServices({ setup, drainTimeoutMs });
+  const services = createDbServices({ setup, drainTimeoutMs, log });
   const drain = createClientDrain({ getPools: setup.getPools, defaultTimeout: drainTimeoutMs });
   const probe = createProbeApi({
     routeFor,

@@ -17,11 +17,20 @@ export function createRestFallback({
       if (isClosed()) return;
       setMode("rest");
       await update?.(createRoutingResync({ version: getVersion(), bundle, receivedAt: now() }));
+      log.http?.("Routing bundle refresh completed", {
+        operation: "routing.bundle.refresh",
+        outcome: "success",
+        transport: "http",
+      });
     } catch (error) {
       if (isClosed()) return;
       setMode("disconnected");
       onError?.(error);
-      log.warn?.("Routing HTTP fallback failed", { error });
+      log.warn?.("Routing HTTP fallback failed", {
+        operation: "routing.bundle.refresh",
+        outcome: "failure",
+        transport: "http",
+      });
     }
   };
 }

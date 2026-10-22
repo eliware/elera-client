@@ -1,3 +1,4 @@
+import "../../../test-fixtures/silence-default-logger.mjs";
 import { expect, test, jest } from "@jest/globals";
 import { createDb } from "../../../src/client/runtime/index.mjs";
 import { bundle, driver, profile } from "../../../test-fixtures/client/runtime.mjs";

@@ -1,3 +1,4 @@
+import "../../../test-fixtures/silence-default-logger.mjs";
 import { expect, test } from "@jest/globals";
 import { getAvailability } from "../../../src/client/diagnostics/availability.mjs";
 import { createDb } from "../../../src/client/runtime/index.mjs";

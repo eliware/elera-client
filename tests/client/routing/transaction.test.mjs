@@ -1,3 +1,4 @@
+import "../../../test-fixtures/silence-default-logger.mjs";
 import { expect, jest, test } from "@jest/globals";
 import { createTransactionOperation } from "../../../src/client/routing/transaction.mjs";
 import { createDb } from "../../../src/client/runtime/index.mjs";

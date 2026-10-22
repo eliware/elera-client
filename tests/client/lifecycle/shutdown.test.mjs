@@ -1,3 +1,4 @@
+import "../../../test-fixtures/silence-default-logger.mjs";
 import { expect, test, jest } from "@jest/globals";
 import { createPoolShutdown } from "../../../src/client/lifecycle/shutdown.mjs";
 import { createDb } from "../../../src/client/runtime/index.mjs";

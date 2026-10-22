@@ -1,3 +1,4 @@
+import "../../../test-fixtures/silence-default-logger.mjs";
 import { expect, test, jest } from "@jest/globals";
 import { exposeManagedClient } from "../../../src/client/managed/public-api.mjs";
 import { makeManagedClient } from "../../../test-fixtures/client/managed.mjs";

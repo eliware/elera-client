@@ -6,15 +6,31 @@ The package also exports the `CreateDbOptions`, `DbPool`, `ProbeResult`, `PoolCo
 
 ## `createDb(options)`
 
-| Option     | Type     | Required source             | Default          | Description                                  |
-| ---------- | -------- | --------------------------- | ---------------- | -------------------------------------------- |
-| `endpoint` | `string` | Option or `ELERA_API_URL`   | No default value | Elera API URL.                               |
-| `token`    | `string` | Option or `ELERA_API_TOKEN` | No default value | Application API token.                       |
-| `env`      | `object` | Optional                    | `process.env`    | Environment map used to read missing values. |
+| Option     | Type                         | Required source             | Default               | Description                                  |
+| ---------- | ---------------------------- | --------------------------- | --------------------- | -------------------------------------------- |
+| `endpoint` | `string`                     | Option or `ELERA_API_URL`   | No default value      | Elera API URL.                               |
+| `token`    | `string`                     | Option or `ELERA_API_TOKEN` | No default value      | Application API token.                       |
+| `env`      | `object`                     | Optional                    | `process.env`         | Environment map used to read missing values. |
+| `log`      | `LoggerWithConfiguredLevels` | Optional                    | `@eliware/log` logger | Structured logger for client events.         |
 
 Set `ELERA_API_URL` to `https://elera.example.test` and `ELERA_API_TOKEN` to `replace-with-application-token` in templates. Both values are required unless you pass the matching option.
 
 The function rejects a missing URL, a missing token, an invalid bundle, or a failed API request.
+
+## Structured logging
+
+Pass a logger with the `log` option. Import `createLogger` from `@eliware/log` to configure JSON output or a log level:
+
+```js
+import { createLogger } from "@eliware/log";
+import { createDb } from "@eliware/elera-client";
+
+const db = await createDb({ log: createLogger({ level: "debug", format: "json" }) });
+```
+
+Install `@eliware/log` directly when your application imports it. Its supported levels are `error`, `warn`, `info`, `http`, `verbose`, `debug`, and `silly`. The default level is `info`.
+
+The client logs operation names, routes, outcomes, transport types, and error codes. It does not log SQL text, SQL values, tokens, endpoints, or error messages.
 
 ## Client methods
 

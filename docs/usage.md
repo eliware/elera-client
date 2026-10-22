@@ -95,6 +95,20 @@ await db.end();
 
 This call closes the routing stream and SQL pools. It can run more than once.
 
+## Configure logging
+
+Pass a logger with the `log` option. Use `createLogger` from `@eliware/log` to select JSON output or a log level:
+
+```js
+import { createLogger } from "@eliware/log";
+
+const db = await createDb({ log: createLogger({ level: "debug", format: "json" }) });
+```
+
+Install `@eliware/log` directly when your application imports it. The supported levels are `error`, `warn`, `info`, `http`, `verbose`, `debug`, and `silly`.
+
+The client does not log SQL text, SQL values, tokens, endpoints, or error messages.
+
 ## Runtime behavior
 
 The client gets SQL credentials and route data from the Elera API. It keeps bearer tokens out of WebSocket URLs. It reconnects after a stream failure and requests new route data after missed events.

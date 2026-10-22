@@ -12,6 +12,7 @@ afterEach(() => jest.useRealTimers());
 test("returns REST resync data to the update handler", async () => {
   const update = jest.fn();
   const setMode = jest.fn();
+  const http = jest.fn();
   const fallback = createRestFallback({
     fetchBundle: async (endpoint) => ({ endpoint, bundleVersion: 4 }),
     getEndpoint: () => "http://vip",
@@ -20,13 +21,18 @@ test("returns REST resync data to the update handler", async () => {
     setMode,
     update,
     now: () => 10,
-    log: { warn: jest.fn() },
+    log: { http, warn: jest.fn() },
   });
   await fallback();
   expect(setMode).toHaveBeenCalledWith("rest");
   expect(update).toHaveBeenCalledWith(
     expect.objectContaining({ type: "routing.resync", version: 3, receivedAt: 10 }),
   );
+  expect(http).toHaveBeenCalledWith("Routing bundle refresh completed", {
+    operation: "routing.bundle.refresh",
+    outcome: "success",
+    transport: "http",
+  });
 });
 
 test("connects fallback state and update callbacks", async () => {
@@ -59,6 +65,7 @@ test("ignores a fallback error after stream close", async () => {
   const setMode = jest.fn();
   const onError = jest.fn();
   const warn = jest.fn();
+  const http = jest.fn();
   const fallback = createRestFallback({
     fetchBundle: async () => {
       throw new Error("offline");
@@ -69,7 +76,7 @@ test("ignores a fallback error after stream close", async () => {
     setMode,
     update: jest.fn(),
     onError,
-    log: { warn },
+    log: { warn, http },
     now: () => 10,
   });
 
@@ -78,6 +85,31 @@ test("ignores a fallback error after stream close", async () => {
   expect(setMode).not.toHaveBeenCalled();
   expect(onError).not.toHaveBeenCalled();
   expect(warn).not.toHaveBeenCalled();
+  expect(http).not.toHaveBeenCalled();
+});
+
+test("logs a safe warning when an active HTTP refresh fails", async () => {
+  const warn = jest.fn();
+  const failure = new Error("private-value");
+  const fallback = createRestFallback({
+    fetchBundle: async () => Promise.reject(failure),
+    getEndpoint: () => "http://private-endpoint",
+    isClosed: () => false,
+    getVersion: () => 1,
+    setMode: jest.fn(),
+    update: jest.fn(),
+    onError: jest.fn(),
+    log: { warn },
+    now: () => 1,
+  });
+  await fallback();
+  expect(warn).toHaveBeenCalledWith("Routing HTTP fallback failed", {
+    operation: "routing.bundle.refresh",
+    outcome: "failure",
+    transport: "http",
+  });
+  expect(JSON.stringify(warn.mock.calls)).not.toContain("private-value");
+  expect(JSON.stringify(warn.mock.calls)).not.toContain("private-endpoint");
 });
 test("falls back to REST when WebSocket is unavailable or fails", async () => {
   const fetchBundle = jest.fn(async () => {

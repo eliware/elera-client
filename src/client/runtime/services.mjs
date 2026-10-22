@@ -9,7 +9,7 @@ import { isOlderBundle } from "../../routing/bundle/version.mjs";
 import { createPoolShutdown } from "../lifecycle/shutdown.mjs";
 import { createDbExecution } from "./execution.mjs";
 
-export function createDbServices({ setup, drainTimeoutMs }) {
+export function createDbServices({ setup, drainTimeoutMs, log }) {
   const { metrics, now, selection, routing } = setup;
   const timed = createTimedOperation({ metrics, now });
   const shutdown = createPoolShutdown({ getPools: setup.getPools, drainTimeoutMs, metrics });
@@ -25,6 +25,7 @@ export function createDbServices({ setup, drainTimeoutMs }) {
     routing,
     metrics,
     getBalancedPool: setup.getBalancedPool,
+    log,
   });
   const transaction = createTransactionOperation({ getPrimaryPool: setup.getPrimaryPool, timed });
   const refreshBundle = createBundleRefresh({

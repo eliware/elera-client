@@ -22,7 +22,7 @@
 - Drain replaced pools before cleanup. Create new pools when bundle resync finds an unhealthy pool.
 - Keep telemetry on by default. Export only `createDb` from the package root.
 - Align package metadata and development tools with Eliware Test 15 and shared bundle contracts.
-- Use `@eliware/log` for the default structured logger and injectable logging.
+- Add injectable structured operation and routing logs with `@eliware/log`.
 - Document client setup, API behavior, examples, validation, and package release steps.
 
 ### Fixed

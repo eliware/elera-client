@@ -1,3 +1,4 @@
+import "../../../test-fixtures/silence-default-logger.mjs";
 import { afterEach, expect, jest, test } from "@jest/globals";
 import { createDb } from "../../../src/client/managed/index.mjs";
 import {
@@ -50,6 +51,43 @@ test("starts and stops an injected telemetry sink", async () => {
   expect(telemetry.start).toHaveBeenCalledTimes(1);
   await client.end();
   expect(telemetry.stop).toHaveBeenCalledTimes(1);
+});
+
+test("injects a logger through the managed API without logging sensitive values", async () => {
+  const log = Object.fromEntries(
+    ["error", "warn", "info", "http", "verbose", "debug", "silly"].map((level) => [
+      level,
+      jest.fn(),
+    ]),
+  );
+  const failure = Object.assign(new Error("private-value"), { code: "ER_QUERY_FAILED" });
+  const mysqlLib = {
+    createPool: () => ({
+      query: jest.fn().mockRejectedValue(failure),
+      execute: jest.fn(),
+      getConnection: jest.fn(),
+      end: jest.fn(async () => {}),
+    }),
+  };
+  const { client } = await createManagedDb({ log, mysqlLib });
+  await expect(
+    client.query("UPDATE users SET secret = ?", ["private-value"]),
+  ).rejects.toMatchObject({ code: "ER_QUERY_FAILED" });
+  expect(log.info).toHaveBeenCalledWith("Managed database client ready", {
+    operation: "client.create",
+    balancedPool: true,
+    routing: "auto",
+  });
+  expect(log.error).toHaveBeenCalledWith("SQL operation failed", {
+    operation: "sql.query",
+    outcome: "failure",
+    route: "primary",
+    errorCode: "ER_QUERY_FAILED",
+  });
+  const records = Object.values(log).flatMap((writer) => writer.mock.calls);
+  expect(JSON.stringify(records)).not.toContain("private-value");
+  expect(JSON.stringify(records)).not.toContain("UPDATE users");
+  await client.end();
 });
 
 test("attaches and closes its routing stream", async () => {

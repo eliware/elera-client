@@ -1,5 +1,13 @@
 import { asSqlError } from "../../errors/index.mjs";
 
+function logQuarantine(log, error) {
+  log?.warn?.("SQL node quarantined", {
+    operation: "sql.node.quarantine",
+    outcome: "quarantined",
+    errorCode: error.code,
+  });
+}
+
 export function createNodeMethods({
   profile,
   operations,
@@ -20,11 +28,7 @@ export function createNodeMethods({
         if (isRetryable(error)) {
           state.failures += 1;
           quarantine();
-          log?.warn?.("SQL node quarantined", {
-            host: profile.host,
-            port: profile.port,
-            error: error.message,
-          });
+          logQuarantine(log, error);
         }
         throw asSqlError(error);
       }
@@ -39,6 +43,7 @@ export function createNodeMethods({
         if (isRetryable(error)) {
           state.failures += 1;
           quarantine();
+          logQuarantine(log, error);
         }
         throw asSqlError(error);
       }
