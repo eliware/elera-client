@@ -1,25 +1,27 @@
 # Client behavior
 
-The package connects an application to an Elera API and a managed MySQL or MariaDB database. The application supplies an Elera API URL and an application token.
+The client connects an application to the Elera API and a managed MySQL or MariaDB database. The application provides the API URL and an application token.
 
-## Setup
+## Startup
 
-The client sends the token to the Elera API in an authorization header. It requests a routing bundle with database connection details. It validates the bundle before it opens SQL connections.
+The client sends the token in an authorization header. It requests a routing bundle from the API and validates the returned data before it opens SQL connections. The bundle supplies SQL routes and credentials.
 
-The client does not accept SQL hosts or database passwords as public options. The Elera API supplies those values in the routing bundle.
+The public API does not accept SQL hosts or database passwords. This keeps database connection details under Elera management.
 
-## Queries
+## Query routing
 
-The client sends writes to the primary route. It sends reads through reader routes when the bundle provides them. `getConnection()` returns a connection pinned to the primary route so a transaction stays on one database node.
+The client routes writes to the primary node. It can route eligible reads to reader nodes when the bundle provides them. Route selection also considers node availability and the query type.
 
-The client retries only queries that can use a safe route. It does not replay an uncertain write after a failure.
+The client retries a failed query only when the failure is retryable and the query is safe on a balanced route. The client does not replay an uncertain write. Confirm the outcome before sending a failed write again.
 
-## Routing updates
+Use `getConnection` when multiple statements must use the same node. It returns a primary connection that stays on that node for its lifetime.
 
-The client receives routing updates through a WebSocket connection. It reconnects after a stream failure. It requests a new bundle after a missed update.
+## Route updates
+
+The client receives route changes through a WebSocket stream. The token stays out of the WebSocket URL. The client reconnects after a stream failure and requests a new routing bundle after a missed event.
 
 ## Shutdown
 
-Call `end()` when the application no longer needs the client. This call closes the routing stream and SQL pools. It can run more than once.
+Call `end` when the application no longer needs the client. This closes the routing stream and SQL pools. The call can run more than once. Release checked-out connections before shutdown completes.
 
-See [Usage](usage.md) for setup steps. See [Public API](public-api.md) for method details.
+Read [Usage](usage.md) for setup steps. Read [Public API](public-api.md) for method details.

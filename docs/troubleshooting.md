@@ -1,29 +1,33 @@
 # Troubleshooting
 
-## Package install fails
+## Install or import errors
 
-Use Node.js 26 or later. Run `npm ci` from the application folder. Check that `package-lock.json` matches `package.json`.
+Use Node.js 26 or later. Confirm that the application uses native ECMAScript modules. Run `npm ci` in the application folder when its lock file matches `package.json`.
 
 ## Client setup fails
 
-Set `ELERA_API_URL` and `ELERA_API_TOKEN`. Confirm that the URL points to the Elera API. Use an application token with access to the target database.
+Set `ELERA_API_URL` and `ELERA_API_TOKEN`, or pass both values to `createDb`. Check that the URL points to the Elera API and that the token is an application token with access to the database.
 
-Check that the API returns a valid routing bundle. The client rejects an invalid response, a failed request, or an expired bundle.
+The client requests a routing bundle during startup. Check API availability and access when setup reports an HTTP failure. Check the response when setup reports invalid JSON, an invalid envelope, or an invalid bundle. The client rejects an expired bundle.
 
 ## A query fails
 
 Check the SQL text, parameter values, database access, and database server. Read the error fields `code`, `errno`, and `sqlState` when available.
 
-The client can retry a safe query. It does not retry an uncertain write. Run a write again only after you confirm its result.
+The client can retry a failed query only when the error and query allow a safe retry. It does not replay an uncertain write. Confirm the write outcome before you send it again.
 
-## A connection fails
+## A connection or health check fails
 
-Check the Elera API and SQL server. Confirm that the application token remains valid. The client reconnects to the routing stream and requests current route data.
+Check that the Elera API and SQL server are available. Confirm that the application token remains valid. The client reconnects to the routing stream and requests current route data after missed updates.
 
-Use `db.end()` during shutdown. Release each connection from `db.getConnection()` after use.
+The `probe` method runs its SQL statement and checks that it can start and end a transaction on a primary connection. Check the query route and primary database availability when this check rejects.
+
+## Close connections
+
+Release each connection returned by `getConnection`. Call `db.end()` during application shutdown to close the routing stream and SQL pools.
 
 ## Report a defect
 
-Run `npm test` in this repository. Include the Node.js version, the client version, and a redacted error. Do not include tokens, passwords, or private data.
+Run `npm test` in this repository. Include the Node.js version, client version, and a redacted error. Do not include tokens, passwords, or private data.
 
-See [Usage](usage.md) for setup. See [Public API](public-api.md) for method details.
+Read [Usage](usage.md) for setup. Read [Public API](public-api.md) for method details.
