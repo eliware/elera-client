@@ -24,7 +24,6 @@ export function createDbServices({ setup, drainTimeoutMs, log }) {
     timed,
     routing,
     metrics,
-    getBalancedPool: setup.getBalancedPool,
     log,
   });
   const transaction = createTransactionOperation({ getPrimaryPool: setup.getPrimaryPool, timed });

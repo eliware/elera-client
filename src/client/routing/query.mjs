@@ -1,4 +1,4 @@
-export function createQuery({ run, metrics, getBalancedPool }) {
+export function createQuery({ run, metrics }) {
   return async (sql, values, options) => {
     return run(
       sql,
@@ -10,7 +10,7 @@ export function createQuery({ run, metrics, getBalancedPool }) {
         } catch (error) {
           if (isSafeBalancedRetry(sql, options, error)) {
             metrics?.record?.({ retry: true, route: "balanced" });
-            return getBalancedPool().query(sql, values);
+            return choose(sql, { ...options, route: "balanced" }).query(sql, values);
           }
           throw error;
         }

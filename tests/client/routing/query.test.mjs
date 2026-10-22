@@ -12,7 +12,11 @@ test("retries only when selection marks a failed query safe", async () => {
   const primary = { query: jest.fn().mockRejectedValue(failure) };
   const balanced = { query: jest.fn(async () => ["retried"]) };
   const record = jest.fn();
-  const selection = () => ({ choose: () => primary, isSafeBalancedRetry: () => true });
+  const balancedSelection = jest.fn(() => balanced);
+  const selection = () => ({
+    choose: (_sql, options) => (options?.route === "balanced" ? balancedSelection() : primary),
+    isSafeBalancedRetry: () => true,
+  });
   const query = createQuery({
     run: queryRunner(selection),
     metrics: { record },
@@ -20,6 +24,7 @@ test("retries only when selection marks a failed query safe", async () => {
   });
   await expect(query("SELECT 1")).resolves.toEqual(["retried"]);
   expect(record).toHaveBeenCalledWith({ retry: true, route: "balanced" });
+  expect(balancedSelection).toHaveBeenCalledTimes(1);
 });
 
 test("propagates failures when retry is unsafe", async () => {

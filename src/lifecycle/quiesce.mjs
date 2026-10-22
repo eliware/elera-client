@@ -1,6 +1,7 @@
 export function createQuiesceController({ close = async () => {}, onChange } = {}) {
   let state = "open";
   let active = 0;
+  let closing;
   const publish = (next) => {
     state = next;
     onChange?.(state);
@@ -23,20 +24,31 @@ export function createQuiesceController({ close = async () => {}, onChange } = {
   const waitForIdle = async () => {
     while (active) await new Promise((resolve) => setTimeout(resolve, 10));
   };
+  const begin = async () => {
+    if (state === "closed" || state === "quiesced") return;
+    if (state !== "quiescing") publish("quiescing");
+    await waitForIdle();
+    if (state === "quiescing") publish("quiesced");
+  };
   return {
     state: () => ({ state, active }),
     enter,
-    async begin() {
-      publish("quiescing");
-      await waitForIdle();
-      publish("quiesced");
-    },
+    begin,
     async end() {
-      publish("open");
+      if (!closing && state !== "closed") publish("open");
     },
-    async close() {
-      await close();
-      publish("closed");
+    close() {
+      if (!closing) {
+        closing = (async () => {
+          await begin();
+          await close();
+          publish("closed");
+        })().catch((error) => {
+          closing = undefined;
+          throw error;
+        });
+      }
+      return closing;
     },
   };
 }

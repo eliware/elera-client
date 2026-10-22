@@ -21,6 +21,7 @@ test("runs direct and session-scoped requests with lifecycle accounting", async 
   await expect(scoped.query("SELECT 1")).resolves.toEqual(["session rows"]);
   await expect(scoped.execute("SELECT 1")).resolves.toEqual(["session result"]);
   expect(connection.query).toHaveBeenCalledWith("SET x=1");
+  expect(connection.query).toHaveBeenCalledWith("SELECT 1", undefined);
   expect(connection.release).toHaveBeenCalledTimes(2);
   expect(begin).toHaveBeenCalledTimes(4);
   expect(end).toHaveBeenCalledTimes(4);

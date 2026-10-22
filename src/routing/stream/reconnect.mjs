@@ -14,7 +14,9 @@ export function createReconnectPolicy({
     const wait = Math.min(delay, Math.max(0, deadline === undefined ? delay : deadline - now()));
     timer = setTimeout(() => {
       timer = undefined;
-      void scheduleConnect();
+      void Promise.resolve()
+        .then(scheduleConnect)
+        .catch(() => schedule());
     }, wait);
     timer.unref?.();
     delay = Math.min(maxReconnectMs, delay * 2);
