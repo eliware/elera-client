@@ -1,6 +1,7 @@
 import { classifyEventVersion } from "../version-classification.mjs";
 
 export function orderRoutingEvent(event, { state, fallback }) {
+  if (event.type === "routing.topology") return { accepted: true };
   const { version } = event;
   const classification = classifyEventVersion(version, state.expectedVersion);
   if (classification === "stale") return { accepted: false };

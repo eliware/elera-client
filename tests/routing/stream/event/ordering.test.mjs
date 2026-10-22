@@ -11,3 +11,12 @@ test("waits for recovery before it records a gap version", async () => {
   expect(fallback).toHaveBeenCalledTimes(1);
   expect(state.expectedVersion).toBe(5);
 });
+
+test("accepts topology snapshots without changing the event version", () => {
+  const state = { expectedVersion: 10 };
+  const fallback = jest.fn();
+  const ordering = orderRoutingEvent({ type: "routing.topology", version: 2 }, { state, fallback });
+  expect(ordering.accepted).toBe(true);
+  expect(state.expectedVersion).toBe(10);
+  expect(fallback).not.toHaveBeenCalled();
+});
