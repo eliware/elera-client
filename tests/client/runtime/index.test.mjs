@@ -3,6 +3,10 @@ import { expect, test, jest } from "@jest/globals";
 import { createDb } from "../../../src/client/runtime/index.mjs";
 import { bundle, driver, profile } from "../../../test-fixtures/client/runtime.mjs";
 
+test("requires a primary connection profile", async () => {
+  await expect(createDb()).rejects.toThrow("primary connection profile");
+});
+
 test("routes reads to balanced pools and writes to the primary pool", async () => {
   const mysqlLib = driver();
   const client = await createDb({
@@ -83,6 +87,27 @@ test("preserves MariaDB query, execute, and connection results", async () => {
   tx.release();
   await client.close();
   expect(connection.commit).toHaveBeenCalledTimes(1);
+});
+
+test("keeps a checked-out connection active until drain can finish", async () => {
+  const client = await createDb({ primary: profile, mysqlLib: driver() });
+  const connection = await client.getConnection();
+  const drain = client.drain("db", 1000);
+  expect(client.nodeStates().find((node) => node.route === "primary")).toMatchObject({
+    active: 1,
+    state: "draining",
+  });
+  let finished = false;
+  const waiting = drain.wait().then((result) => {
+    finished = true;
+    return result;
+  });
+  await Promise.resolve();
+  expect(finished).toBe(false);
+  connection.release();
+  await expect(waiting).resolves.toEqual([[true]]);
+  expect(client.nodeStates().find((node) => node.route === "primary").active).toBe(0);
+  await client.close();
 });
 
 test("rejects invalid refreshes and applies a primary-only client refresh", async () => {

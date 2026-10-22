@@ -3,23 +3,22 @@ import { resolveManagedConfig, createBundleFetcher } from "./configuration.mjs";
 import { exposeManagedClient } from "./public-api.mjs";
 import { createManagedShutdown } from "./shutdown.mjs";
 import { createManagedClient, createManagedSetup } from "./setup.mjs";
-import { createManagedDependencies } from "./options.mjs";
+import { resolveManagedRuntimeOptions } from "./runtime-options.mjs";
 
-export async function createDb({
-  endpoint,
-  token,
-  env = process.env,
-  fetchImpl = globalThis.fetch,
-  fetchPath,
-  WebSocketImpl = globalThis.WebSocket,
-  mysqlLib,
-  log,
-  routing,
-  quarantineMs,
-  drainTimeoutMs,
-  now,
-  telemetry = true,
-} = {}) {
+export async function createDb({ endpoint, token, env = process.env, ...runtimeInput } = {}) {
+  const runtime = resolveManagedRuntimeOptions(runtimeInput);
+  const {
+    fetchImpl,
+    fetchPath,
+    WebSocketImpl,
+    mysqlLib,
+    log,
+    routing,
+    quarantineMs,
+    drainTimeoutMs,
+    now,
+    telemetry,
+  } = runtime;
   ({ endpoint, token } = resolveManagedConfig({ endpoint, token, env }));
   const fetchBundle = createBundleFetcher({ endpoint, token, fetchImpl, fetchPath });
   const { bundle, tokenContext } = await createManagedSetup(fetchBundle);
@@ -36,15 +35,7 @@ export async function createDb({
     bundle,
     tokenContext,
     stream,
-    options: createManagedDependencies({
-      mysqlLib,
-      log,
-      routing,
-      quarantineMs,
-      drainTimeoutMs,
-      now,
-      telemetry,
-    }),
+    options: { mysqlLib, log, routing, quarantineMs, drainTimeoutMs, now, telemetry },
   });
   const end = createManagedShutdown(detach, client.close.bind(client));
   return exposeManagedClient(client, end);

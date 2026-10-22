@@ -24,7 +24,7 @@ export function createClientApi({
       return transaction(callback);
     },
     async getConnection() {
-      return getPrimaryPool().choose().getConnection();
+      return getPrimaryPool().getConnection();
     },
     async health(route = "primary") {
       return diagnostics.health(route);
