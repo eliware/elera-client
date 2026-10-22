@@ -2,27 +2,27 @@
 
 ## Project
 
-Build `@eliware/elera-client` with Node.js 26 or later. Use native ESM.
+Build `@eliware/elera-client`, an Eliware client for managed MySQL and MariaDB access. Use Node.js 26 or later and native ESM.
 
 ## Scope and boundaries
 
-Expose only the managed database client in the public API. Keep shared bundle contracts in `@eliware/elera-lib`. Do not publish or deploy during validation.
+Expose the managed database client as the public API. Keep shared bundle contracts in `@eliware/elera-lib`. Do not publish or deploy during validation.
 
 ## Layout
 
-Keep runtime modules in `src/`. Keep tests in `tests/`. Keep fixtures in `test-fixtures/`. Keep user guides in `docs/`. Keep specifications in `specs/`.
+Keep runtime modules in `src/`, tests in `tests/`, fixtures in `test-fixtures/`, guides in `docs/`, examples in `examples/`, and specifications in `specs/`.
 
 ## Development
 
-Give each source and test module one purpose. Limit source modules to 100 lines. Limit test modules to 200 lines. Match each source module with one test module.
+Install dependencies with `npm ci`. Read [the specifications index](specs/README.md) before changing repository requirements.
 
 ## Validation
 
-Run `npm test` for aggregate validation. Run `npm run lint` for lint checks. Run `npm run audit` for dependency checks.
-
-Run `npm run check` to check the public entrypoint. Run `npm run typecheck` to check TypeScript declarations.
-
-Run `npm run format` to format files. Run `npm run format:check` to check formatting. Run `npm run pack` to check package contents.
+Run `npm test` for aggregate validation.
+Run `npm run lint` for lint checks.
+Run `npm run audit` for dependency checks.
+Run `npm run format` to format files.
+Run `npm run format:check` to check formatting.
 
 ## Security
 
@@ -30,7 +30,7 @@ Keep tokens, passwords, and private data out of source control and logs.
 
 ## Changes
 
-Keep documentation current. Follow the shared repository conventions.
+Keep documentation current. Update the nearest index when you add a document.
 
 ## Library
 
@@ -42,4 +42,4 @@ Prevent repeated full-suite runs during development. Run the full `npm test` sui
 
 ## npm publication
 
-Run `npm run pack` to check package contents. Follow approved Operations procedures before publication.
+Follow approved Eliware Operations procedures before publication.

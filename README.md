@@ -23,9 +23,9 @@ Application-facing Elera client for managed MySQL/MariaDB routing, failover, lif
 
 ## Features
 
-Create a managed MySQL or MariaDB client. Get SQL credentials and routes from the Elera API.
+Create a managed MySQL or MariaDB client that gets database routes and credentials from the Elera API.
 
-Read the [user guides](docs/README.md), [examples](examples/README.md), [specifications](specs/README.md), and [release notes](RELEASE_NOTES.md).
+Read the [user guides](docs/README.md), [examples](examples/README.md), and [specifications](specs/README.md).
 
 ## Requirements
 
@@ -41,7 +41,7 @@ npm install @eliware/elera-client
 
 ## Usage
 
-Set `ELERA_API_URL` and `ELERA_API_TOKEN`, then call `createDb()`. Read the [release notes](RELEASE_NOTES.md) for package changes:
+Set `ELERA_API_URL` to `https://elera.example.test` and `ELERA_API_TOKEN` to `replace-with-application-token`. Read the [usage guide](docs/usage.md) for setup and query examples. Read the [release notes](RELEASE_NOTES.md) for package changes.
 
 ```js
 import { createDb } from "@eliware/elera-client";
@@ -55,19 +55,17 @@ try {
 }
 ```
 
-Read the [usage guide](docs/usage.md) for configuration and examples.
-
 ## Development
 
-Use Node.js 26 or later. Run `npm ci` from the repository root. Read [the specifications index](specs/README.md) for repository requirements.
+Run `npm ci` from the repository root. Read the [specifications index](specs/README.md) for repository requirements and the [documentation index](docs/README.md) for user guides.
 
 ## Testing
 
-Run `npm test` for aggregate validation. Run `npm run lint`, `npm run audit`, `npm run format:check`, `npm run typecheck`, or `npm run pack` for focused checks. Run `npm run format` to format files.
+Run `npm test` for aggregate validation.
 
 ## Troubleshooting
 
-If setup fails, check the Elera API URL and application token. Read the [troubleshooting guide](docs/troubleshooting.md) for steps.
+Read the [troubleshooting guide](docs/troubleshooting.md) for setup and query failures.
 
 ## Security
 
@@ -75,19 +73,17 @@ Use an application token. Keep credentials out of source control, logs, and URLs
 
 ## API
 
-The package exports `createDb()` from its root. Read the [public API guide](docs/public-api.md) for options and client methods.
+The package root exports `createDb` and TypeScript types. Read the [public API guide](docs/public-api.md) for options and client methods.
 
 ## Packaging
 
 The `files` field in `package.json` lists `src/`, `docs/`, `README.md`, `AGENTS.md`, `LICENSE`, `RELEASE_NOTES.md`, `examples/`, `specs/`, and `.env.example` for npm packaging.
 
-Use numeric `MAJOR.MINOR.PATCH` versions. Use a `v<version>` tag for each release. The npm workflow starts when you push a tag.
-
-Run `npm run pack` to check package contents. Publish only after approved Operations procedures.
+Use numeric `MAJOR.MINOR.PATCH` versions and a `v<version>` tag for each release. The npm workflow starts when you push a tag. Run `npm run pack` to check package contents. Follow approved Eliware Operations procedures before publication.
 
 ## Examples
 
-Run `node examples/basic.mjs` to see the managed client. Read [examples/README.md](examples/README.md) for prerequisites and expected results.
+Run `node examples/basic.mjs` to see the managed client. Read [example guidance](examples/README.md) for prerequisites and expected results.
 
 ## Support
 
