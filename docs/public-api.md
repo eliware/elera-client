@@ -1,6 +1,6 @@
 # Public API
 
-The package root exports `createDb` and these TypeScript types: `CreateDbOptions`, `DbPool`, `ProbeResult`, `QueryOptions`, `QueryValues`, `QueryResultTuple`, `Telemetry`, `PoolConnection`, and `QueryResult`.
+The package root exports `createDb` and these TypeScript types: `CreateDbOptions`, `DbPool`, `ProbeResult`, `QueryOptions`, `QueryValues`, `QueryResultTuple`, `Telemetry`, `PoolConnection`, `QueryResult`, and `LoggerWithConfiguredLevels`.
 
 ## `createDb(options)`
 
