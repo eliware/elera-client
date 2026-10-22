@@ -12,3 +12,11 @@ test("selects preferred and weighted nodes and rejects empty pools", () => {
     "no eligible SQL nodes available",
   );
 });
+
+test("excludes a failed node from the next selection", () => {
+  const first = { available: true, weight: 1 };
+  const second = { available: true, weight: 1 };
+  const selector = createNodeSelector([first, second], { unavailableError: Error });
+  expect(selector.choose([first])).toBe(second);
+  expect(() => selector.choose([first, second])).toThrow("no eligible SQL nodes available");
+});

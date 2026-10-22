@@ -152,6 +152,7 @@ test("removes and drains a balanced pool when the new bundle has no reader", asy
   });
   await new Promise((resolve) => setImmediate(resolve));
   expect(state.state.balanced).toBeNull();
+  expect(state.state.balancedConfig).toBeUndefined();
   expect(drain).toHaveBeenCalledWith(10);
   expect(balanced.close).toHaveBeenCalledTimes(1);
 

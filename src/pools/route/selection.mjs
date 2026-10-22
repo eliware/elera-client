@@ -1,7 +1,7 @@
 export function createNodeSelector(nodes, { preferred = false, unavailableError }) {
   let cursor = 0;
-  const choose = () => {
-    const available = nodes.filter((node) => node.available);
+  const choose = (excluded = []) => {
+    const available = nodes.filter((node) => node.available && !excluded.includes(node));
     if (!available.length) throw new unavailableError("no eligible SQL nodes available");
     if (preferred) return available[0];
     const total = available.reduce((sum, node) => sum + Math.max(0, node.weight), 0);

@@ -20,6 +20,14 @@ export async function createManagedClient({
   createClient = createDbFromBundle,
 }) {
   const client = await createClient({ ...options, bundle, tokenContext });
-  const detach = await client.attachRoutingStream(stream);
-  return { client, detach };
+  try {
+    const detach = await client.attachRoutingStream(stream);
+    return { client, detach };
+  } catch (error) {
+    await Promise.resolve()
+      .then(() => stream?.close?.())
+      .catch(() => {});
+    await client.close().catch(() => {});
+    throw error;
+  }
 }

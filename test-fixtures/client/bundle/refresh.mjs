@@ -2,13 +2,14 @@ export const refreshForState = (
   createBundleRefresh,
   { active, primary, balanced, equivalent, usable, older, makeRoute, validateProfile },
 ) => {
-  const state = { active, primary, balanced };
+  const state = { active, primary, balanced, balancedConfig: { host: "old-reader" } };
   const refresh = createBundleRefresh({
     validateBundle: (value) => value,
     getBundle: () => state.active,
     setBundle: (value) => (state.active = value),
     getPrimaryConfig: () => ({}),
     setPrimaryConfig: () => {},
+    setBalancedConfig: (value) => (state.balancedConfig = value),
     getPrimaryPool: () => state.primary,
     setPrimaryPool: (value) => (state.primary = value),
     getBalancedPool: () => state.balanced,

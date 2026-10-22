@@ -6,10 +6,12 @@ export const bundlesHaveEquivalentPools = (candidate, current) =>
     credentials: candidate.credentials,
     writer: candidate.writer,
     routes: candidate.routes,
+    expiresAt: candidate.expiresAt,
   }) ===
     JSON.stringify({
       physicalDatabase: current.physicalDatabase,
       credentials: current.credentials,
       writer: current.writer,
       routes: current.routes,
+      expiresAt: current.expiresAt,
     });

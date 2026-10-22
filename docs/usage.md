@@ -83,7 +83,7 @@ const status = await db.probe();
 console.log(status.ok, status.route);
 ```
 
-The default query is `SELECT 1`. Pass a SQL string to run a different query. This check also starts a transaction on a primary connection, ends it without committing, then releases that connection. A passing result includes `ok`, `route`, `result`, `transaction`, and `released` fields.
+The default query is `SELECT 1`. Pass a SQL string to run a different query. The check starts a transaction on its reported route, ends it without committing, then releases that connection. A passing result includes `ok`, `route`, `result`, `transaction`, and `released` fields.
 
 ## Configure logging
 

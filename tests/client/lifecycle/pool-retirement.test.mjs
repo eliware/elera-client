@@ -40,3 +40,26 @@ test("keeps an obsolete pool open when active work misses the idle deadline", as
 
   expect(pool.close).not.toHaveBeenCalled();
 });
+
+test("handles a rejected idle wait and closes the obsolete pool", async () => {
+  const pool = {
+    nodes: [{ drain: jest.fn() }],
+    waitForIdle: jest.fn().mockRejectedValue(new Error("idle wait failed")),
+    close: jest.fn(async () => {}),
+  };
+  retireObsoletePools({ previous: [pool], retained: [], drainTimeoutMs: 5 });
+  await new Promise((resolve) => setImmediate(resolve));
+  expect(pool.close).toHaveBeenCalledTimes(1);
+});
+
+test("handles a rejected close without an unhandled retirement error", async () => {
+  const close = jest.fn().mockRejectedValue(new Error("close failed"));
+  const pool = {
+    nodes: [{ drain: jest.fn() }],
+    waitForIdle: jest.fn(async () => [true]),
+    close,
+  };
+  retireObsoletePools({ previous: [pool], retained: [], drainTimeoutMs: 5 });
+  await new Promise((resolve) => setImmediate(resolve));
+  expect(close).toHaveBeenCalledTimes(2);
+});

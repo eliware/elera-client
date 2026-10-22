@@ -32,8 +32,12 @@ export function createDbPoolState({
       balancedPool = value;
     },
     getPrimaryConfig: () => activePrimaryConfig,
+    getBalancedConfig: () => activeBalancedConfig,
     setPrimaryConfig: (value) => {
       activePrimaryConfig = value;
+    },
+    setBalancedConfig: (value) => {
+      activeBalancedConfig = value;
     },
     getBundle: () => activeBundle,
     setBundle: (value) => {

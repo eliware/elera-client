@@ -27,6 +27,23 @@ test("retries only when selection marks a failed query safe", async () => {
   expect(balancedSelection).toHaveBeenCalledTimes(1);
 });
 
+test("retries a balanced read on a different node", async () => {
+  const failure = new Error("temporary");
+  const first = { query: jest.fn().mockRejectedValue(failure) };
+  const second = { query: jest.fn(async () => ["retried"]) };
+  const chooseNode = jest.fn((excluded = []) => (excluded.includes(first) ? second : first));
+  const pool = { choose: chooseNode };
+  const query = createQuery({
+    run: queryRunner(() => ({ choose: () => pool, isSafeBalancedRetry: () => true })),
+    metrics: {},
+  });
+  await expect(query("SELECT 1", [], { route: "balanced" })).resolves.toEqual(["retried"]);
+  expect(chooseNode).toHaveBeenNthCalledWith(1);
+  expect(chooseNode).toHaveBeenNthCalledWith(2, [first]);
+  expect(first.query).toHaveBeenCalledTimes(1);
+  expect(second.query).toHaveBeenCalledTimes(1);
+});
+
 test("propagates failures when retry is unsafe", async () => {
   const failure = new Error("unsafe");
   const pool = { query: jest.fn().mockRejectedValue(failure) };

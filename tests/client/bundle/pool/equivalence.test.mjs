@@ -25,4 +25,5 @@ test("rejects missing or different bundle pool configuration", () => {
   expect(bundlesHaveEquivalentPools({ ...current, physicalDatabase: "other" }, current)).toBe(
     false,
   );
+  expect(bundlesHaveEquivalentPools({ ...current, expiresAt: "later" }, current)).toBe(false);
 });

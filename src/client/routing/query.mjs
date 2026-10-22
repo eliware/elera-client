@@ -5,12 +5,16 @@ export function createQuery({ run, metrics }) {
       options,
       async ({ choose, isSafeBalancedRetry }) => {
         const selected = choose(sql, options);
+        const selectedNode = selected.choose?.();
+        const target = selectedNode ?? selected;
         try {
-          return await selected.query(sql, values);
+          return await target.query(sql, values);
         } catch (error) {
           if (isSafeBalancedRetry(sql, options, error)) {
             metrics?.record?.({ retry: true, route: "balanced" });
-            return choose(sql, { ...options, route: "balanced" }).query(sql, values);
+            const retryNode = selected.choose?.([selectedNode]);
+            const retryTarget = retryNode ?? choose(sql, { ...options, route: "balanced" });
+            return retryTarget.query(sql, values);
           }
           throw error;
         }

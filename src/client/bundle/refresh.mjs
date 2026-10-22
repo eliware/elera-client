@@ -9,6 +9,7 @@ export function createBundleRefresh({
   setBundle,
   getPrimaryConfig,
   setPrimaryConfig,
+  setBalancedConfig,
   getBalancedPool,
   setBalancedPool,
   getPrimaryPool,
@@ -53,6 +54,7 @@ export function createBundleRefresh({
     });
     setBundle(candidate);
     setPrimaryConfig(primaryConfig);
+    setBalancedConfig?.(profiles.balanced);
     setPrimaryPool(nextPrimary);
     setBalancedPool(nextBalanced);
     retireObsoletePools({

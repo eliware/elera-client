@@ -38,7 +38,26 @@ test.each([
     routeFor: () => "balanced",
     execution: { query },
     getPrimaryPool: () => ({ choose: () => ({ getConnection: async () => connection }) }),
-    getBalancedPool: () => (hasBalancedPool ? {} : undefined),
+    getBalancedPool: () =>
+      hasBalancedPool ? { choose: () => ({ getConnection: async () => connection }) } : undefined,
   })();
   expect(query).toHaveBeenCalledWith("SELECT 1", undefined, { route: expectedRoute });
+});
+
+test("checks a transaction on the balanced route when the probe uses it", async () => {
+  const query = jest.fn(async () => []);
+  const connection = {
+    beginTransaction: jest.fn(),
+    rollback: jest.fn(),
+    release: jest.fn(),
+  };
+  const getConnection = jest.fn(async () => connection);
+  await createProbeApi({
+    routeFor: () => "balanced",
+    execution: { query },
+    getPrimaryPool: () => ({ choose: () => ({ getConnection: async () => ({}) }) }),
+    getBalancedPool: () => ({ choose: () => ({ getConnection }) }),
+  })();
+  expect(getConnection).toHaveBeenCalledTimes(1);
+  expect(query).toHaveBeenCalledWith("SELECT 1", undefined, { route: "balanced" });
 });

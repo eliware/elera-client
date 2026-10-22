@@ -15,6 +15,7 @@ export function createProbeApi({
         return route === "balanced" && !getBalancedPool?.() ? "primary" : route;
       },
       query: (statement, route) => execution.query(statement, undefined, { route }),
-      getConnection: () => getPrimaryPool().choose().getConnection(),
+      getConnection: (route) =>
+        (route === "balanced" ? getBalancedPool() : getPrimaryPool()).choose().getConnection(),
     });
 }

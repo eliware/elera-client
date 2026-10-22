@@ -17,11 +17,14 @@ test("creates and updates primary pool state without a balanced pool", () => {
   expect(state.getBalancedPool()).toBeNull();
   const primaryPool = {};
   const primaryConfig = { ...profile, host: "next" };
+  const balancedConfig = { ...profile, host: "read" };
   state.setPrimaryPool(primaryPool);
   state.setPrimaryConfig(primaryConfig);
+  state.setBalancedConfig(balancedConfig);
   state.setBundle(bundle);
   expect(state.getPrimaryPool()).toBe(primaryPool);
   expect(state.getPrimaryConfig()).toBe(primaryConfig);
+  expect(state.getBalancedConfig()).toBe(balancedConfig);
   expect(state.getBundle()).toBe(bundle);
 });
 

@@ -19,7 +19,10 @@ Install dependencies with `npm ci`. Read [the specifications index](specs/README
 ## Validation
 
 Run `npm test` for aggregate validation.
+Run `npm run typecheck` for TypeScript validation.
+Run `npm run check` for the package entry point syntax check.
 Run `npm run lint` for lint checks.
+
 Run `npm run audit` for dependency checks.
 Run `npm run format` to format files.
 Run `npm run format:check` to check formatting.

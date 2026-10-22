@@ -29,7 +29,7 @@ Read the [user guides](docs/README.md), [examples](examples/README.md), and [spe
 
 ## Requirements
 
-Use Node.js 26 or later in a native ESM project.
+Use Node.js 26 or later in a native ESM project. CommonJS `require()` is not supported.
 
 ## Setup
 
@@ -61,7 +61,7 @@ Run `npm ci` from the repository root. Read the [specifications index](specs/REA
 
 ## Testing
 
-Run `npm test` for aggregate validation.
+Run `npm test` for aggregate validation. Run `npm run typecheck`, `npm run check`, or `npm run lint` for focused checks.
 
 ## Troubleshooting
 

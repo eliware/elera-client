@@ -53,3 +53,25 @@ test("creates the database client and attaches its stream", async () => {
   });
   expect(client.attachRoutingStream).toHaveBeenCalledWith(stream);
 });
+
+test("closes the database client when stream attachment fails", async () => {
+  const failure = new Error("attach failed");
+  const stream = { close: jest.fn().mockRejectedValue(new Error("stream close failed")) };
+  const client = {
+    attachRoutingStream: jest.fn(async () => {
+      throw failure;
+    }),
+    close: jest.fn().mockRejectedValue(new Error("close failed")),
+  };
+  await expect(
+    createManagedClient({
+      bundle: {},
+      tokenContext: {},
+      stream,
+      options: {},
+      createClient: async () => client,
+    }),
+  ).rejects.toBe(failure);
+  expect(client.close).toHaveBeenCalledTimes(1);
+  expect(stream.close).toHaveBeenCalledTimes(1);
+});
