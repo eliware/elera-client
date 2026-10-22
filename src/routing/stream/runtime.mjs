@@ -1,4 +1,4 @@
-import { log as defaultLog } from "@eliware/common";
+import { log as defaultLog } from "@eliware/log";
 import { activeStreamUrl } from "./address.mjs";
 import { createReconnectPolicy } from "./reconnect.mjs";
 import { createRuntimeFallback } from "./fallback.mjs";

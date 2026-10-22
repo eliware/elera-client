@@ -2,15 +2,19 @@
 
 The package exports one function: `createDb`. It returns a managed MySQL or MariaDB client.
 
+The package also exports the `CreateDbOptions`, `DbPool`, `ProbeResult`, `PoolConnection`, and `QueryResult` TypeScript types.
+
 ## `createDb(options)`
 
-| Option     | Type     | Required source             | Description                                 |
-| ---------- | -------- | --------------------------- | ------------------------------------------- |
-| `endpoint` | `string` | Option or `ELERA_API_URL`   | Elera API URL.                              |
-| `token`    | `string` | Option or `ELERA_API_TOKEN` | Application API token.                      |
-| `env`      | `object` | Optional                    | Environment map. Defaults to `process.env`. |
+| Option     | Type     | Required source             | Default          | Description                                  |
+| ---------- | -------- | --------------------------- | ---------------- | -------------------------------------------- |
+| `endpoint` | `string` | Option or `ELERA_API_URL`   | No default value | Elera API URL.                               |
+| `token`    | `string` | Option or `ELERA_API_TOKEN` | No default value | Application API token.                       |
+| `env`      | `object` | Optional                    | `process.env`    | Environment map used to read missing values. |
 
-Pass endpoint and token as options or environment values. The function rejects a missing URL, a missing token, an invalid bundle, or a failed API request.
+Set `ELERA_API_URL` to `https://elera.example.test` and `ELERA_API_TOKEN` to `replace-with-application-token` in templates. Both values are required unless you pass the matching option.
+
+The function rejects a missing URL, a missing token, an invalid bundle, or a failed API request.
 
 ## Client methods
 

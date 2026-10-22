@@ -10,7 +10,7 @@ npm install @eliware/elera-client
 
 ## Configure
 
-Set the Elera API URL and application token. Pass both values to `createDb`:
+Set the Elera API URL and application token in the process environment, or pass both values to `createDb`:
 
 ```js
 import { createDb } from "@eliware/elera-client";
@@ -21,7 +21,16 @@ const db = await createDb({
 });
 ```
 
-Set an environment variable to omit its matching option. Pass a custom environment map with `env`:
+`ELERA_API_URL` has no built-in default and is required when `endpoint` is omitted. Use a placeholder URL in templates:
+
+```dotenv
+ELERA_API_URL=https://elera.example.test
+ELERA_API_TOKEN=replace-with-application-token
+```
+
+`ELERA_API_TOKEN` has no built-in default and is required when `token` is omitted. Use an application token, not a supervisor token.
+
+Pass a custom environment map with `env` when an application does not use `process.env`:
 
 ```js
 const db = await createDb({
@@ -32,7 +41,7 @@ const db = await createDb({
 });
 ```
 
-Use an application token. Do not use a supervisor token. Keep tokens out of source control, logs, and URLs.
+Pass `endpoint` or `token` to override the matching environment value. Keep tokens out of source control, logs, and URLs.
 
 ## Run SQL
 

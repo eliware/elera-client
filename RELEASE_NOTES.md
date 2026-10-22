@@ -1,13 +1,12 @@
 # Release Notes
 
-## 13.0.0 — 2026-10-18
+## 15.0.0 — 2026-10-22
 
 ### Added
 
 - Add the managed `createDb` API for MySQL and MariaDB applications.
 - Add the `query`, `execute`, `getConnection`, `probe`, and `end` methods.
-- Add TypeScript declarations, user guides, and runnable examples.
-- Add CI and npm publication workflows.
+- Add TypeScript declarations, user guides, runnable examples, and CI and npm publication workflows.
 
 ### Changed
 
@@ -22,6 +21,9 @@
 - Use the shared `@eliware/elera-lib` contract and `@eliware/test` validation.
 - Drain replaced pools before cleanup. Create new pools when bundle resync finds an unhealthy pool.
 - Keep telemetry on by default. Export only `createDb` from the package root.
+- Align package metadata and development tools with Eliware Test 15 and shared bundle contracts.
+- Use `@eliware/log` for the default structured logger and injectable logging.
+- Document client setup, API behavior, examples, validation, and package release steps.
 
 ### Fixed
 

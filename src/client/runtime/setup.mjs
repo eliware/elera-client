@@ -1,4 +1,4 @@
-import { log as defaultLog } from "@eliware/common";
+import { log as defaultLog } from "@eliware/log";
 import * as mysql from "mysql2/promise";
 import { validateProfile } from "../../config/index.mjs";
 import { createClientTelemetry } from "../telemetry/context.mjs";

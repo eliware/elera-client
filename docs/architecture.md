@@ -1,52 +1,25 @@
-# Architecture
+# Client behavior
 
-The package root exports `createDb` from `src/index.mjs`.
-It exports public types from `src/index.d.ts`.
-Keep internal modules out of the `package.json` exports.
+The package connects an application to an Elera API and a managed MySQL or MariaDB database. The application supplies an Elera API URL and an application token.
 
-## Client modules
+## Setup
 
-Keep the managed client in `src/client/managed/`.
-Keep SQL client setup in `src/client/runtime/`.
-Keep token checks and credentials in `src/client/auth/`.
-Keep bundle checks, profiles, refresh, and state in `src/client/bundle/`.
+The client sends the token to the Elera API in an authorization header. It requests a routing bundle with database connection details. It validates the bundle before it opens SQL connections.
 
-Keep route selection, SQL work, and stream setup in `src/client/routing/`.
-Keep health checks in `src/client/diagnostics/`.
-Keep shutdown and pool close rules in `src/client/lifecycle/`.
-Keep client telemetry in `src/client/telemetry/`.
+The client does not accept SQL hosts or database passwords as public options. The Elera API supplies those values in the routing bundle.
 
-## Shared modules
+## Queries
 
-Keep node pools in `src/pools/node/`.
-Keep route pools in `src/pools/route/`.
-Keep SQL routing rules in `src/routing/query/`.
-Keep bundle request and version rules in `src/routing/bundle/`.
+The client sends writes to the primary route. It sends reads through reader routes when the bundle provides them. `getConnection()` returns a connection pinned to the primary route so a transaction stays on one database node.
 
-Keep stream connection and event rules in `src/routing/stream/`.
-Keep routing node checks in `src/routing/nodes/`.
-Keep configuration checks in `src/config/`.
-Keep telemetry state and output in `src/telemetry/`.
+The client retries only queries that can use a safe route. It does not replay an uncertain write after a failure.
 
-Keep SQL error rules in `src/errors/`.
+## Routing updates
 
-## Tests and fixtures
+The client receives routing updates through a WebSocket connection. It reconnects after a stream failure. It requests a new bundle after a missed update.
 
-Mirror each source module with a test at the same path under `tests/`.
-Keep package entry tests in `tests/index.test.mjs`.
-Keep client runtime tests in `tests/client/runtime/`.
-Keep pool tests in `tests/pools/`.
+## Shutdown
 
-Keep shared routing tests in `tests/routing/`.
-Keep configuration tests in `tests/config/`.
-Keep SQL error tests in `tests/errors/`.
-Keep telemetry tests in `tests/telemetry/`.
+Call `end()` when the application no longer needs the client. This call closes the routing stream and SQL pools. It can run more than once.
 
-Keep shared test data in `test-fixtures/`.
-Keep client fixtures in `test-fixtures/client/`.
-Keep bundle fixtures in `test-fixtures/client/bundle/`.
-Keep pool fixtures in `test-fixtures/pools/`.
-
-Keep stream fixtures in `test-fixtures/routing/`.
-Run focused tests for each change.
-Run the full `npm test` suite before each milestone commit.
+See [Usage](usage.md) for setup steps. See [Public API](public-api.md) for method details.

@@ -23,47 +23,71 @@ Application-facing Elera client for managed MySQL/MariaDB routing, failover, lif
 
 ## Features
 
-Create a managed MySQL or MariaDB client. Use the Elera API for routes and credentials.
+Create a managed MySQL or MariaDB client. Get SQL credentials and routes from the Elera API.
+
+Read the [user guides](docs/README.md), [examples](examples/README.md), [specifications](specs/README.md), and [release notes](RELEASE_NOTES.md).
 
 ## Requirements
 
-Use Node.js 26 or later.
+Use Node.js 26 or later in a native ESM project.
 
 ## Setup
 
-Run `npm install @eliware/elera-client` in your application.
+Install the package in your application:
+
+```sh
+npm install @eliware/elera-client
+```
 
 ## Usage
 
-Set `ELERA_API_URL` and `ELERA_API_TOKEN`. Read the [documentation index](docs/README.md), [examples index](examples/README.md), [specification index](specs/README.md), and [release notes](RELEASE_NOTES.md).
+Set `ELERA_API_URL` and `ELERA_API_TOKEN`, then call `createDb()`. Read the [release notes](RELEASE_NOTES.md) for package changes:
+
+```js
+import { createDb } from "@eliware/elera-client";
+
+const db = await createDb();
+try {
+  const [rows] = await db.query("SELECT 1 AS connected");
+  console.log(rows);
+} finally {
+  await db.end();
+}
+```
+
+Read the [usage guide](docs/usage.md) for configuration and examples.
 
 ## Development
 
-Keep runtime code in `src/`. Keep tests in `tests/`.
+Use Node.js 26 or later. Run `npm ci` from the repository root. Read [the specifications index](specs/README.md) for repository requirements.
 
 ## Testing
 
-Run `npm test` for package validation.
+Run `npm test` for aggregate validation. Run `npm run lint`, `npm run audit`, `npm run format:check`, `npm run typecheck`, or `npm run pack` for focused checks. Run `npm run format` to format files.
 
 ## Troubleshooting
 
-Follow the [troubleshooting guide](docs/troubleshooting.md).
+If setup fails, check the Elera API URL and application token. Read the [troubleshooting guide](docs/troubleshooting.md) for steps.
 
 ## Security
 
-Keep tokens and passwords out of Git, logs, and URLs.
+Use an application token. Keep credentials out of source control, logs, and URLs.
 
 ## API
 
-Read the [public API guide](docs/public-api.md).
+The package exports `createDb()` from its root. Read the [public API guide](docs/public-api.md) for options and client methods.
 
 ## Packaging
 
-Run `npm run pack` to check package contents.
+The `files` field in `package.json` lists `src/`, `docs/`, `README.md`, `AGENTS.md`, `LICENSE`, `RELEASE_NOTES.md`, `examples/`, `specs/`, and `.env.example` for npm packaging.
+
+Use numeric `MAJOR.MINOR.PATCH` versions. Use a `v<version>` tag for each release. The npm workflow starts when you push a tag.
+
+Run `npm run pack` to check package contents. Publish only after approved Operations procedures.
 
 ## Examples
 
-Read the [basic example](examples/basic.mjs).
+Run `node examples/basic.mjs` to see the managed client. Read [examples/README.md](examples/README.md) for prerequisites and expected results.
 
 ## Support
 

@@ -1,4 +1,4 @@
-import { log as defaultLog } from "@eliware/common";
+import { log as defaultLog } from "@eliware/log";
 import { routeFor } from "../../routing/index.mjs";
 import { attachRoutingStream } from "../routing/stream-attachment.mjs";
 import { createClientDrain } from "../lifecycle/drain.mjs";

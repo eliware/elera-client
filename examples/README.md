@@ -1,15 +1,15 @@
 # Examples
 
-## Basic client
+The [basic.mjs](basic.mjs) example runs a query with the managed client.
 
-Open [basic.mjs](basic.mjs) to review the example code.
+## Prerequisites
 
-Set `ELERA_API_URL` and `ELERA_API_TOKEN` before you run the example. Use an application token.
+Use Node.js 26 or later in an ESM project. Set `ELERA_API_URL` to `https://elera.example.test` and `ELERA_API_TOKEN` to `replace-with-application-token` before you run the example.
 
-Run this command from the repository root:
+## Command
 
-```sh
-node examples/basic.mjs
-```
+Run `node examples/basic.mjs` from the repository root.
 
-The example prints one row from `SELECT 1 AS connected`. It calls `db.end()` after the query.
+## Expected result
+
+The example prints one row with the `connected` value set to `1`. It closes the client after the query.

@@ -1,4 +1,4 @@
-version: "13.0"
+version: "15.0"
 description: Defines requirements for @eliware/elera-client.
 directives:
   - id: E-1323.0
