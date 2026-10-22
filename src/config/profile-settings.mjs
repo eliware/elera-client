@@ -1,3 +1,5 @@
+import { validateSslSetting } from "./ssl-settings.mjs";
+
 const integer = (value, name, { min, max }) => {
   const number = Number(value);
   if (!Number.isInteger(number) || number < min || number > max)
@@ -27,12 +29,7 @@ export function normalizeProfileSettings(profile, name = "connection") {
     `${name}.options.acquireTimeout`,
     { max: 3600000 },
   );
-  if (
-    options.ssl !== undefined &&
-    typeof options.ssl !== "object" &&
-    typeof options.ssl !== "string"
-  )
-    throw new TypeError(`${name}.options.ssl must be an object or string`);
+  validateSslSetting(options.ssl, name);
   return {
     port,
     options: { ...options, connectionLimit, queueLimit, connectTimeout, acquireTimeout },

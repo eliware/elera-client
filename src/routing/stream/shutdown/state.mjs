@@ -1,4 +1,4 @@
-import { activeEndpointFromShutdown } from "../address.mjs";
+import { activeEndpointFromShutdown } from "./endpoint.mjs";
 
 export function applyShutdownState(event, { state, now }) {
   state.activeEndpoint = activeEndpointFromShutdown(state.activeEndpoint, event);

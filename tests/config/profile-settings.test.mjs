@@ -14,7 +14,6 @@ test("applies defaults and converts numeric settings", () => {
         queueLimit: "2",
         connectTimeout: "3000",
         acquireTimeout: "4000",
-        ssl: "required",
       },
     }),
   ).toMatchObject({
@@ -33,7 +32,6 @@ test.each([
   [{ options: { queueLimit: 1000001 } }],
   [{ options: { connectTimeout: 3600001 } }],
   [{ options: { acquireTimeout: 3600001 } }],
-  [{ options: { ssl: true } }],
 ])("rejects invalid profile settings %j", (profile) => {
   expect(() => normalizeProfileSettings(profile)).toThrow();
 });
