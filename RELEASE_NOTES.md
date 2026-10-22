@@ -57,7 +57,7 @@ The `bundle()`, `availability()`, `nodeStates()`, and `drain()` methods are no l
 
 Replace `ManagedClientOptions` with `CreateDbOptions`. Set the API endpoint with the `endpoint` option or `ELERA_API_URL`. Set the token with the `token` option or `ELERA_API_TOKEN`. Let the Elera 15 API bundle provide SQL credentials and routes. Do not pass legacy profile, credential provider, identity, or token context settings.
 
-The named `TelemetrySnapshot` type is no longer exported. `Telemetry` remains the custom telemetry type and lists optional operation, reconnect, context, snapshot, and lifecycle methods. See [Public API](docs/public-api.md) for details.
+The named `TelemetrySnapshot` type is no longer exported. `Telemetry` remains the custom telemetry type and lists optional operation, reconnect, context, snapshot, and lifecycle methods. Add `start(stream)` to send custom snapshots with `stream.sendTelemetry(payload)`. See [Public API](docs/public-api.md) for details.
 
 ## 0.3.1 — 2026-08-29
 
