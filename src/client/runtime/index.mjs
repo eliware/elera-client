@@ -45,6 +45,7 @@ export async function createDb(options = {}) {
     routeFor,
     execution: services.execution,
     getPrimaryPool: setup.getPrimaryPool,
+    getBalancedPool: setup.getBalancedPool,
     routing,
   });
   const client = createClientApi({

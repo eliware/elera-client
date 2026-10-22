@@ -26,6 +26,7 @@ export async function createDbSetup({
     balanced,
     credentialProvider,
     identity,
+    route: routing === "balanced" ? "balanced" : "primary",
   });
   const validateBundle = createSetupBundleValidator(tokenContext);
   const activeBundle = bundle ? validateBundle(bundle) : undefined;

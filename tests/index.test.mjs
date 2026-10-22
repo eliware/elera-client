@@ -60,7 +60,7 @@ test("public entrypoint creates a managed client with only endpoint and token", 
   expect(client.probe).toEqual(expect.any(Function));
   await expect(client.probe()).resolves.toMatchObject({
     ok: true,
-    route: "balanced",
+    route: "primary",
     transaction: "started",
     released: true,
   });

@@ -43,6 +43,17 @@ test("passes the configured clock to setup", async () => {
   expect(now).toHaveBeenCalledTimes(1);
 });
 
+test("passes balanced routing to the credential provider", async () => {
+  const credentialProvider = jest.fn(async () => ({ user: "u", password: "p" }));
+  await createDbSetup({
+    primary: { ...profile, user: undefined, password: undefined },
+    credentialProvider,
+    routing: "balanced",
+    mysqlLib: driver(),
+  });
+  expect(credentialProvider.mock.calls[0][0]).toMatchObject({ route: "balanced" });
+});
+
 test("enforces the single-token database context on refresh", async () => {
   const scopedBundle = {
     ...bundle,

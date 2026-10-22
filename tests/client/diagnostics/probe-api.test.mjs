@@ -23,3 +23,22 @@ test.each([undefined, "primary"])(
     expect(query).toHaveBeenCalledWith("SELECT 1", undefined, { route: "primary" });
   },
 );
+
+test.each([
+  [false, "primary"],
+  [true, "balanced"],
+])("uses %s balanced-pool availability to report %s", async (hasBalancedPool, expectedRoute) => {
+  const query = jest.fn(async () => []);
+  const connection = {
+    beginTransaction: jest.fn(),
+    rollback: jest.fn(),
+    release: jest.fn(),
+  };
+  await createProbeApi({
+    routeFor: () => "balanced",
+    execution: { query },
+    getPrimaryPool: () => ({ choose: () => ({ getConnection: async () => connection }) }),
+    getBalancedPool: () => (hasBalancedPool ? {} : undefined),
+  })();
+  expect(query).toHaveBeenCalledWith("SELECT 1", undefined, { route: expectedRoute });
+});

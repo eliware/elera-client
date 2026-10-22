@@ -3,12 +3,18 @@ import { credentialContext } from "./context.mjs";
 import { revalidateCredentialOverlay } from "./credential-overlay.mjs";
 import { resolveCredentials } from "./resolve.mjs";
 
-export async function prepareDbProfiles({ primary, balanced, credentialProvider, identity } = {}) {
+export async function prepareDbProfiles({
+  primary,
+  balanced,
+  credentialProvider,
+  identity,
+  route = "primary",
+} = {}) {
   if (!primary || typeof primary !== "object")
     throw new TypeError("primary connection profile is required");
   const credentials = await resolveCredentials(
     credentialProvider,
-    credentialContext(primary, { identity }),
+    credentialContext(primary, { identity, route }),
   );
   let primaryConfig = validateProfile({ ...primary, ...credentials }, "primary");
   if (!primaryConfig.user || typeof primaryConfig.password !== "string")

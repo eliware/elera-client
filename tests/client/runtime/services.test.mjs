@@ -5,7 +5,7 @@ test("wires the client service groups to the supplied pool state", async () => {
   const pool = {
     nodes: [],
     drain: () => {},
-    waitForIdle: async () => {},
+    waitForIdle: async () => true,
     close: async () => {},
     query: async () => [],
     execute: async () => [],

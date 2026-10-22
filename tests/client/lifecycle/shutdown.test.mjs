@@ -7,7 +7,7 @@ import { bundle, driver, profile } from "../../../test-fixtures/client/runtime.m
 test("drains, waits for idle, and closes pools once", async () => {
   const pool = {
     drain: jest.fn(),
-    waitForIdle: jest.fn(async () => {}),
+    waitForIdle: jest.fn(async () => [true]),
     close: jest.fn(async () => {}),
   };
   const shutdown = createPoolShutdown({
@@ -18,6 +18,16 @@ test("drains, waits for idle, and closes pools once", async () => {
   await Promise.all([shutdown.close(), shutdown.close()]);
   expect(pool.drain).toHaveBeenCalledWith(10);
   expect(pool.waitForIdle).toHaveBeenCalledWith(10);
+  expect(pool.close).toHaveBeenCalledTimes(1);
+});
+
+test("does not close busy pools and allows shutdown to retry", async () => {
+  const waitForIdle = jest.fn().mockResolvedValueOnce([false]).mockResolvedValueOnce([true]);
+  const pool = { drain: jest.fn(), waitForIdle, close: jest.fn(async () => {}) };
+  const shutdown = createPoolShutdown({ getPools: () => [pool], drainTimeoutMs: 10 });
+  await expect(shutdown.close()).rejects.toThrow("Timed out waiting for active SQL connections");
+  expect(pool.close).not.toHaveBeenCalled();
+  await shutdown.close();
   expect(pool.close).toHaveBeenCalledTimes(1);
 });
 

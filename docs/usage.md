@@ -117,7 +117,7 @@ try {
 }
 ```
 
-Close the client during application shutdown. Release every connection returned by `getConnection` before shutdown completes.
+Close the client during application shutdown. Release every connection returned by `getConnection`. Shutdown rejects if a connection remains active after the timeout.
 
 ## Learn more
 

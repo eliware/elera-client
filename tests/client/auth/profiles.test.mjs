@@ -1,4 +1,4 @@
-import { expect, test } from "@jest/globals";
+import { expect, jest, test } from "@jest/globals";
 import { prepareDbProfiles } from "../../../src/client/auth/profiles.mjs";
 import { profile } from "../../../test-fixtures/client/runtime.mjs";
 
@@ -18,6 +18,16 @@ test("applies credential overlays to primary and balanced profiles", async () =>
   });
   expect(result.primaryConfig).toMatchObject({ user: "service", password: "secret" });
   expect(result.balancedConfig).toMatchObject({ host: "read", port: 3307, user: "service" });
+});
+
+test("passes the selected route to the credential provider", async () => {
+  const provider = jest.fn(async () => ({ user: "service", password: "secret" }));
+  await prepareDbProfiles({
+    primary: { ...profile, user: undefined, password: undefined },
+    credentialProvider: provider,
+    route: "balanced",
+  });
+  expect(provider.mock.calls[0][0]).toMatchObject({ route: "balanced" });
 });
 
 test("applies credential overlays when no balanced profile exists", async () => {

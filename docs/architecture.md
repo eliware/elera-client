@@ -22,6 +22,6 @@ The client receives route changes through a WebSocket stream. The token stays ou
 
 ## Shutdown
 
-Call `end` when the application no longer needs the client. This closes the routing stream and SQL pools. The call can run more than once. Release checked-out connections before shutdown completes.
+Call `end` when the application no longer needs the client. This closes the routing stream and SQL pools. The call can run more than once. Shutdown waits for checked-out connections and rejects if they remain active after the timeout.
 
 Read [Usage](usage.md) for setup steps. Read [Public API](public-api.md) for method details.
