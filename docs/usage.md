@@ -17,7 +17,7 @@ npm install @eliware/elera-client
 Set the Elera API URL and application token in the environment:
 
 ```dotenv
-ELERA_API_URL=https://elera.example.test
+ELERA_API_URL=http://elera.example.test:8080
 ELERA_API_TOKEN=replace-with-application-token
 ```
 
@@ -35,7 +35,7 @@ Pass `endpoint` or `token` to override the matching environment value. Pass `env
 
 ```js
 const db = await createDb({
-  endpoint: "https://elera.example.test",
+  endpoint: "http://elera.example.test:8080",
   token: process.env.ELERA_API_TOKEN,
 });
 ```

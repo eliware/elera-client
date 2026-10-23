@@ -6,6 +6,17 @@ The package root exports `createDb` and these TypeScript types: `CreateDbOptions
 
 `createDb` reads the Elera API URL and application token, requests a routing bundle, validates the response, and creates the managed client. It returns a promise that resolves to a `DbPool`.
 
+For the in-vRack path, connect to the Kubernetes load balancer by HTTP on
+TCP port `8080`. The client requests `/api/v1/routing/bundle` with the token in
+the `Authorization` header. The bundle supplies the database name, SQL server
+FQDNs, and credentials. The client then connects directly to a listed SQL
+server using MariaDB on TCP port `3306`.
+
+Both connections stay in the encrypted OVH vRack. Elera-layer TLS is not
+required. Optional TLS support remains available where the deployment
+configures it. Keep the application token and bundle credentials out of logs
+and URLs. Read [Client behavior](architecture.md) for the complete flow.
+
 | Option           | Type                                   | Default                  | Description                                             |
 | ---------------- | -------------------------------------- | ------------------------ | ------------------------------------------------------- |
 | `endpoint`       | `string`                               | `ELERA_API_URL`          | Elera API base URL.                                     |

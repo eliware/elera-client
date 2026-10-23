@@ -2,9 +2,26 @@
 
 The client connects an application to the Elera API and a managed MySQL or MariaDB database. The application provides the API URL and an application token.
 
-## Startup
+## Connection paths
 
-The client sends the token in an authorization header. It requests a routing bundle from the API and validates the returned data before it opens SQL connections. The bundle supplies SQL routes and credentials.
+The application connects to the Kubernetes load balancer by HTTP on TCP
+port `8080`. The client requests `/api/v1/routing/bundle` and sends the
+application token in the `Authorization` header.
+
+The supervisor returns a routing bundle with the database name, SQL server
+FQDNs, and database credentials. The client validates the bundle before it
+opens SQL connections.
+
+The client connects directly to a listed SQL server using MariaDB on TCP port
+`3306`. SQL traffic does not pass through the supervisor.
+
+Both connections stay in the encrypted OVH vRack. Elera-layer TLS is not
+required for these paths. Optional TLS support remains available where the
+deployment configures it.
+
+The routing bundle carries database credentials. Keep those credentials out
+of logs and URLs. Keep the application token out of source control, logs, and
+URLs.
 
 The public API does not accept SQL hosts or database passwords. This keeps database connection details under Elera management.
 
@@ -18,7 +35,9 @@ Use `getConnection` when multiple statements must use the same node. It returns 
 
 ## Route updates
 
-The client receives route changes through a WebSocket stream. The token stays out of the WebSocket URL. The client reconnects after a stream failure and requests a new routing bundle after a missed event.
+The client receives route changes through a WebSocket stream on supervisor
+TCP port `8080`. The token stays out of the WebSocket URL. The client reconnects
+after a stream failure and requests a new routing bundle after a missed event.
 
 ## Shutdown
 
