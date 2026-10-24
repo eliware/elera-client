@@ -12,10 +12,14 @@ the `Authorization` header. The bundle supplies the database name, SQL server
 FQDNs, and credentials. The client then connects directly to a listed SQL
 server using MariaDB on TCP port `3306`.
 
-Both connections stay in the encrypted OVH vRack. Elera-layer TLS is not
-required. Optional TLS support remains available where the deployment
-configures it. Keep the application token and bundle credentials out of logs
-and URLs. Read [Client behavior](architecture.md) for the complete flow.
+Both paths currently transmit unencrypted traffic. Cilium WireGuard is disabled.
+Cilium VXLAN encapsulates pod packets but does not encrypt them. The OVH vRack
+provides private logical isolation but does not encrypt traffic.
+
+Application TLS remains optional and is disabled on these paths. Optional
+client TLS support remains available when a deployment configures it. Keep the
+application token and bundle credentials out of logs and URLs. Read
+[Client behavior](architecture.md) for the complete flow.
 
 | Option           | Type                                   | Default                  | Description                                             |
 | ---------------- | -------------------------------------- | ------------------------ | ------------------------------------------------------- |

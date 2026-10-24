@@ -15,9 +15,12 @@ opens SQL connections.
 The client connects directly to a listed SQL server using MariaDB on TCP port
 `3306`. SQL traffic does not pass through the supervisor.
 
-Both connections stay in the encrypted OVH vRack. Elera-layer TLS is not
-required for these paths. Optional TLS support remains available where the
-deployment configures it.
+Both paths currently transmit unencrypted traffic. Cilium WireGuard is disabled.
+Cilium VXLAN encapsulates pod packets but does not encrypt them. The OVH vRack
+provides private logical isolation but does not encrypt traffic.
+
+Application TLS remains optional and is disabled on these paths. Optional
+client TLS support remains available when a deployment configures it.
 
 The routing bundle carries database credentials. Keep those credentials out
 of logs and URLs. Keep the application token out of source control, logs, and
